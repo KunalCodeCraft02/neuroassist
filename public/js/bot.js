@@ -223,7 +223,7 @@ Send
 
             try {
 
-                const res = await fetch("https://neuroassist.onrender.com/chat", {
+                const res = await fetch("https://neuroassist-xw90.onrender.com/chat", {
 
                     method: "POST",
 
