@@ -14,16 +14,34 @@
     <title>Profile</title>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Macondo&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap');
+        @font-face {
+            font-family: ramen;
+            src: url(/assets/ramen.ttf);
+        }
+
+        @font-face {
+            font-family: futura;
+            src: url(/assets/Futura-Bold.ttf);
+        }
+
+        @font-face {
+            font-family: gilroy;
+            src: url(/assets/Gilroy-Medium.ttf);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            /* font-family: 'Inter', sans-serif; */
+            font-family: poppins;
         }
 
         body {
             background: #f6f7fb;
             color: #111;
+            
         }
 
         /* NAVBAR */
@@ -77,6 +95,7 @@
         .profile-header h1 {
             font-size: 32px;
             font-weight: 600;
+            font-family: futura;
         }
 
         /* STATS */
@@ -117,6 +136,7 @@
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 25px;
+            font-family: futura;
         }
 
         /* GRID */
@@ -201,6 +221,9 @@
         /* MOBILE */
 
         @media(max-width:768px) {
+            nav {
+                padding: 19px 18px;
+            }
 
             nav ul a {
                 display: none;

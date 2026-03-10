@@ -42,6 +42,12 @@
             font-weight: 600;
             margin-bottom: 20px;
         }
+        .logo img {
+            /* height: 100%; */
+            width: 70px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
 
         h2 {
             font-size: 22px;
@@ -135,7 +141,7 @@
 
     <div class="container">
 
-        <div class="logo">BotBuilder</div>
+        <div class="logo"><img src="/assets/image/Neuro Assist.png" alt="Neuro Assist"></div>
 
         <h2>Create your account</h2>
 
@@ -146,6 +152,9 @@
 
             <label>Email</label>
             <input id="email" type="email" placeholder="you@example.com">
+            <label>Company</label>
+
+            <input name="companyname" id="company" type="text" placeholder="Your Company">
 
             <label>Password</label>
             <input id="password" type="password" placeholder="Create password">
