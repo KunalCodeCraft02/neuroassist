@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bot Conversations</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #f5f6fa;
+            color: #111;
+        }
+
+        /* HEADER */
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* LAYOUT */
+
+        .container {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        /* SIDEBAR */
+
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 16px 18px;
+            border-bottom: 1px solid #f1f1f1;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .chat-item:hover {
+            background: #f9f9f9;
+        }
+
+        .chat-item h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .chat-item p {
+            font-size: 12px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        /* CHAT WINDOW */
+
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f8f8;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: #e4e4e4;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: #dff6e4;
+        }
+
+        /* INPUT */
+
+        .input-area {
+            background: white;
+            border-top: 1px solid #eee;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-area button {
+            background: black;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* MOBILE */
+
+        @media(max-width:768px) {
+
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+
+            .chat-window {
+                height: calc(100vh - 260px);
+            }
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Bot Conversations</h1>
+    </div>
+
+    <div class="container">
+
+        <!-- SIDEBAR -->
+
+        <div class="sidebar">
+
+            <% conversations.forEach(function(conv,index){ %>
+
+                <div class="chat-item" data-index="<%= index %>">
+
+                    <h3>Conversation <%= index + 1 %>
+                    </h3>
+
+                    <p>
+                        <% if(conv.messages && conv.messages.length> 0){ %>
+                            <%= conv.messages[0].text %>
+                                <% } else { %>
+                                    No messages
+                                    <% } %>
+                    </p>
+
+                </div>
+
+                <% }) %>
+
+        </div>
+
+
+        <!-- CHAT WINDOW -->
+
+        <div class="chat-window">
+
+            <div class="messages" id="messages">
+                <p style="color:#777">Select a conversation</p>
+            </div>
+
+            <div class="input-area">
+                <input placeholder="Send message..." disabled>
+                <button disabled>Send</button>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SAFE JSON DATA (no red errors) -->
+
+    <script id="conversationData" type="application/json">
+<%- JSON.stringify(conversations) %>
+</script>
+
+
+    <script>
+
+        const conversations = JSON.parse(
+            document.getElementById("conversationData").textContent
+        );
+
+        function openConversation(index) {
+
+            const messagesDiv = document.getElementById("messages")
+
+            messagesDiv.innerHTML = ""
+
+            const conversation = conversations[index]
+
+            if (!conversation) return
+
+            conversation.messages.forEach(function (msg) {
+
+                const div = document.createElement("div")
+
+                div.classList.add("message")
+
+                if (msg.role === "user") {
+                    div.classList.add("user")
+                } else {
+                    div.classList.add("bot")
+                }
+
+                div.innerText = msg.text
+
+                messagesDiv.appendChild(div)
+
+            })
+
+            messagesDiv.scrollTop = messagesDiv.scrollHeight
+
+        }
+
+    </script>
+
+</body>
+
+</html>

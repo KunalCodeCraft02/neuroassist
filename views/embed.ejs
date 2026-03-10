@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
+
+    <title>Embed Your Bot</title>
+
+    <style>
+        body {
+            font-family: Inter, sans-serif;
+            background: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            width: 500px;
+            text-align: center;
+
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .code-box {
+
+            background: #111;
+            color: #00ff9d;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin-bottom: 20px;
+
+        }
+
+        button {
+
+            background: black;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .success {
+
+            margin-top: 15px;
+            color: green;
+            display: none;
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Your Bot Is Ready</h1>
+
+        <p>Copy the script below and paste it into your website before the closing &lt;/body&gt; tag.</p>
+
+        <div class="code-box" id="scriptCode">
+            &lt;script src="http://localhost:3000/js/bot.js"
+            data-bot="<%= bot.botId %>"
+                data-name="<%= bot.name %>"&gt;&lt;/script&gt;
+        </div>
+
+        <button onclick="copyScript()">
+            Copy Script
+        </button>
+
+        <div class="success" id="successMsg">
+            Script copied successfully!
+        </div>
+
+    </div>
+
+    <script>
+
+        function copyScript() {
+
+            const text = document.getElementById("scriptCode").innerText
+
+            navigator.clipboard.writeText(text)
+
+            document.getElementById("successMsg").style.display = "block"
+
+            setTimeout(() => {
+                document.getElementById("successMsg").style.display = "none"
+            }, 2000)
+
+        }
+
+    </script>
+
+</body>
+
+</html>

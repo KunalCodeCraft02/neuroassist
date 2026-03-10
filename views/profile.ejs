@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <title>Profile</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #f6f7fb;
+            color: #111;
+        }
+
+        /* NAVBAR */
+
+        nav {
+            display: flex;
+            align-items: center;
+            padding: 20px 40px;
+            justify-content: space-between;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        nav ul a {
+            text-decoration: none;
+            color: black;
+            font-weight: 600;
+        }
+
+        nav button {
+            padding: 8px 14px;
+            border: none;
+            background: #FF7518;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* CONTAINER */
+
+        .profile-container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 50px 20px;
+        }
+
+        /* HEADER */
+
+        .profile-header {
+            margin-bottom: 40px;
+        }
+
+        .profile-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        /* STATS */
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            min-width: 160px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-box h2 {
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+        .stat-box p {
+            color: #777;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* BOT SECTION */
+
+        .bots-section {
+            margin-top: 40px;
+        }
+
+        .bots-section h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        /* GRID */
+
+        .bots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+        }
+
+        /* BOT CARD */
+
+        .bot-card {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+        }
+
+        .bot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .bot-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .bot-card p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+
+        /* STATUS */
+
+        .status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e7f7ee;
+            color: #0a8a42;
+        }
+
+        /* ACTION BUTTONS */
+
+        .bot-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-btn {
+            background: #ff3b3b;
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #e52e2e;
+        }
+
+        /* EMPTY */
+
+        .empty {
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* MOBILE */
+
+        @media(max-width:768px) {
+
+            nav ul a {
+                display: none;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .stat-box {
+                width: 100%;
+            }
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <nav>
+
+        <div class="logo">
+            <h1>Neuro Assist</h1>
+        </div>
+
+        <ul>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+
+            <button onclick="window.location='/profile'">
+                Profile <i class="ri-arrow-right-fill"></i>
+            </button>
+
+            <button onclick="window.location='/logout'">
+                Logout <i class="ri-arrow-right-fill"></i>
+            </button>
+
+        </ul>
+
+    </nav>
+
+    <div class="profile-container">
+
+        <div class="profile-header">
+
+            <h1>Your Profile</h1>
+
+            <div class="stats">
+
+                <div class="stat-box">
+                    <h2>
+                        <%= bots.length %>
+                    </h2>
+                    <p>Total Bots</p>
+                </div>
+
+                <div class="stat-box">
+                    <h2>Active</h2>
+                    <p>Account Status</p>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="bots-section">
+
+            <h2>Your Created Bots</h2>
+
+            <div class="bots-grid">
+
+                <% if(bots.length===0){ %>
+
+                    <p class="empty">No bots created yet.</p>
+
+                    <% } %>
+
+                        <% bots.forEach(bot=>{ %>
+
+                            <div class="bot-card">
+
+                                <h3>
+                                    <%= bot.name %>
+                                </h3>
+
+                                <p><strong>Category:</strong>
+                                    <%= bot.category %>
+                                </p>
+
+                                <p><strong>Bot ID:</strong>
+                                    <%= bot.botId %>
+                                </p>
+
+                                <p><strong>Created:</strong>
+                                    <%= bot.createdAt.toDateString() %>
+                                </p>
+
+                                <span class="status">Active</span>
+
+                                <div class="bot-actions">
+
+                                    <button class="delete-btn" onclick="deleteBot('<%= bot.botId %>')">
+
+                                        Delete Bot
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <% }) %>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        async function deleteBot(botId) {
+
+            const confirmDelete = confirm("Are you sure you want to delete this bot?")
+
+            if (!confirmDelete) return
+
+            try {
+
+                const res = await fetch("/deletebot/" + botId, {
+                    method: "DELETE"
+                })
+
+                const data = await res.json()
+
+                if (data.success) {
+                    location.reload()
+                } else {
+                    alert("Failed to delete bot")
+                }
+
+            } catch (err) {
+                alert("Server error")
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>
