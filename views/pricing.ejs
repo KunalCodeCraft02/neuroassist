@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pricing - Neuro Assist</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: white;
+            color: #111;
+        }
+
+        /* HEADER */
+
+        .header {
+            text-align: center;
+            padding: 80px 20px 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        /* PRICING SECTION */
+
+        .pricing-container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        /* CARD */
+
+        .pricing-card {
+
+            border: 1px solid #eee;
+            border-radius: 14px;
+            padding: 35px;
+            background: white;
+            transition: 0.3s;
+            position: relative;
+
+        }
+
+        .pricing-card:hover {
+
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+
+        }
+
+        /* POPULAR PLAN */
+
+        .popular {
+
+            border: 2px solid black;
+
+        }
+
+        .popular-badge {
+
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: black;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+
+        }
+
+        /* PLAN NAME */
+
+        .plan-name {
+
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+
+        }
+
+        /* PRICE */
+
+        .price {
+
+            font-size: 36px;
+            font-weight: 700;
+            margin: 10px 0;
+
+        }
+
+        .price span {
+
+            font-size: 14px;
+            color: #666;
+
+        }
+
+        /* FEATURES */
+
+        .features {
+
+            margin-top: 20px;
+            list-style: none;
+
+        }
+
+        .features li {
+
+            margin-bottom: 10px;
+            color: #444;
+            font-size: 14px;
+
+        }
+
+        /* BUTTON */
+
+        .btn {
+
+            margin-top: 25px;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: black;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+
+        }
+
+        .btn:hover {
+
+            opacity: 0.85;
+
+        }
+
+        /* MOBILE */
+
+        @media(max-width:768px) {
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .price {
+                font-size: 30px;
+            }
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="header">
+
+        <h1>Simple Pricing</h1>
+        <p>Choose a plan that fits your business</p>
+
+    </div>
+
+
+    <div class="pricing-container">
+
+        <!-- FREE PLAN -->
+
+        <div class="pricing-card">
+
+            <div class="plan-name">Free</div>
+
+            <div class="price">
+                ₹0 <span>/ forever</span>
+            </div>
+
+            <ul class="features">
+
+                <li>2 Chatbots</li>
+                <li>Basic AI replies</li>
+                <li>Website embedding</li>
+                <li>Community support</li>
+
+            </ul>
+
+            <button class="btn" disabled>
+                Current Plan
+            </button>
+
+        </div>
+
+
+        <!-- PRO PLAN -->
+
+        <div class="pricing-card popular">
+
+            <div class="popular-badge">
+                Most Popular
+            </div>
+
+            <div class="plan-name">
+                Pro
+            </div>
+
+            <div class="price">
+                ₹499 <span>/ month</span>
+            </div>
+
+            <ul class="features">
+
+                <li>10 Chatbots</li>
+                <li>Website AI training</li>
+                <li>Conversation analytics</li>
+                <li>Priority support</li>
+
+            </ul>
+
+            <button class="btn" onclick="pay(499)">
+                Upgrade
+            </button>
+
+        </div>
+
+
+        <!-- BUSINESS PLAN -->
+
+        <div class="pricing-card">
+
+            <div class="plan-name">
+                Business
+            </div>
+
+            <div class="price">
+                ₹999 <span>/ month</span>
+            </div>
+
+            <ul class="features">
+
+                <li>Unlimited chatbots</li>
+                <li>Advanced AI responses</li>
+                <li>Full analytics dashboard</li>
+                <li>Priority support</li>
+
+            </ul>
+
+            <button class="btn" onclick="pay(999)">
+                Upgrade
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script>
+
+        async function pay(amount) {
+
+            const res = await fetch("/create-order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ amount })
+            })
+
+            const order = await res.json()
+
+            const options = {
+
+                key: "<%= process.env.RAZORPAY_KEY_ID %>",
+
+                amount: order.amount,
+
+                currency: "INR",
+
+                name: "Neuro Assist",
+
+                description: "Subscription Plan",
+
+                order_id: order.id,
+
+                handler: async function (response) {
+
+                    await fetch("/verify-payment", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(response)
+                    })
+
+                    alert("Payment Successful!")
+
+                    location.reload()
+
+                }
+
+            }
+
+            const rzp = new Razorpay(options)
+
+            rzp.open()
+
+        }
+
+    </script>
+
+</body>
+
+</html>

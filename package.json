@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.4",
     "openai": "^6.27.0",
+    "razorpay": "^2.9.6",
     "uuid": "^13.0.0"
   }
 }

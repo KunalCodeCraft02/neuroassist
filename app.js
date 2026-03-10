@@ -116,8 +116,9 @@ app.get("/createbot", auth, (req, res) => {
 app.get("/profile", auth, async (req, res) => {
 
     const bots = await Bot.find({ userId: req.user.id })
+    const user = await User.findById(req.user.id)
 
-    res.render("profile", { bots })
+    res.render("profile", { bots, user })
 
 })
 
@@ -137,10 +138,30 @@ app.get("/admin", protectAdmin, async (req, res) => {
     const bots = await Bot.find()
     const conversations = await Conversation.find()
 
+    const freeUsers = users.filter(u => u.plan === "free").length
+    const proUsers = users.filter(u => u.plan === "pro").length
+    const businessUsers = users.filter(u => u.plan === "business").length
+
+    const totalRevenue = users.reduce((sum, u) => sum + (u.planPrice || 0), 0)
+
+    let mostPopularPlan = "free"
+
+    if (proUsers > freeUsers && proUsers > businessUsers) {
+        mostPopularPlan = "Pro"
+    }
+    else if (businessUsers > proUsers) {
+        mostPopularPlan = "Business"
+    }
+
     res.render("admin", {
         users,
         bots,
-        conversations
+        conversations,
+        totalRevenue,
+        freeUsers,
+        proUsers,
+        businessUsers,
+        mostPopularPlan
     })
 
 })
@@ -166,6 +187,10 @@ app.get("/admin/logout", (req, res) => {
 })
 
 
+app.get("/pricing", auth, (req, res) => {
+    res.render("pricing")
+})
+
 
 
 
@@ -177,7 +202,7 @@ app.get("/admin/logout", (req, res) => {
 
 app.post("/signup", async (req, res) => {
 
-    const { name, email, password ,companyname } = req.body
+    const { name, email, password, companyname } = req.body
 
     if (!name || name.length < 3) {
         return res.json({ success: false, message: "Name must be at least 3 characters" })
@@ -270,6 +295,19 @@ app.post("/createbot", auth, async (req, res) => {
     const { name, category, color, welcomeMessage, knowledge, websiteUrl } = req.body
 
     const botId = uuidv4()
+
+    const bots = await Bot.find({ userId: req.user.id })
+
+    const user = await User.findById(req.user.id)
+
+    if (bots.length >= user.botsLimit) {
+
+        res.send(`<script>
+      alert("Bot limit reached. Please upgrade to plan.");
+      window.location="/pharmacyadmin";
+    </script>`);
+
+    }
 
     let websiteContent = ""
 
@@ -381,6 +419,86 @@ app.delete("/deletebot/:botId", async (req, res) => {
     }
 
 })
+
+
+// PAYMENTS ROUTE 
+
+
+
+const razorpay = require("./services/razorpay")
+
+app.post("/create-order", async (req, res) => {
+
+    try {
+
+        const { amount } = req.body
+
+        const order = await razorpay.orders.create({
+            amount: amount * 100,
+            currency: "INR",
+            receipt: "order_" + Date.now()
+        })
+
+        res.json(order)
+
+    } catch (err) {
+
+        console.log(err)
+        res.status(500).json({ error: "order failed" })
+
+    }
+
+})
+
+const crypto = require("crypto")
+
+app.post("/verify-payment", async (req, res) => {
+
+    const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+    } = req.body
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+
+    const expected = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(body.toString())
+        .digest("hex")
+
+    if (expected === razorpay_signature) {
+
+        await User.findByIdAndUpdate(req.user.id, {
+            plan: "pro",
+            botsLimit: 10
+        })
+
+        res.json({ success: true })
+
+    } else {
+
+        res.json({ success: false })
+
+    }
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 app.get("/logout", (req, res) => {
 

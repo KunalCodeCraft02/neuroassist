@@ -184,6 +184,49 @@ ul button i {
 
 
 
+#page3 {
+    min-height: 80vh;
+    width: 100%;
+    background-color: #CDE7B1;
+    color: black;
+    padding: 1.5vw;
+    border-radius: 1rem;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    margin-top: 1vw;
+}
+
+.visiondiv h1 span {
+    color: #FF7518;
+}
+
+.visiondiv {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 2vw;
+    gap: 2vw;
+}
+
+#page3 .visiondiv h1 {
+    text-align: center;
+    font-family: futura;
+    font-size: 2rem;
+}
+
+.visiondiv p {
+    margin-top: 1rem;
+    width: 70%;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.visiondiv2 {
+    margin-top: 5vw;
+}
+
+
+
 /* FEATURES SECTION */
 
 .feature {
@@ -776,6 +819,13 @@ a {
         font-size: 4vw;
     }
 
+    .visiondiv p {
+        margin-top: 1rem;
+        width: 90%;
+        text-align: justify;
+        font-size: 1.2rem;
+    }
+
     nav ul button {
         padding: 2vw 3vw;
         border: none;
@@ -826,6 +876,13 @@ a {
         /* gap: 6vw; */
     }
 
+    .feature {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 30px 20px;
+    }
+
     .short-line .short-box {
         min-height: 15vh;
         /* border: none; */
@@ -834,6 +891,10 @@ a {
     nav .logo img {
         height: 5vh;
         border-radius: 50%;
+    }
+
+    .short-feature {
+        margin-top: 18vw;
     }
 
     .short-feature .short-line {
