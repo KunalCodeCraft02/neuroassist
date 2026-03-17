@@ -193,6 +193,15 @@ app.get("/pricing", auth, (req, res) => {
 
 
 
+app.get("/verify-otp", (req, res) => {
+
+    if (!req.session.signupData) {
+        return res.redirect("/signup")
+    }
+
+    res.render("verify-otp")
+
+})
 
 
 
@@ -200,36 +209,106 @@ app.get("/pricing", auth, (req, res) => {
 
 
 
+const sendOtp = require("./services/sendOtp")
+
 app.post("/signup", async (req, res) => {
 
     const { name, email, password, companyname } = req.body
 
     if (!name || name.length < 3) {
-        return res.json({ success: false, message: "Name must be at least 3 characters" })
+        return res.json({
+            success: false,
+            message: "Name must be at least 3 characters"
+        })
     }
 
     if (!email.includes("@")) {
-        return res.json({ success: false, message: "Enter a valid email" })
+        return res.json({
+            success: false,
+            message: "Enter a valid email"
+        })
     }
 
     if (password.length < 6) {
-        return res.json({ success: false, message: "Password must be at least 6 characters" })
+        return res.json({
+            success: false,
+            message: "Password must be at least 6 characters"
+        })
     }
 
     const existingUser = await User.findOne({ email })
 
     if (existingUser) {
-        return res.json({ success: false, message: "Email already registered" })
+        return res.json({
+            success: false,
+            message: "Email already registered"
+        })
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+   
 
-    const user = await User.create({
+    const otp = Math.floor(100000 + Math.random() * 900000)
+
+    
+    req.session.signupData = {
         name,
         email,
+        password,
         companyname,
+        otp,
+        expires: Date.now() + 300000
+    }
+
+
+    await sendOtp(email, otp)
+
+    res.json({
+        success: true,
+        message: "OTP sent to your email",
+        redirect: "/verify-otp"
+    })
+
+})
+
+app.post("/verify-otp", async (req, res) => {
+
+    const { otp } = req.body
+
+    const sessionData = req.session.signupData
+
+    if (!sessionData) {
+        return res.json({
+            success: false,
+            message: "Session expired"
+        })
+    }
+
+    if (Date.now() > sessionData.expires) {
+        return res.json({
+            success: false,
+            message: "OTP expired"
+        })
+    }
+
+    if (parseInt(otp) !== sessionData.otp) {
+        return res.json({
+            success: false,
+            message: "Invalid OTP"
+        })
+    }
+
+ 
+
+    const hashedPassword = await bcrypt.hash(sessionData.password, 10)
+
+    const user = await User.create({
+        name: sessionData.name,
+        email: sessionData.email,
+        companyname: sessionData.companyname,
         password: hashedPassword
     })
+
+ 
 
     const token = jwt.sign(
         { id: user._id, email: user.email },
@@ -243,13 +322,16 @@ app.post("/signup", async (req, res) => {
         sameSite: "lax"
     })
 
+    req.session.signupData = null
+
     res.json({
         success: true,
-        message: "Account created successfully",
         redirect: "/home"
     })
 
 })
+
+
 
 
 app.post("/login", async (req, res) => {
@@ -484,7 +566,38 @@ app.post("/verify-payment", async (req, res) => {
 
 })
 
+app.post("/voice", async (req, res) => {
 
+    try {
+
+        const message = req.body.message
+        const botId = req.body.botId
+
+        const bot = await Bot.findOne({ botId })
+
+        if (!bot) {
+            return res.json({
+                reply: "Bot not found"
+            })
+        }
+
+        const reply = await generateReply(bot, message)
+
+        res.json({
+            reply
+        })
+
+    } catch (err) {
+
+        console.log("VOICE ERROR:", err)
+
+        res.json({
+            reply: "Sorry, something went wrong."
+        })
+
+    }
+
+})
 
 
 

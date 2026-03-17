@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <title>Verify OTP</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .container {
+
+            width: 400px;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        input {
+
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 4px;
+
+        }
+
+        button {
+
+            margin-top: 20px;
+            width: 100%;
+            padding: 13px;
+            background: black;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>Verify OTP</h2>
+
+        <p>Enter the verification code sent to your email.</p>
+
+        <form id="otpForm">
+
+            <input type="text" name="otp" placeholder="Enter OTP" required>
+
+            <button type="submit">Verify</button>
+
+        </form>
+
+    </div>
+
+    <script>
+
+        document.getElementById("otpForm").addEventListener("submit", async function (e) {
+
+            e.preventDefault()
+
+            const otp = this.otp.value
+
+            const res = await fetch("/verify-otp", {
+
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ otp })
+
+            })
+
+            const data = await res.json()
+
+            if (data.success) {
+
+                window.location = data.redirect
+
+            } else {
+
+                alert(data.message)
+
+            }
+
+        })
+
+    </script>
+
+</body>
+
+</html>

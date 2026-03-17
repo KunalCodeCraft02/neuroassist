@@ -8,67 +8,88 @@
 
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
 
-    <title>Profile</title>
+    <title>Dashboard</title>
 
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Poppins;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
-            background: #f6f7fb;
-            color: #111;
+            background: #f8f8f8;
+            padding-top: 110px;
+            /* FIX FOR NAVBAR OVERLAP */
         }
 
         /* NAVBAR */
 
-        nav {
+        #nav {
+            height: 100px;
+            width: 100%;
+            background: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 99;
+            padding: 0 40px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px 40px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
         }
 
-        nav ul {
+        .logo {
+            line-height: 1.2;
+        }
+
+        .logo h3 {
+            font-family: Anton;
+            letter-spacing: 3px;
+            font-size: 18px;
+            font-weight: 400;
+        }
+
+        #navPart2 {
             display: flex;
-            gap: 20px;
             align-items: center;
+            gap: 40px;
         }
 
-        nav ul a {
+        #nav-links {
+            display: flex;
+            gap: 35px;
+        }
+
+        #nav-links a {
             text-decoration: none;
             color: black;
-            font-weight: 600;
+            font-size: 15px;
+            text-transform: uppercase;
+            font-weight: 500;
         }
 
-        nav button {
-            padding: 8px 14px;
-            border: none;
-            background: #FF7518;
-            color: white;
-            border-radius: 6px;
+        #icon {
+            font-size: 22px;
             cursor: pointer;
-            font-size: 14px;
         }
 
-        /* PROFILE CONTAINER */
+        /* CONTAINER */
 
         .profile-container {
             max-width: 1200px;
             margin: auto;
-            padding: 40px 20px;
+            padding: 20px;
         }
 
-        /* HEADER */
-
         .profile-header h1 {
-            font-size: 30px;
-            margin-bottom: 20px;
+            font-size: 32px;
+            margin-bottom: 30px;
         }
 
         /* STATS */
@@ -84,7 +105,8 @@
             background: white;
             padding: 25px;
             border-radius: 12px;
-            min-width: 200px;
+            min-width: 220px;
+            flex: 1;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
         }
 
@@ -95,7 +117,7 @@
         .stat-box p {
             color: #777;
             font-size: 14px;
-            margin-top: 5px;
+            margin-top: 6px;
         }
 
         /* PLAN CARD */
@@ -110,15 +132,17 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 20px;
         }
 
         .plan-info h3 {
             font-size: 20px;
+            margin-bottom: 5px;
         }
 
         .plan-info p {
-            color: #666;
             font-size: 14px;
+            color: #666;
         }
 
         .upgrade-btn {
@@ -134,8 +158,9 @@
 
         .bots-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
+            margin-top: 20px;
         }
 
         .bot-card {
@@ -157,6 +182,7 @@
         .bot-card p {
             font-size: 14px;
             color: #555;
+            margin: 3px 0;
         }
 
         .status {
@@ -186,8 +212,16 @@
 
         @media(max-width:768px) {
 
-            nav ul a {
+            #nav {
+                padding: 0 20px;
+            }
+
+            #nav-links {
                 display: none;
+            }
+
+            .profile-header h1 {
+                font-size: 26px;
             }
 
             .stats {
@@ -197,7 +231,6 @@
             .plan-card {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
             }
 
         }
@@ -207,31 +240,40 @@
 
 <body>
 
-    <nav>
+
+    <!-- NAVBAR -->
+
+    <div id="nav">
 
         <div class="logo">
-            <h2>Neuro Assist</h2>
+            <h3>Neuro</h3>
+            <h3>Assist</h3>
+            <h3>Co</h3>
         </div>
 
-        <ul>
+        <div id="navPart2">
 
-            <a href="/home">Home</a>
+            <div id="nav-links">
+                <a href="#">About</a>
+                <a href="/profile">Profile</a>
+                <a href="/logout">Logout</a>
+            </div>
 
-            <button onclick="window.location='/logout'">
-                Logout
-            </button>
+            <div id="icon">
+                <i class="ri-shopping-cart-2-line"></i>
+            </div>
 
-        </ul>
+        </div>
 
-    </nav>
+    </div>
 
+
+    <!-- DASHBOARD -->
 
     <div class="profile-container">
 
         <div class="profile-header">
-
             <h1>Your Dashboard</h1>
-
         </div>
 
 
@@ -263,38 +305,31 @@
         </div>
 
 
-        <!-- PLAN SECTION -->
+        <!-- PLAN -->
 
         <div class="plan-card">
 
             <div class="plan-info">
-
                 <h3>Current Plan: <%= user.plan %>
                 </h3>
-
                 <p>Upgrade your plan to create more bots and unlock premium features.</p>
-
             </div>
 
             <button class="upgrade-btn" onclick="window.location='/pricing'">
-
                 Upgrade Plan
-
             </button>
 
         </div>
 
 
-        <!-- BOT LIST -->
+        <!-- BOTS -->
 
         <h2>Your Bots</h2>
 
         <div class="bots-grid">
 
             <% if(bots.length===0){ %>
-
                 <p>No bots created yet.</p>
-
                 <% } %>
 
                     <% bots.forEach(bot=>{ %>
@@ -322,9 +357,7 @@
                             <div class="bot-actions">
 
                                 <button class="delete-btn" onclick="deleteBot('<%= bot.botId %>')">
-
                                     Delete Bot
-
                                 </button>
 
                             </div>
@@ -348,10 +381,7 @@
 
             try {
 
-                const res = await fetch("/deletebot/" + botId, {
-                    method: "DELETE"
-                })
-
+                const res = await fetch("/deletebot/" + botId, { method: "DELETE" })
                 const data = await res.json()
 
                 if (data.success) {
