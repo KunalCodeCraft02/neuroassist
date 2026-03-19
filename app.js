@@ -16,7 +16,6 @@ const cors = require("cors")
 const scrapeWebsite = require("./services/scraper")
 const buildPrompt = require("./services/promptBuilder")
 const Conversation = require("./models/conversation")
-const Booking = require("./models/booking");
 const twilio = require("twilio");
 const Booking = require("./models/booking");
 
