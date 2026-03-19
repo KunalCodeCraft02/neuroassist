@@ -1,32 +1,77 @@
-const express = require('express');
-const app = express();
-const path = require("path");
-const mongoose = require("mongoose")
 require("dotenv").config()
-const db = require("./databaseconection/database");
+
+const express = require("express")
+const app = express()
+const path = require("path")
+const mongoose = require("mongoose")
+
 const bcrypt = require("bcrypt")
-const User = require("./models/users")
 const jwt = require("jsonwebtoken")
 const cookieParser = require("cookie-parser")
-const auth = require("./middleware/auth")
-const Bot = require("./models/bot")
-const { v4: uuidv4 } = require("uuid")
-const generateReply = require("./services/gemini")
 const cors = require("cors")
+const session = require("express-session")
+
+
+const User = require("./models/users")
+const Bot = require("./models/bot")
+const Conversation = require("./models/conversation")
+const Booking = require("./models/booking")
+
+
+const generateReply = require("./services/gemini")
 const scrapeWebsite = require("./services/scraper")
 const buildPrompt = require("./services/promptBuilder")
-const Conversation = require("./models/conversation")
-const twilio = require("twilio");
-const Booking = require("./models/booking");
+
+
+const auth = require("./middleware/auth")
 const passport = require("./config/passport")
 
 
+const { v4: uuidv4 } = require("uuid")
+
+
+const twilio = require("twilio")
+const client = twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN)
 
 
 
 
+app.use(cookieParser())
 
-const client = twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
+app.use(cors({
+    origin: "*"
+}))
+
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
+app.use(express.static(path.join(__dirname, "public")))
+
+app.set("view engine", "ejs")
+
+
+
+app.use(session({
+    secret: "supersecretadminkey",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false 
+    }
+}))
+
+
+
+
+app.use(passport.initialize())
+app.use(passport.session())
+
+
+
+
+const ADMIN_USERNAME = "admin"
+const ADMIN_PASSWORD = "123456"
+
 
 
 
@@ -35,35 +80,8 @@ async function sendMessage(to, message) {
         from: process.env.TWILIO_WHATSAPP_NUMBER,
         to: to,
         body: message
-    });
+    })
 }
-
-app.use(cookieParser())
-app.use(cors({
-    origin: "*"
-}))
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.set("view engine", "ejs");
-
-
-const session = require("express-session")
-
-app.use(session({
-    secret: "supersecretadminkey",
-    resave: false,
-    saveUninitialized: false
-}))
-
-app.use(passport.initialize())
-app.use(passport.session())
-
-
-const ADMIN_USERNAME = "admin"
-const ADMIN_PASSWORD = "123456"
-
 
 
 // app.get("/admin/login", (req, res) => {
