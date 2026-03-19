@@ -99,7 +99,6 @@
     </div>
 
     <script>
-
         document.getElementById("otpForm").addEventListener("submit", async function (e) {
 
             e.preventDefault()
@@ -107,29 +106,23 @@
             const otp = this.otp.value
 
             const res = await fetch("/verify-otp", {
-
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ otp })
-
             })
 
             const data = await res.json()
 
             if (data.success) {
-
                 window.location = data.redirect
-
             } else {
-
-                alert(data.message)
-
+                document.querySelector("p").innerText = data.message
+                document.querySelector("p").style.color = "red"
             }
 
         })
-
     </script>
 
 </body>

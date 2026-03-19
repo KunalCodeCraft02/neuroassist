@@ -1,25 +1,27 @@
-const { Resend } = require("resend")
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const client = SibApiV3Sdk.ApiClient.instance;
+const apiKey = client.authentications['api-key'];
 
-async function sendOtp(email, otp){
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
-    await resend.emails.send({
+async function sendOtp(email, otp) {
 
-       from: "NeuroAssist <onboarding@resend.dev>",
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-        to: email,
-
+    const sendSmtpEmail = {
+        to: [{ email: email }],
+        sender: { email: "hyperboy022@gmail.com", name: "NeuroAssist" },
         subject: "Your OTP Code",
-
-        html: `
-        <h2>Email Verification</h2>
-        <p>Your OTP code is:</p>
-        <h1>${otp}</h1>
-        <p>This OTP will expire in 5 minutes.</p>
+        htmlContent: `
+            <h2>Email Verification</h2>
+            <p>Your OTP code is:</p>
+            <h1>${otp}</h1>
+            <p>This OTP will expire in 5 minutes.</p>
         `
-    })
+    };
 
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
 }
 
-module.exports = sendOtp
+module.exports = sendOtp;
