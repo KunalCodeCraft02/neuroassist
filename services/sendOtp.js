@@ -6,7 +6,7 @@ async function sendOtp(email, otp){
 
     await resend.emails.send({
 
-        from: "NeuroAssist <teamcodeandsecure@gmail.com>",
+       from: "NeuroAssist <onboarding@resend.dev>",
 
         to: email,
 
