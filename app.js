@@ -18,6 +18,13 @@ const buildPrompt = require("./services/promptBuilder")
 const Conversation = require("./models/conversation")
 const twilio = require("twilio");
 const Booking = require("./models/booking");
+const passport = require("./config/passport")
+
+
+
+
+
+
 
 const client = twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
 
@@ -49,6 +56,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }))
+
+app.use(passport.initialize())
+app.use(passport.session())
+
 
 const ADMIN_USERNAME = "admin"
 const ADMIN_PASSWORD = "123456"
@@ -239,6 +250,37 @@ app.get("/bookings", auth, async (req, res) => {
     res.render("bookings", { bookings });
 
 });
+
+
+
+
+
+// Step 1: Redirect to Google
+app.get("/auth/google",
+    passport.authenticate("google", { scope: ["profile", "email"] })
+)
+
+// Step 2: Callback
+app.get("/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req, res) => {
+
+        const token = jwt.sign(
+            { id: req.user._id, email: req.user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        )
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax"
+        })
+
+        res.redirect("/home")
+
+    }
+)
 
 // post methods 
 
