@@ -6,7 +6,7 @@ passport.use(new GoogleStrategy({
 
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "https://neuroassist-2.onrender.com/auth/google/callback"
+    callbackURL: "https://neuroassist-2.onrender.com/auth/google/callback"  
 
 },
 async (accessToken, refreshToken, profile, done) => {
@@ -46,5 +46,8 @@ passport.deserializeUser(async (id, done) => {
     done(null, user)
 
 })
+
+console.log("CLIENT ID:", process.env.GOOGLE_CLIENT_ID)
+console.log("SECRET:", process.env.GOOGLE_CLIENT_SECRET)
 
 module.exports = passport
