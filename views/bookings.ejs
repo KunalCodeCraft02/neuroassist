@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bookings</title>
+  <style>
+    body {
+      background: #fff;
+      color: #111;
+      font-family: Poppins;
+      padding: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    button {
+      padding: 6px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .approve { background: green; color: white; }
+    .reject { background: red; color: white; }
+
+  </style>
+</head>
+
+<body>
+
+<h2>Booking Requests</h2>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Phone</th>
+    <th>Date</th>
+    <th>Time</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+
+  <% bookings.forEach(b => { %>
+    <tr>
+      <td><%= b.customerName %></td>
+      <td><%= b.phone %></td>
+      <td><%= b.date %></td>
+      <td><%= b.time %></td>
+      <td><%= b.status %></td>
+      <td>
+        <% if (b.status === "pending") { %>
+          <button class="approve" onclick="update('<%= b._id %>', 'approved')">Approve</button>
+          <button class="reject" onclick="update('<%= b._id %>', 'rejected')">Reject</button>
+        <% } %>
+      </td>
+    </tr>
+  <% }) %>
+
+</table>
+
+<script>
+async function update(id, action) {
+    await fetch("/booking/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: id, action })
+    });
+
+    location.reload();
+}
+</script>
+
+</body>
+</html>

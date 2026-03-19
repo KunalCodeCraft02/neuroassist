@@ -16,7 +16,21 @@ const cors = require("cors")
 const scrapeWebsite = require("./services/scraper")
 const buildPrompt = require("./services/promptBuilder")
 const Conversation = require("./models/conversation")
+const Booking = require("./models/booking");
+const twilio = require("twilio");
+const Booking = require("./models/booking");
 
+const client = twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
+
+
+
+async function sendMessage(to, message) {
+    await client.messages.create({
+        from: process.env.TWILIO_WHATSAPP_NUMBER,
+        to: to,
+        body: message
+    });
+}
 
 app.use(cookieParser())
 app.use(cors({
@@ -203,7 +217,29 @@ app.get("/verify-otp", (req, res) => {
 
 })
 
+app.get("/booking", (req, res) => {
+    res.render("booking");
+});
 
+
+app.get("/create-booking-bot", auth, (req, res) => {
+    res.render("create-booking-bot");
+});
+
+
+app.get("/bookings", auth, async (req, res) => {
+
+    const bots = await Bot.find({ userId: req.user.id });
+
+    const botIds = bots.map(b => b.botId);
+
+    const bookings = await Booking.find({
+        botId: { $in: botIds }
+    }).sort({ createdAt: -1 });
+
+    res.render("bookings", { bookings });
+
+});
 
 // post methods 
 
@@ -245,11 +281,11 @@ app.post("/signup", async (req, res) => {
         })
     }
 
-   
+
 
     const otp = Math.floor(100000 + Math.random() * 900000)
 
-    
+
     req.session.signupData = {
         name,
         email,
@@ -297,7 +333,7 @@ app.post("/verify-otp", async (req, res) => {
         })
     }
 
- 
+
 
     const hashedPassword = await bcrypt.hash(sessionData.password, 10)
 
@@ -308,7 +344,7 @@ app.post("/verify-otp", async (req, res) => {
         password: hashedPassword
     })
 
- 
+
 
     const token = jwt.sign(
         { id: user._id, email: user.email },
@@ -424,49 +460,81 @@ app.post("/createbot", auth, async (req, res) => {
 })
 
 app.post("/chat", async (req, res) => {
-
     try {
+        const { botId, message } = req.body;
 
-        const { botId, message } = req.body
-
-        const bot = await Bot.findOne({ botId })
+        const bot = await Bot.findOne({ botId });
 
         if (!bot) {
             return res.json({
                 reply: "Bot not found"
-            })
+            });
         }
 
-        /* GENERATE AI REPLY */
+        const msg = message.toLowerCase();
 
-        const reply = await generateReply(bot, message)
 
-        /* SAVE CONVERSATION */
+        if (msg.includes("book") || msg.includes("appointment")) {
+
+            return res.json({
+                reply: "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
+            });
+        }
+
+
+        const dateTimeMatch = message.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/);
+
+        if (dateTimeMatch) {
+            const date = dateTimeMatch[1];
+            const time = dateTimeMatch[2];
+
+            const Booking = require("./models/booking");
+
+
+            const existing = await Booking.findOne({ botId, date, time });
+
+            if (existing) {
+                return res.json({
+                    reply: `This slot (${time}) is already booked. Try another time.`
+                });
+            }
+
+
+            await Booking.create({
+                botId,
+                name: "Guest User",
+                phone: "N/A",
+                date,
+                time
+            });
+
+            return res.json({
+                reply: `Your appointment is confirmed for ${date} at ${time}`
+            });
+        }
+
+
+        const reply = await generateReply(bot, message);
+
 
         await Conversation.create({
-
             botId,
-
             messages: [
                 { role: "user", text: message },
                 { role: "bot", text: reply }
             ]
+        });
 
-        })
-
-        res.json({ reply })
+        res.json({ reply });
 
     } catch (err) {
-
-        console.log(err)
+        console.log(err);
 
         res.json({
             reply: "Server error"
-        })
-
+        });
     }
-
-})
+});
 app.get("/bot/:id", async (req, res) => {
 
     const bot = await Bot.findOne({ botId: req.params.id })
@@ -566,46 +634,203 @@ app.post("/verify-payment", async (req, res) => {
 
 })
 
-app.post("/voice", async (req, res) => {
 
+
+
+// booking route
+
+
+app.post("/book", async (req, res) => {
     try {
+        const { botId, name, phone, date, time } = req.body;
 
-        const message = req.body.message
-        const botId = req.body.botId
+        const existing = await Booking.findOne({ botId, date, time });
 
-        const bot = await Bot.findOne({ botId })
-
-        if (!bot) {
+        if (existing) {
             return res.json({
-                reply: "Bot not found"
-            })
+                success: false,
+                message: "Slot already booked"
+            });
         }
 
-        const reply = await generateReply(bot, message)
+        await Booking.create({
+            botId,
+            name,
+            phone,
+            date,
+            time
+        });
 
         res.json({
-            reply
-        })
+            success: true,
+            message: "Booking confirmed"
+        });
 
     } catch (err) {
-
-        console.log("VOICE ERROR:", err)
+        console.log(err);
 
         res.json({
-            reply: "Sorry, something went wrong."
-        })
+            success: false,
+            message: "Error booking slot"
+        });
+    }
+});
 
+
+app.post("/available-slots", async (req, res) => {
+    const { botId, date } = req.body;
+
+    const allSlots = [
+        "10:00", "11:00", "12:00",
+        "13:00", "14:00", "15:00",
+        "16:00", "17:00"
+    ];
+
+    const bookings = await Booking.find({ botId, date });
+
+    const bookedTimes = bookings.map(b => b.time);
+
+    const available = allSlots.filter(t => !bookedTimes.includes(t));
+
+    res.json({ available });
+});
+
+
+
+app.post("/whatsapp", async (req, res) => {
+    try {
+        const msg = req.body.Body.toLowerCase();
+        const from = req.body.From;
+
+        console.log("Incoming:", from, msg);
+
+       
+        const bot = await Bot.findOne({ type: "booking" });
+
+        if (!bot) {
+            await sendMessage(from, "❌ No bot configured for this number.");
+            return res.sendStatus(200);
+        }
+
+        const botId = bot.botId;
+
+      
+        if (bot.customReply && msg.includes("hello")) {
+            await sendMessage(from, bot.customReply);
+            return res.sendStatus(200);
+        }
+
+       
+        if (msg.includes("book") || msg.includes("appointment")) {
+
+            let reply = "";
+
+            if (bot.category === "doctor") {
+                reply = " Please send date & time for doctor appointment (YYYY-MM-DD HH:MM)";
+            }
+            else if (bot.category === "consultant") {
+                reply = "Share your preferred consultation time (YYYY-MM-DD HH:MM)";
+            }
+            else if (bot.category === "education") {
+                reply = "Send preferred slot for session (YYYY-MM-DD HH:MM)";
+            }
+            else {
+                reply = "Send date & time like: 2026-03-20 17:00";
+            }
+
+            await sendMessage(from, reply);
+            return res.sendStatus(200);
+        }
+
+    
+        const match = msg.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/);
+
+        if (match) {
+            const date = match[1];
+            const time = match[2];
+
+         
+            const existing = await Booking.findOne({
+                botId,
+                date,
+                time,
+                status: "approved"
+            });
+
+            if (existing) {
+                await sendMessage(from, `${time} already booked. Try another slot.`);
+                return res.sendStatus(200);
+            }
+
+           
+            const booking = await Booking.create({
+                botId,
+                customerName: "WhatsApp User",
+                phone: from,
+                date,
+                time,
+                status: "pending"
+            });
+
+            await sendMessage(from, `⏳ Booking request sent for ${date} ${time}. Waiting for approval.`);
+
+            console.log("Booking:", booking._id);
+
+            return res.sendStatus(200);
+        }
+
+     
+        await sendMessage(from, "Type 'book' to start appointment booking.");
+
+        res.sendStatus(200);
+
+    } catch (err) {
+        console.log("WhatsApp Error:", err);
+        res.sendStatus(500);
+    }
+});
+
+
+app.post("/booking/action", async (req, res) => {
+    const { bookingId, action } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+
+    booking.status = action;
+    await booking.save();
+
+    if (action === "approved") {
+        await sendMessage(
+            booking.phone,
+            `Confirmed: ${booking.date} ${booking.time}`
+        );
+    } else {
+        await sendMessage(
+            booking.phone,
+            `Rejected. Try another slot`
+        );
     }
 
-})
+    res.json({ success: true });
+});
 
+app.post("/create-booking-bot", auth, async (req, res) => {
 
+    const { name, category, customReply } = req.body;
 
+    const botId = uuidv4();
 
+    const bot = await Bot.create({
+        userId: req.user.id,
+        botId,
+        name,
+        category,
+        customReply,
+        type: "booking"
+    });
 
-
-
-
+    res.redirect("/home");
+});
 
 
 

@@ -22,6 +22,7 @@ const botSchema = new mongoose.Schema({
     
     websiteUrl: String,
     websiteContent: String,
+    whatsappNumber: String,
 
     knowledge: [String],
 

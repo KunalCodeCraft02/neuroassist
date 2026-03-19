@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Booking Bot</title>
+  <style>
+    body {
+      background: #fff;
+      color: #111;
+      font-family: Poppins;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      width: 400px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Create WhatsApp Booking Bot</h2>
+
+  <form action="/create-booking-bot" method="POST">
+
+    <input type="text" name="name" placeholder="Bot Name" required>
+
+    <select name="category">
+      <option value="doctor">Doctor</option>
+      <option value="consultant">Consultant</option>
+      <option value="education">Education</option>
+      <option value="therapy">Therapy</option>
+    </select>
+
+    <textarea name="customReply" placeholder="Custom reply (optional)"></textarea>
+
+    <button type="submit">Create Bot</button>
+
+  </form>
+</div>
+
+</body>
+</html>
