@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 const session = require("express-session")
+const Chat = require("./models/chat");
 
 
 const User = require("./models/users")
@@ -94,66 +95,66 @@ const upload = multer({ storage });
 const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server);
-
 let users = {};
 let lastMessageTime = {};
 
 io.on("connection", (socket) => {
 
-    console.log("User connected:", socket.id);
+    console.log("User connected");
 
 
-    socket.on("joinLocation", ({ state, district, user }) => {
-     
+    socket.on("joinLocation", ({ state, district, user, userId }) => {
+
         const room = `${state}-${district}`;
         socket.join(room);
 
-        users[socket.id] = { room, user };
 
-        // 🔥 broadcast real name
-        socket.to(room).emit("userJoined", {
-            user
-        });
-
-         
+        users[socket.id] = {
+            room,
+            user,
+            userId,
+            state,
+            district
+        };
     });
 
 
-    socket.on("sendMessage", (data) => {
+    socket.on("sendMessage", async (data) => {
 
-        const now = Date.now();
-
-
-        if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 2000) {
-            return;
-        }
-
-        lastMessageTime[socket.id] = now;
+        const userData = users[socket.id];
+        if (!userData) return;
 
         const { message } = data;
 
-        if (!message || message.length > 300) return;
 
-        const userData = users[socket.id];
+        const now = Date.now();
+        if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1500) {
+            return;
+        }
+        lastMessageTime[socket.id] = now;
 
-        if (!userData) return;
+
+        const chat = await Chat.create({
+            userId: userData.userId,
+            user: userData.user,
+            message,
+            state: userData.state,
+            district: userData.district
+        });
+
 
         io.to(userData.room).emit("message", {
-            user: userData.user,
-            text: message,
-            time: new Date()
+            userId: chat.userId,
+            user: chat.user,
+            text: chat.message,
+            time: chat.createdAt
         });
-    });
 
+    });
 
     socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
-
         delete users[socket.id];
         delete lastMessageTime[socket.id];
-    });
-    socket.on("userJoined", (data) => {
-        showToast(`${data.user} joined the chat`);
     });
 
 });
