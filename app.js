@@ -731,7 +731,7 @@ app.post("/create-booking-agent", auth, async (req, res) => {
 app.post("/voice", async (req, res) => {
     const VoiceResponse = require("twilio").twiml.VoiceResponse;
     const twiml = new VoiceResponse();
-
+    console.log("CALL RECEIVED");
     try {
         const toNumber = req.body.To;
 
