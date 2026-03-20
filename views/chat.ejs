@@ -363,7 +363,6 @@
     <script>
 
         const socket = io();
-        const user = "<%= user.name %>";
         const userId = "<%= user._id %>";
 
         console.log("User:", user);
@@ -423,7 +422,7 @@
 
             const div = document.createElement("div");
 
-            const isMe = data.user === user;
+            const isMe = data.userId === userId; // ✅ FIXED
 
             div.className = isMe ? "chat-row right" : "chat-row left";
 

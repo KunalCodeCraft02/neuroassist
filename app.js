@@ -162,7 +162,7 @@ io.on("connection", (socket) => {
 
             // 🔥 SEND TO ROOM
             io.to(userData.room).emit("message", {
-                userId: chat.userId,
+                userId: chat.userId.toString(),
                 user: chat.user,
                 text: chat.message,
                 time: chat.createdAt
