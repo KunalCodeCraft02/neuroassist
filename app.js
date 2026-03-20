@@ -158,12 +158,18 @@ app.get("/createbot", auth, (req, res) => {
 
 app.get("/profile", auth, async (req, res) => {
 
-    const bots = await Bot.find({ userId: req.user.id })
-    const user = await User.findById(req.user.id)
+    const bots = await Bot.find({ userId: req.user.id });
+    const user = await User.findById(req.user.id);
 
-    res.render("profile", { bots, user })
+    const botIds = bots.map(b => b.botId);
 
-})
+    const bookings = await Booking.find({
+        botId: { $in: botIds }
+    });
+
+    res.render("profile", { bots, user, bookings });
+
+});
 
 app.get("/conversations/:botId", async (req, res) => {
 
@@ -838,7 +844,7 @@ app.post("/get-time", async (req, res) => {
         // ✅ Save booking
         await Booking.create({
             botId,
-            name: "Caller",
+            name: req.body.From,
             phone,
             date,
             time

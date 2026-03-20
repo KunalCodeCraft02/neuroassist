@@ -1,405 +1,288 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
+<title>Dashboard</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;500;600&display=swap"
-        rel="stylesheet">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
 
-    <title>Dashboard</title>
+body {
+    background: #fff;
+    padding-top: 90px;
+}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+/* NAV */
+#nav {
+    height: 80px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
 
-        body {
-            background: #f8f8f8;
-            padding-top: 110px;
-            /* FIX FOR NAVBAR OVERLAP */
-        }
+#nav a {
+    text-decoration: none;
+    margin-left: 20px;
+    color: black;
+}
 
-        /* NAVBAR */
+/* CONTAINER */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
 
-        #nav {
-            height: 100px;
-            width: 100%;
-            background: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 99;
-            padding: 0 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-        }
+h1 {
+    margin-bottom: 25px;
+}
 
-        .logo {
-            line-height: 1.2;
-        }
+/* STATS */
+.stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
 
-        .logo h3 {
-            font-family: Anton;
-            letter-spacing: 3px;
-            font-size: 18px;
-            font-weight: 400;
-        }
+.stat-box {
+    flex: 1;
+    min-width: 220px;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+}
 
-        #navPart2 {
-            display: flex;
-            align-items: center;
-            gap: 40px;
-        }
+.stat-box h2 {
+    font-size: 26px;
+}
 
-        #nav-links {
-            display: flex;
-            gap: 35px;
-        }
+.stat-box p {
+    color: #777;
+}
 
-        #nav-links a {
-            text-decoration: none;
-            color: black;
-            font-size: 15px;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
+/* GRAPH */
+.graph {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
 
-        #icon {
-            font-size: 22px;
-            cursor: pointer;
-        }
+/* TABLE */
+.table-box {
+    margin-bottom: 40px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
 
-        /* CONTAINER */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-        .profile-container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-        }
+thead {
+    background: #111;
+    color: #fff;
+}
 
-        .profile-header h1 {
-            font-size: 32px;
-            margin-bottom: 30px;
-        }
+th, td {
+    padding: 12px;
+    text-align: left;
+}
 
-        /* STATS */
+tr {
+    border-bottom: 1px solid #eee;
+}
 
-        .stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
+tr:hover {
+    background: #f9f9f9;
+}
 
-        .stat-box {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            min-width: 220px;
-            flex: 1;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        }
+/* BOTS */
+.bots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+    gap: 20px;
+}
 
-        .stat-box h2 {
-            font-size: 28px;
-        }
+.bot-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
 
-        .stat-box p {
-            color: #777;
-            font-size: 14px;
-            margin-top: 6px;
-        }
-
-        /* PLAN CARD */
-
-        .plan-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .plan-info h3 {
-            font-size: 20px;
-            margin-bottom: 5px;
-        }
-
-        .plan-info p {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .upgrade-btn {
-            background: black;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        /* BOT GRID */
-
-        .bots-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .bot-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            transition: 0.3s;
-        }
-
-        .bot-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .bot-card h3 {
-            margin-bottom: 10px;
-        }
-
-        .bot-card p {
-            font-size: 14px;
-            color: #555;
-            margin: 3px 0;
-        }
-
-        .status {
-            display: inline-block;
-            margin-top: 10px;
-            background: #e7f7ee;
-            color: #0a8a42;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-
-        .bot-actions {
-            margin-top: 15px;
-        }
-
-        .delete-btn {
-            background: #ff3b3b;
-            border: none;
-            color: white;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        /* MOBILE */
-
-        @media(max-width:768px) {
-
-            #nav {
-                padding: 0 20px;
-            }
-
-            #nav-links {
-                display: none;
-            }
-
-            .profile-header h1 {
-                font-size: 26px;
-            }
-
-            .stats {
-                flex-direction: column;
-            }
-
-            .plan-card {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-        }
-    </style>
+.delete-btn {
+    background: red;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+</style>
 
 </head>
 
 <body>
 
+<!-- NAV -->
+<div id="nav">
+    <h2>Neuro Assist</h2>
+    <div>
+        <a href="/home">Home</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
 
-    <!-- NAVBAR -->
+<div class="container">
 
-    <div id="nav">
+<h1>Dashboard</h1>
 
-        <div class="logo">
-            <h3>Neuro</h3>
-            <h3>Assist</h3>
-            <h3>Co</h3>
-        </div>
+<!-- STATS -->
+<div class="stats">
 
-        <div id="navPart2">
-
-            <div id="nav-links">
-                <a href="#">About</a>
-                <a href="/profile">Profile</a>
-                <a href="/logout">Logout</a>
-            </div>
-
-            <div id="icon">
-                <i class="ri-shopping-cart-2-line"></i>
-            </div>
-
-        </div>
-
+    <div class="stat-box">
+        <h2><%= bots.length %></h2>
+        <p>Total Bots</p>
     </div>
 
-
-    <!-- DASHBOARD -->
-
-    <div class="profile-container">
-
-        <div class="profile-header">
-            <h1>Your Dashboard</h1>
-        </div>
-
-
-        <!-- STATS -->
-
-        <div class="stats">
-
-            <div class="stat-box">
-                <h2>
-                    <%= bots.length %>
-                </h2>
-                <p>Total Bots</p>
-            </div>
-
-            <div class="stat-box">
-                <h2>
-                    <%= user.plan %>
-                </h2>
-                <p>Current Plan</p>
-            </div>
-
-            <div class="stat-box">
-                <h2>
-                    <%= user.botsLimit %>
-                </h2>
-                <p>Bot Limit</p>
-            </div>
-
-        </div>
-
-
-        <!-- PLAN -->
-
-        <div class="plan-card">
-
-            <div class="plan-info">
-                <h3>Current Plan: <%= user.plan %>
-                </h3>
-                <p>Upgrade your plan to create more bots and unlock premium features.</p>
-            </div>
-
-            <button class="upgrade-btn" onclick="window.location='/pricing'">
-                Upgrade Plan
-            </button>
-
-        </div>
-
-
-        <!-- BOTS -->
-
-        <h2>Your Bots</h2>
-
-        <div class="bots-grid">
-
-            <% if(bots.length===0){ %>
-                <p>No bots created yet.</p>
-                <% } %>
-
-                    <% bots.forEach(bot=>{ %>
-
-                        <div class="bot-card">
-
-                            <h3>
-                                <%= bot.name %>
-                            </h3>
-
-                            <p><strong>Category:</strong>
-                                <%= bot.category %>
-                            </p>
-
-                            <p><strong>Bot ID:</strong>
-                                <%= bot.botId %>
-                            </p>
-
-                            <p><strong>Created:</strong>
-                                <%= bot.createdAt.toDateString() %>
-                            </p>
-
-                            <span class="status">Active</span>
-
-                            <div class="bot-actions">
-
-                                <button class="delete-btn" onclick="deleteBot('<%= bot.botId %>')">
-                                    Delete Bot
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                        <% }) %>
-
-        </div>
-
+    <div class="stat-box">
+        <h2><%= bookings.length %></h2>
+        <p>Total Bookings</p>
     </div>
 
+    <div class="stat-box">
+        <h2>
+            <%= bookings.filter(b => {
+                const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                return b.date === today;
+            }).length %>
+        </h2>
+        <p>Today Bookings</p>
+    </div>
 
-    <script>
+</div>
 
-        async function deleteBot(botId) {
+<!-- GRAPH -->
+<div class="graph">
+    <canvas id="chart"></canvas>
+</div>
 
-            const confirmDelete = confirm("Delete this bot?")
+<!-- BOOKINGS TABLE -->
+<h2>Recent Bookings</h2>
 
-            if (!confirmDelete) return
+<div class="table-box">
+<table>
+<thead>
+<tr>
+    <th>Customer</th>
+    <th>Phone</th>
+    <th>Date</th>
+    <th>Time</th>
+</tr>
+</thead>
 
-            try {
+<tbody>
 
-                const res = await fetch("/deletebot/" + botId, { method: "DELETE" })
-                const data = await res.json()
+<% if(bookings.length === 0){ %>
+<tr><td colspan="4">No bookings yet</td></tr>
+<% } %>
 
-                if (data.success) {
-                    location.reload()
-                } else {
-                    alert("Failed to delete")
-                }
+<% bookings.forEach(b => { %>
+<tr>
+    <td><%= b.name || "Customer" %></td>
+    <td><%= b.phone %></td>
 
-            } catch (err) {
+    <td>
+        <%= b.date.slice(0,4) %>-<%= b.date.slice(4,6) %>-<%= b.date.slice(6,8) %>
+    </td>
 
-                alert("Server error")
+    <td>
+        <%= b.time.slice(0,2) %>:<%= b.time.slice(2,4) %>
+    </td>
+</tr>
+<% }) %>
 
-            }
+</tbody>
+</table>
+</div>
 
-        }
+<!-- BOTS -->
+<h2>Your Bots</h2>
 
-    </script>
+<div class="bots-grid">
+
+<% bots.forEach(bot => { %>
+<div class="bot-card">
+    <h3><%= bot.name %></h3>
+    <p>Category: <%= bot.category %></p>
+    <p>ID: <%= bot.botId %></p>
+
+    <button class="delete-btn" onclick="deleteBot('<%= bot.botId %>')">
+        Delete
+    </button>
+</div>
+<% }) %>
+
+</div>
+
+</div>
+
+<script>
+
+// 🔥 SAFE BOOKINGS DATA
+const bookings = JSON.parse('<%- JSON.stringify(bookings || []) %>');
+
+// GROUP BY DATE
+const map = {};
+bookings.forEach(b => {
+    if (!b.date) return;
+    map[b.date] = (map[b.date] || 0) + 1;
+});
+
+// CHART
+new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+        labels: Object.keys(map),
+        datasets: [{
+            label: "Bookings",
+            data: Object.values(map),
+            borderWidth: 2,
+            tension: 0.4
+        }]
+    }
+});
+
+// DELETE BOT
+function deleteBot(id){
+    fetch("/deletebot/" + id, {method:"DELETE"})
+    .then(()=>location.reload());
+}
+
+</script>
 
 </body>
-
 </html>
