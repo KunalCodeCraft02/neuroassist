@@ -1,13 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bookings</title>
+  <meta charset="UTF-8">
+  <title>Bookings Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
     body {
-      background: #fff;
+      background: #ffffff;
       color: #111;
-      font-family: Poppins;
       padding: 30px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 25px;
+      font-weight: 600;
+    }
+
+    /* Cards */
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      flex: 1;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card h3 {
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    /* Table */
+    .table-container {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
     }
 
     table {
@@ -15,69 +69,111 @@
       border-collapse: collapse;
     }
 
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
+    thead {
+      background: #111;
+      color: #fff;
+    }
+
+    th {
       text-align: left;
+      padding: 15px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
     }
 
-    button {
-      padding: 6px 10px;
-      margin-right: 5px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    td {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
     }
 
-    .approve { background: green; color: white; }
-    .reject { background: red; color: white; }
+    tr:hover {
+      background: #f9f9f9;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats {
+        flex-direction: column;
+      }
+
+      table {
+        font-size: 12px;
+      }
+    }
 
   </style>
 </head>
 
 <body>
 
-<h2>Booking Requests</h2>
+  <h1>📊 Booking Dashboard</h1>
 
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Phone</th>
-    <th>Date</th>
-    <th>Time</th>
-    <th>Status</th>
-    <th>Action</th>
-  </tr>
+  <!-- Stats -->
+  <div class="stats">
+    <div class="card">
+      <h3>Total Bookings</h3>
+      <p id="total">0</p>
+    </div>
 
-  <% bookings.forEach(b => { %>
-    <tr>
-      <td><%= b.customerName %></td>
-      <td><%= b.phone %></td>
-      <td><%= b.date %></td>
-      <td><%= b.time %></td>
-      <td><%= b.status %></td>
-      <td>
-        <% if (b.status === "pending") { %>
-          <button class="approve" onclick="update('<%= b._id %>', 'approved')">Approve</button>
-          <button class="reject" onclick="update('<%= b._id %>', 'rejected')">Reject</button>
-        <% } %>
-      </td>
-    </tr>
-  <% }) %>
+    <div class="card">
+      <h3>Today’s Bookings</h3>
+      <p id="today">0</p>
+    </div>
+  </div>
 
-</table>
+  <!-- Table -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Date</th>
+          <th>Time</th>
+        </tr>
+      </thead>
 
-<script>
-async function update(id, action) {
-    await fetch("/booking/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId: id, action })
-    });
+      <tbody id="bookingTable">
+      </tbody>
+    </table>
+  </div>
 
-    location.reload();
-}
-</script>
+  <script>
+    const botId = "<%= botId %>";
+
+    fetch(`/bookings/${botId}`)
+      .then(res => res.json())
+      .then(data => {
+
+        document.getElementById("total").innerText = data.length;
+
+        const todayDate = new Date().toISOString().slice(0,10).replace(/-/g, "");
+        let todayCount = 0;
+
+        const table = document.getElementById("bookingTable");
+
+        data.forEach(b => {
+
+          if (b.date === todayDate) todayCount++;
+
+          // Format date
+          const formattedDate = `${b.date.slice(0,4)}-${b.date.slice(4,6)}-${b.date.slice(6,8)}`;
+          const formattedTime = `${b.time.slice(0,2)}:${b.time.slice(2,4)}`;
+
+          table.innerHTML += `
+            <tr>
+              <td>${b.name}</td>
+              <td>${b.phone}</td>
+              <td>${formattedDate}</td>
+              <td>${formattedTime}</td>
+            </tr>
+          `;
+        });
+
+        document.getElementById("today").innerText = todayCount;
+      });
+  </script>
 
 </body>
 </html>

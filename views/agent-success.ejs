@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Created</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            background: #ffffff;
+            color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            background: #fff;
+        }
+
+        .icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .number-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .copy-btn {
+            background: #111;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #333;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .primary {
+            background: #111;
+            color: #fff;
+        }
+
+        .primary:hover {
+            background: #333;
+        }
+
+        .secondary {
+            background: #f1f1f1;
+            color: #111;
+        }
+
+        .secondary:hover {
+            background: #ddd;
+        }
+
+        .note {
+            font-size: 13px;
+            margin-top: 15px;
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="icon">🎉</div>
+
+        <h1>Your AI Booking Agent is Ready</h1>
+
+        <p>Share this number with your customers to start receiving bookings automatically.</p>
+
+        <div class="number-box" id="number">
+            <%= phoneNumber %>
+        </div>
+
+        <button class="copy-btn" onclick="copyNumber()">Copy Number</button>
+
+        <div class="actions">
+            <a href="/bookings" class="btn primary">View Bookings</a>
+            <a href="/home" class="btn secondary">Back to Home</a>
+        </div>
+
+        <p class="note">
+            When customers call this number, your AI will handle bookings automatically 📞
+        </p>
+
+    </div>
+
+    <script>
+        function copyNumber() {
+            const number = document.getElementById("number").innerText;
+            navigator.clipboard.writeText(number);
+            alert("Number copied!");
+        }
+    </script>
+
+</body>
+
+</html>

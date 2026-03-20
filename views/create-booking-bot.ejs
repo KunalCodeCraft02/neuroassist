@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Booking Agent</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            background: #ffffff;
+            color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            background: #fff;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: block;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: #111;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            background: #f5f5f5;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .time-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: #111;
+            color: #fff;
+            font-size: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        .note {
+            font-size: 13px;
+            color: #777;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>Create AI Call Booking Agent</h2>
+
+        <form action="/create-booking-agent" method="POST">
+
+            <!-- Company Name -->
+            <div class="form-group">
+                <label>Business Name</label>
+                <input type="text" name="businessName" placeholder="Enter your company name" required>
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="hospital">Hospital</option>
+                    <option value="salon">Salon</option>
+                    <option value="gym">Gym</option>
+                    <option value="restaurant">Restaurant</option>
+                </select>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+                <label>Business Phone Number</label>
+                <input type="text" name="customerNumber" placeholder="+91XXXXXXXXXX" required>
+            </div>
+
+            <!-- Working Days -->
+            <div class="form-group">
+                <label>Working Days</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="workingDays" value="Mon"> Mon</label>
+                    <label><input type="checkbox" name="workingDays" value="Tue"> Tue</label>
+                    <label><input type="checkbox" name="workingDays" value="Wed"> Wed</label>
+                    <label><input type="checkbox" name="workingDays" value="Thu"> Thu</label>
+                    <label><input type="checkbox" name="workingDays" value="Fri"> Fri</label>
+                    <label><input type="checkbox" name="workingDays" value="Sat"> Sat</label>
+                </div>
+            </div>
+
+            <!-- Time -->
+            <div class="form-group">
+                <label>Working Hours</label>
+                <div class="time-row">
+                    <input type="text" name="startTime" placeholder="Start (09:00)">
+                    <input type="text" name="endTime" placeholder="End (18:00)">
+                </div>
+            </div>
+
+            <!-- Slot -->
+            <div class="form-group">
+                <label>Slot Duration</label>
+                <select name="slotDuration">
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                </select>
+            </div>
+
+            <button type="submit">Create Agent 🚀</button>
+
+            <p class="note">
+                Your AI will handle calls & bookings automatically 📞
+            </p>
+
+        </form>
+
+    </div>
+
+</body>
+
+</html>

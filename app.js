@@ -57,7 +57,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false 
+        secure: false
     }
 }))
 
@@ -257,19 +257,14 @@ app.get("/create-booking-bot", auth, (req, res) => {
 
 
 app.get("/bookings", auth, async (req, res) => {
-
     const bots = await Bot.find({ userId: req.user.id });
 
-    const botIds = bots.map(b => b.botId);
+    if (!bots.length) {
+        return res.send("No bots found");
+    }
 
-    const bookings = await Booking.find({
-        botId: { $in: botIds }
-    }).sort({ createdAt: -1 });
-
-    res.render("bookings", { bookings });
-
+    res.render("bookings", { botId: bots[0].botId });
 });
-
 
 
 
@@ -694,21 +689,231 @@ app.post("/verify-payment", async (req, res) => {
 
 })
 
+/// BOOKING AGENT ROUTES
+
+const BookingAgent = require("./models/bookingAgent")
+
+app.post("/create-booking-agent", auth, async (req, res) => {
+    const {
+        category,
+        businessName,
+        workingDays,
+        startTime,
+        endTime,
+        slotDuration,
+        customerNumber
+    } = req.body;
+
+    const botId = uuidv4();
+
+    const agent = await BookingAgent.create({
+        userId: req.user.id,
+        botId,
+        category,
+        businessName,
+        workingDays,
+        startTime,
+        endTime,
+        slotDuration,
+        customerNumber, // 🔥 NEW
+        phoneNumber: process.env.TWILIO_PHONE_NUMBER
+    });
+
+    res.render("agent-success", {
+        botId,
+        phoneNumber: process.env.TWILIO_PHONE_NUMBER
+    });
+});
 
 
 
 
+app.post("/voice", async (req, res) => {
+    const VoiceResponse = require("twilio").twiml.VoiceResponse;
+    const twiml = new VoiceResponse();
 
+    try {
+        const toNumber = req.body.To;
 
+        // 🔍 Find agent dynamically
+        const agent = await BookingAgent.findOne({
+            phoneNumber: toNumber
+        });
 
+        // ❌ If no agent found
+        if (!agent) {
+            twiml.say("Sorry, no booking service is configured for this number.");
+            twiml.hangup();
+            return res.type("text/xml").send(twiml.toString());
+        }
 
+        // 🎤 Welcome message
+        twiml.say(
+            { voice: "alice" },
+            `Welcome to ${agent.businessName || "our booking service"}.`
+        );
 
+        // 🔥 Gather input (DTMF)
+        const gather = twiml.gather({
+            numDigits: 1,
+            action: `/handle-input?botId=${agent.botId}`,
+            method: "POST",
+            timeout: 5 // seconds to wait
+        });
 
+        gather.say(
+            { voice: "alice" },
+            "Press 1 to book an appointment. Press 2 to hear this menu again."
+        );
 
+        // ❗ If no input received
+        twiml.say(
+            { voice: "alice" },
+            "No input received. Please try again."
+        );
 
+        // 🔁 Redirect back to same menu
+        twiml.redirect("/voice");
 
+        res.type("text/xml");
+        res.send(twiml.toString());
 
+    } catch (err) {
+        console.log("VOICE ERROR:", err);
 
+        twiml.say(
+            { voice: "alice" },
+            "We are facing technical issues. Please try again later."
+        );
+
+        twiml.hangup();
+
+        res.type("text/xml").send(twiml.toString());
+    }
+});
+
+app.post("/get-date", (req, res) => {
+    const VoiceResponse = require("twilio").twiml.VoiceResponse;
+    const twiml = new VoiceResponse();
+
+    const botId = req.query.botId;
+    const date = req.body.Digits;
+
+    const gather = twiml.gather({
+        input: "dtmf",
+        numDigits: 4,
+        action: `/get-time?botId=${botId}&date=${date}`,
+        method: "POST"
+    });
+
+    gather.say("Enter time in HHMM format. Example: 0930 for 9 30 AM");
+
+    res.type("text/xml").send(twiml.toString());
+});
+
+app.post("/get-time", async (req, res) => {
+    const VoiceResponse = require("twilio").twiml.VoiceResponse;
+    const twiml = new VoiceResponse();
+
+    try {
+        const botId = req.query.botId;
+        const date = req.query.date;
+        const time = req.body.Digits;
+        const phone = req.body.From;
+
+        // ❌ Validate time
+        if (time.length !== 4) {
+            twiml.say("Invalid time format. Please try again.");
+            return res.type("text/xml").send(twiml.toString());
+        }
+
+        // ❌ Check slot availability
+        const existing = await Booking.findOne({ botId, date, time });
+
+        if (existing) {
+            twiml.say("This slot is already booked. Please try another time.");
+            return res.type("text/xml").send(twiml.toString());
+        }
+
+        // ✅ Save booking
+        await Booking.create({
+            botId,
+            name: "Caller",
+            phone,
+            date,
+            time
+        });
+
+        // 🔥 FORMAT DATE
+        const year = date.slice(0, 4);
+        const month = date.slice(4, 6);
+        const day = date.slice(6, 8);
+
+        const formattedDate = `${day}-${month}-${year}`;
+
+        // 🔥 FORMAT TIME
+        let hours = parseInt(time.slice(0, 2));
+        const minutes = time.slice(2, 4);
+        const ampm = hours >= 12 ? "PM" : "AM";
+
+        hours = hours % 12 || 12;
+
+        const formattedTime = `${hours}:${minutes} ${ampm}`;
+
+        // 🔥 SEND SMS TO CUSTOMER
+        await client.messages.create({
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phone,
+            body: `✅ Booking Confirmed!
+Date: ${formattedDate}
+Time: ${formattedTime}
+
+Thank you for booking with us!`
+        });
+
+        // 🎤 Voice response
+        twiml.say("Your booking is confirmed. You will receive a confirmation message.");
+
+        res.type("text/xml").send(twiml.toString());
+
+    } catch (err) {
+        console.log("SMS ERROR:", err);
+        twiml.say("Booking saved but message failed.");
+        res.type("text/xml").send(twiml.toString());
+    }
+});
+
+app.get("/bookings/:botId", auth, async (req, res) => {
+    const bookings = await Booking.find({
+        botId: req.params.botId
+    }).sort({ createdAt: -1 });
+
+    res.json(bookings);
+});
+
+app.post("/handle-input", (req, res) => {
+    const VoiceResponse = require("twilio").twiml.VoiceResponse;
+    const twiml = new VoiceResponse();
+
+    const digit = req.body.Digits;
+    const botId = req.query.botId; // 🔥 dynamic
+
+    if (digit === "1") {
+        const gather = twiml.gather({
+            input: "dtmf",
+            numDigits: 8,
+            action: `/get-date?botId=${botId}`,
+            method: "POST"
+        });
+
+        gather.say("Enter date in format YYYYMMDD");
+    } else {
+        twiml.say("Invalid input.");
+    }
+
+    res.type("text/xml");
+    res.send(twiml.toString());
+});
 
 
 
