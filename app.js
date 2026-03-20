@@ -103,7 +103,7 @@ io.on("connection", (socket) => {
     console.log("User connected");
 
 
-    socket.on("joinLocation", ({ state, district, user, userId }) => {
+    socket.on("joinLocation", async ({ state, district, user, userId }) => {
 
         const room = `${state}-${district}`;
         socket.join(room);
@@ -116,58 +116,72 @@ io.on("connection", (socket) => {
             district
         };
 
+        // 🔥 LOAD OLD MESSAGES (LAST 50)
+        const oldMessages = await Chat.find({ state, district })
+            .sort({ createdAt: -1 })
+            .limit(50);
 
+        socket.emit("loadMessages", oldMessages.reverse());
+
+        // 🔥 ONLINE USERS UPDATE
         const roomUsers = Object.values(users).filter(u => u.room === room);
-
-
         io.to(room).emit("onlineUsers", roomUsers);
     });
 
 
     socket.on("sendMessage", async (data) => {
 
-    try {
+        try {
 
+            const userData = users[socket.id];
+            if (!userData) return;
+
+            let { message } = data;
+
+            // 🔥 VALIDATION
+            if (!message || message.trim().length === 0) return;
+            if (message.length > 300) return;
+
+            message = message.trim();
+
+            // 🔥 ANTI-SPAM
+            const now = Date.now();
+            if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1500) {
+                return;
+            }
+            lastMessageTime[socket.id] = now;
+
+            // 🔥 SAVE IN DB
+            const chat = await Chat.create({
+                userId: userData.userId,
+                user: userData.user, // 👈 name
+                message,
+                state: userData.state,
+                district: userData.district
+            });
+
+            // 🔥 SEND TO ROOM
+            io.to(userData.room).emit("message", {
+                userId: chat.userId,
+                user: chat.user,
+                text: chat.message,
+                time: chat.createdAt
+            });
+
+        } catch (err) {
+            console.log("SEND MESSAGE ERROR:", err);
+        }
+
+    });
+
+    socket.on("typing", () => {
         const userData = users[socket.id];
         if (!userData) return;
 
-        let { message } = data;
-
-        // 🔥 VALIDATION
-        if (!message || message.trim().length === 0) return;
-        if (message.length > 300) return;
-
-        message = message.trim();
-
-        // 🔥 ANTI-SPAM
-        const now = Date.now();
-        if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1500) {
-            return;
-        }
-        lastMessageTime[socket.id] = now;
-
-        // 🔥 SAVE IN DB
-        const chat = await Chat.create({
-            userId: userData.userId,
-            user: userData.user, // 👈 name
-            message,
-            state: userData.state,
-            district: userData.district
+        socket.to(userData.room).emit("typing", {
+            user: userData.user
         });
-
-        // 🔥 SEND TO ROOM
-        io.to(userData.room).emit("message", {
-            userId: chat.userId,
-            user: chat.user,
-            text: chat.message,
-            time: chat.createdAt
-        });
-
-    } catch (err) {
-        console.log("SEND MESSAGE ERROR:", err);
-    }
-
-});
+    });
 
     socket.on("disconnect", () => {
 
