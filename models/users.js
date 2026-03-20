@@ -19,6 +19,14 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 2
     },
+    state: String,
+    district: String,
+    photo: String,
+    bio:String,
+    skills:String,
+    github:String,
+    linkedin:String,
+    role:String,
 
 
 

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroAssist Community</title>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Poppins",sans-serif;
+}
+
+body{
+    background:#f5f7fb;
+}
+
+/* LAYOUT */
+.container{
+    display:flex;
+    height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:260px;
+    background:white;
+    border-right:1px solid #eee;
+    padding:20px;
+}
+
+.sidebar h2{
+    font-size:18px;
+    margin-bottom:20px;
+}
+
+/* FILTER */
+.filter{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.filter select,
+.filter input{
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    font-size:14px;
+}
+
+.filter button{
+    padding:10px;
+    border:none;
+    background:black;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* CHAT */
+.chat{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+/* HEADER */
+.chat-header{
+    padding:12px 18px;
+    background:white;
+    border-bottom:1px solid #eee;
+    font-size:14px;
+    display:flex;
+    justify-content:space-between;
+}
+
+/* MESSAGES */
+.messages{
+    flex:1;
+    padding:15px;
+    overflow-y:auto;
+}
+
+/* MESSAGE */
+.msg{
+    max-width:55%;
+    padding:8px 12px;
+    border-radius:8px;
+    margin-bottom:8px;
+    font-size:13px;
+    line-height:1.4;
+}
+
+/* RECEIVED */
+.msg.received{
+    background:#fff;
+    border:1px solid #eee;
+}
+
+/* SENT */
+.msg.sent{
+    background:#000;
+    color:#fff;
+    margin-left:auto;
+}
+
+/* NAME */
+.username{
+    font-size:10px;
+    opacity:0.6;
+    margin-bottom:2px;
+}
+
+/* TIME */
+.time{
+    font-size:9px;
+    opacity:0.5;
+    margin-top:4px;
+}
+
+/* INPUT */
+.input-box{
+    display:flex;
+    padding:10px;
+    background:white;
+    border-top:1px solid #eee;
+}
+
+.input-box input{
+    flex:1;
+    padding:9px;
+    border-radius:6px;
+    border:1px solid #ddd;
+    font-size:13px;
+}
+
+.input-box button{
+    margin-left:8px;
+    padding:9px 14px;
+    font-size:13px;
+    border:none;
+    background:black;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+#toast{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:black;
+    color:white;
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13px;
+    opacity:0;
+    transform:translateY(20px);
+    transition:0.3s;
+    z-index:9999;
+}
+
+#toast.show{
+    opacity:1;
+    transform:translateY(0);
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .container{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100%;
+        border-right:none;
+        border-bottom:1px solid #eee;
+    }
+
+    .chat{
+        height:calc(100vh - 160px);
+    }
+
+    .msg{
+        max-width:75%;
+        font-size:12px;
+    }
+
+    .chat-header{
+        font-size:13px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+<h2>Location Filter</h2>
+
+<div class="filter">
+
+<select id="state">
+    <option value="">Select State</option>
+    <option>Maharashtra</option>
+    <option>Karnataka</option>
+    <option>Delhi</option>
+    <option>Gujarat</option>
+    <option>Tamil Nadu</option>
+</select>
+
+<input id="district" placeholder="Enter District">
+
+<button onclick="joinLocation()">Join Chat</button>
+
+</div>
+
+</div>
+
+<!-- CHAT -->
+<div class="chat">
+
+<div class="chat-header">
+    <span>🌍 Community Chat</span>
+    <span><%= user.name %></span>
+</div>
+
+<div class="messages" id="messages"></div>
+
+<div class="input-box">
+    <input id="msg" placeholder="Type message...">
+    <button onclick="send()">Send</button>
+</div>
+
+</div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+const socket = io();
+const user = "<%= user.name %>";
+
+// AUTO FOCUS
+document.getElementById("msg").focus();
+
+// ENTER KEY SEND
+document.getElementById("msg").addEventListener("keypress", function(e){
+    if(e.key === "Enter"){
+        send();
+    }
+});
+
+// JOIN LOCATION
+function joinLocation(){
+
+    const state = document.getElementById("state").value;
+    const district = document.getElementById("district").value;
+
+    if(!state || !district){
+        alert("Select state & district");
+        return;
+    }
+
+    socket.emit("joinLocation", {
+        state,
+        district,
+        user
+    });
+
+    document.getElementById("messages").innerHTML = "";
+
+    alert("Joined chat successfully ");
+}
+
+// SEND MESSAGE
+function send(){
+
+    const msgInput = document.getElementById("msg");
+    const message = msgInput.value;
+
+    if(!message.trim()) return;
+
+    socket.emit("sendMessage", {
+        message
+    });
+
+    msgInput.value = "";
+}
+
+// RECEIVE MESSAGE
+socket.on("message", (data) => {
+
+    const div = document.createElement("div");
+
+    const isMe = data.user === user;
+
+    div.classList.add("msg");
+    div.classList.add(isMe ? "sent" : "received");
+
+    div.innerHTML = `
+        <div class="username">${data.user}</div>
+        <div>${data.text}</div>
+        <div class="time">
+            ${new Date(data.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+        </div>
+    `;
+
+    const messages = document.getElementById("messages");
+    messages.appendChild(div);
+
+    messages.scrollTop = messages.scrollHeight;
+});
+
+function showToast(text){
+    const toast = document.getElementById("toast");
+
+    toast.innerText = text;
+    toast.classList.add("show");
+
+    setTimeout(()=>{
+        toast.classList.remove("show");
+    }, 3000);
+}
+
+</script>
+
+</body>
+</html>

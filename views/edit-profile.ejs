@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Edit Profile</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+        }
+
+        /* CONTAINER */
+        .wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* CARD */
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* PROFILE IMAGE */
+        .profile-img {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-img img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #eee;
+        }
+
+        .upload {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        /* INPUTS */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            color: #555;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            margin-top: 5px;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: black;
+            outline: none;
+        }
+
+        /* BUTTON */
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            background: black;
+            color: white;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        /* MOBILE */
+        @media(max-width:600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="wrapper">
+
+        <div class="container">
+
+            <h2>Edit Profile</h2>
+
+            <form action="/update-profile" method="POST" enctype="multipart/form-data">
+
+                <!-- PROFILE IMAGE -->
+                <div class="profile-img">
+                    <img src="<%= user.photo || 'https://via.placeholder.com/100' %>" alt="Profile">
+                    <div class="upload">
+                        <input type="file" name="photo">
+                    </div>
+                </div>
+
+                <!-- ROLE -->
+                <div class="input-group">
+                    <label>Role</label>
+                    <select name="role" id="role" onchange="toggleLinkedin()">
+                        <option value="">Select Role</option>
+                        <option value="Student" <%=user.role==="Student" ?"selected":"" %>>Student</option>
+                        <option value="Developer" <%=user.role==="Developer" ?"selected":"" %>>Developer</option>
+                        <option value="Business" <%=user.role==="Business" ?"selected":"" %>>Business</option>
+                    </select>
+                </div>
+
+                <!-- BIO -->
+                <div class="input-group">
+                    <label>Bio</label>
+                    <textarea name="bio" placeholder="Tell about yourself"><%= user.bio || "" %></textarea>
+                </div>
+
+                <!-- SKILLS -->
+                <div class="input-group">
+                    <label>Skills</label>
+                    <input name="skills" placeholder="e.g. React, Node, AI" value="<%= user.skills || "" %>">
+                </div>
+
+                <!-- GITHUB -->
+                <div class="input-group">
+                    <label>GitHub</label>
+                    <input name="github" placeholder="GitHub URL" value="<%= user.github || "" %>">
+                </div>
+
+                <!-- LINKEDIN -->
+                <div class="input-group" id="linkedinBox">
+                    <label>LinkedIn</label>
+                    <input name="linkedin" id="linkedin" placeholder="LinkedIn URL" value="<%= user.linkedin || "" %>">
+                </div>
+
+                <button type="submit">Save Profile</button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        function toggleLinkedin() {
+            const role = document.getElementById("role").value;
+            const linkedinBox = document.getElementById("linkedinBox");
+
+            if (role === "Business") {
+                linkedinBox.style.display = "block";
+            } else {
+                linkedinBox.style.display = "none";
+            }
+        }
+
+        // run on load
+        toggleLinkedin();
+
+    </script>
+
+</body>
+
+</html>

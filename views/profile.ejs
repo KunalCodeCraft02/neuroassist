@@ -2,287 +2,444 @@
 <html lang="en">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<title>Dashboard</title>
+    <title>Dashboard</title>
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
 
-body {
-    background: #fff;
-    padding-top: 90px;
-}
+        body {
+            background: #fff;
+            padding-top: 90px;
+        }
 
-/* NAV */
-#nav {
-    height: 80px;
-    width: 100%;
-    position: fixed;
-    top: 0;
-    background: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 40px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-}
+        /* NAV */
+        #nav {
+            height: 80px;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
 
-#nav a {
-    text-decoration: none;
-    margin-left: 20px;
-    color: black;
-}
+        #nav a {
+            text-decoration: none;
+            margin-left: 20px;
+            color: black;
+        }
 
-/* CONTAINER */
-.container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
-}
+        /* CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
 
-h1 {
-    margin-bottom: 25px;
-}
+        h1 {
+            margin-bottom: 25px;
+        }
 
-/* STATS */
-.stats {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
-}
+        /* STATS */
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
 
-.stat-box {
-    flex: 1;
-    min-width: 220px;
-    background: #f9f9f9;
-    padding: 20px;
-    border-radius: 12px;
-}
+        .stat-box {
+            flex: 1;
+            min-width: 220px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+        }
 
-.stat-box h2 {
-    font-size: 26px;
-}
+        /* PROFILE HEADER */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
 
-.stat-box p {
-    color: #777;
-}
+        /* LEFT */
+        .profile-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-/* GRAPH */
-.graph {
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 40px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
+        /* DP */
+        .profile-dp {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* TABLE */
-.table-box {
-    margin-bottom: 40px;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
+        .profile-dp img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+        /* INFO */
+        .profile-info h2 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
 
-thead {
-    background: #111;
-    color: #fff;
-}
+        .role {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-}
+        .bio {
+            font-size: 13px;
+            color: #888;
+            max-width: 400px;
+        }
 
-tr {
-    border-bottom: 1px solid #eee;
-}
+        /* BUTTON */
+        .edit-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            background: black;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: 0.3s;
+        }
 
-tr:hover {
-    background: #f9f9f9;
-}
+        .edit-btn:hover {
+            background: #333;
+        }
 
-/* BOTS */
-.bots-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
-    gap: 20px;
-}
+        /* RESPONSIVE */
+        @media(max-width:768px) {
 
-.bot-card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
+            .profile-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
 
-.delete-btn {
-    background: red;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    margin-top: 10px;
-    cursor: pointer;
-    border-radius: 6px;
-}
-</style>
+            .profile-left {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .profile-dp img {
+                width: 70px;
+                height: 70px;
+            }
+
+        }
+
+        /* MOBILE */
+        @media(max-width:768px) {
+
+            .profile-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+        }
+
+        .stat-box h2 {
+            font-size: 26px;
+        }
+
+        .stat-box p {
+            color: #777;
+        }
+
+        /* GRAPH */
+        .graph {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* TABLE */
+        .table-box {
+            margin-bottom: 40px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #111;
+            color: #fff;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* BOTS */
+        .bots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .bot-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+    </style>
 
 </head>
 
 <body>
 
-<!-- NAV -->
-<div id="nav">
-    <h2>Neuro Assist</h2>
-    <div>
-        <a href="/home">Home</a>
-        <a href="/logout">Logout</a>
-    </div>
-</div>
-
-<div class="container">
-
-<h1>Dashboard</h1>
-
-<!-- STATS -->
-<div class="stats">
-
-    <div class="stat-box">
-        <h2><%= bots.length %></h2>
-        <p>Total Bots</p>
+    <!-- NAV -->
+    <div id="nav">
+        <h2>Neuro Assist</h2>
+        <div>
+            <a href="/home">Home</a>
+            <a href="/logout">Logout</a>
+        </div>
     </div>
 
-    <div class="stat-box">
-        <h2><%= bookings.length %></h2>
-        <p>Total Bookings</p>
+    <div class="container">
+
+        <!-- PROFILE HEADER -->
+        <div class="profile-header">
+
+            <!-- LEFT -->
+            <div class="profile-left">
+
+                <!-- DP -->
+                <div class="profile-dp">
+                    <img src="<%= user.photo ? user.photo : '/default.png' %>" alt="Profile">
+                </div>
+
+                <!-- INFO -->
+                <div class="profile-info">
+                    <h2>
+                        <%= user.name %>
+                    </h2>
+
+                    <p class="role">
+                        <%= user.role || "Add your role" %>
+                    </p>
+
+                    <p class="bio">
+                        <%= user.bio || "Tell people about yourself..." %>
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="profile-right">
+                <a href="/edit-profile" class="edit-btn">
+                    <i class="ri-edit-line"></i> Edit Profile
+                </a>
+            </div>
+
+        </div>
+        <h1>Dashboard</h1>
+
+        <!-- STATS -->
+        <div class="stats">
+
+            <div class="stat-box">
+                <h2>
+                    <%= bots.length %>
+                </h2>
+                <p>Total Bots</p>
+            </div>
+
+            <div class="stat-box">
+                <h2>
+                    <%= bookings.length %>
+                </h2>
+                <p>Total Bookings</p>
+            </div>
+
+            <div class="stat-box">
+                <h2>
+                    <%= bookings.filter(b=> {
+                        const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                        return b.date === today;
+                        }).length %>
+                </h2>
+                <p>Today Bookings</p>
+            </div>
+
+        </div>
+
+        <!-- GRAPH -->
+        <div class="graph">
+            <canvas id="chart"></canvas>
+        </div>
+
+        <!-- BOOKINGS TABLE -->
+        <h2>Recent Bookings</h2>
+
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <% if(bookings.length===0){ %>
+                        <tr>
+                            <td colspan="4">No bookings yet</td>
+                        </tr>
+                        <% } %>
+
+                            <% bookings.forEach(b=> { %>
+                                <tr>
+                                    <td>
+                                        <%= b.name || "Customer" %>
+                                    </td>
+                                    <td>
+                                        <%= b.phone %>
+                                    </td>
+
+                                    <td>
+                                        <%= b.date.slice(0,4) %>-<%= b.date.slice(4,6) %>-<%= b.date.slice(6,8) %>
+                                    </td>
+
+                                    <td>
+                                        <%= b.time.slice(0,2) %>:<%= b.time.slice(2,4) %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- BOTS -->
+        <h2>Your Bots</h2>
+
+        <div class="bots-grid">
+
+            <% bots.forEach(bot=> { %>
+                <div class="bot-card">
+                    <h3>
+                        <%= bot.name %>
+                    </h3>
+                    <p>Category: <%= bot.category %>
+                    </p>
+                    <p>ID: <%= bot.botId %>
+                    </p>
+
+                    <button class="delete-btn" onclick="deleteBot('<%= bot.botId %>')">
+                        Delete
+                    </button>
+                </div>
+                <% }) %>
+
+        </div>
+
     </div>
 
-    <div class="stat-box">
-        <h2>
-            <%= bookings.filter(b => {
-                const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
-                return b.date === today;
-            }).length %>
-        </h2>
-        <p>Today Bookings</p>
-    </div>
+    <script>
 
-</div>
+        // 🔥 SAFE BOOKINGS DATA
+        const bookings = JSON.parse('<%- JSON.stringify(bookings || []) %>');
 
-<!-- GRAPH -->
-<div class="graph">
-    <canvas id="chart"></canvas>
-</div>
+        // GROUP BY DATE
+        const map = {};
+        bookings.forEach(b => {
+            if (!b.date) return;
+            map[b.date] = (map[b.date] || 0) + 1;
+        });
 
-<!-- BOOKINGS TABLE -->
-<h2>Recent Bookings</h2>
+        // CHART
+        new Chart(document.getElementById("chart"), {
+            type: "line",
+            data: {
+                labels: Object.keys(map),
+                datasets: [{
+                    label: "Bookings",
+                    data: Object.values(map),
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            }
+        });
 
-<div class="table-box">
-<table>
-<thead>
-<tr>
-    <th>Customer</th>
-    <th>Phone</th>
-    <th>Date</th>
-    <th>Time</th>
-</tr>
-</thead>
+        // DELETE BOT
+        function deleteBot(id) {
+            fetch("/deletebot/" + id, { method: "DELETE" })
+                .then(() => location.reload());
+        }
 
-<tbody>
-
-<% if(bookings.length === 0){ %>
-<tr><td colspan="4">No bookings yet</td></tr>
-<% } %>
-
-<% bookings.forEach(b => { %>
-<tr>
-    <td><%= b.name || "Customer" %></td>
-    <td><%= b.phone %></td>
-
-    <td>
-        <%= b.date.slice(0,4) %>-<%= b.date.slice(4,6) %>-<%= b.date.slice(6,8) %>
-    </td>
-
-    <td>
-        <%= b.time.slice(0,2) %>:<%= b.time.slice(2,4) %>
-    </td>
-</tr>
-<% }) %>
-
-</tbody>
-</table>
-</div>
-
-<!-- BOTS -->
-<h2>Your Bots</h2>
-
-<div class="bots-grid">
-
-<% bots.forEach(bot => { %>
-<div class="bot-card">
-    <h3><%= bot.name %></h3>
-    <p>Category: <%= bot.category %></p>
-    <p>ID: <%= bot.botId %></p>
-
-    <button class="delete-btn" onclick="deleteBot('<%= bot.botId %>')">
-        Delete
-    </button>
-</div>
-<% }) %>
-
-</div>
-
-</div>
-
-<script>
-
-// 🔥 SAFE BOOKINGS DATA
-const bookings = JSON.parse('<%- JSON.stringify(bookings || []) %>');
-
-// GROUP BY DATE
-const map = {};
-bookings.forEach(b => {
-    if (!b.date) return;
-    map[b.date] = (map[b.date] || 0) + 1;
-});
-
-// CHART
-new Chart(document.getElementById("chart"), {
-    type: "line",
-    data: {
-        labels: Object.keys(map),
-        datasets: [{
-            label: "Bookings",
-            data: Object.values(map),
-            borderWidth: 2,
-            tension: 0.4
-        }]
-    }
-});
-
-// DELETE BOT
-function deleteBot(id){
-    fetch("/deletebot/" + id, {method:"DELETE"})
-    .then(()=>location.reload());
-}
-
-</script>
+    </script>
 
 </body>
+
 </html>

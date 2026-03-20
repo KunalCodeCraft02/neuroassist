@@ -1,368 +1,314 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
 
-    <title>Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+body {
+    background: #ffffff;
+    color: #111;
+}
 
-        body {
-            background: #f4f6fb;
-            color: #111;
-        }
+/* NAVBAR */
+.nav {
+    height: 70px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+}
 
-        /* HEADER */
+.nav h1 {
+    font-size: 18px;
+    font-weight: 600;
+}
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            background: white;
-            border-bottom: 1px solid #eee;
-        }
+.logout {
+    border: 1px solid #111;
+    background: transparent;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+}
 
-        .header h1 {
-            font-size: 22px;
-        }
+/* CONTAINER */
+.container {
+    max-width: 1300px;
+    margin: auto;
+    padding: 30px 20px;
+}
 
-        .logout {
-            background: black;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+/* STATS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
 
-        /* CONTAINER */
+.stat {
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 10px;
+}
 
-        .container {
-            max-width: 1400px;
-            margin: auto;
-            padding: 30px;
-        }
+.stat h2 {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
 
-        /* STATS */
+.stat p {
+    font-size: 13px;
+    color: #666;
+}
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
+/* GRAPH */
+.graph {
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
 
-        .stat {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        }
+.graph h3 {
+    margin-bottom: 15px;
+    font-size: 15px;
+}
 
-        .stat h2 {
-            font-size: 32px;
-        }
+/* TABLE */
+.section {
+    margin-top: 40px;
+}
 
-        .stat p {
-            color: #777;
-            font-size: 14px;
-            margin-top: 5px;
-        }
+.section h2 {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
 
-        /* SECTION */
+.table {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    overflow-x: auto;
+}
 
-        .section {
-            margin-top: 40px;
-        }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
 
-        .section h2 {
-            margin-bottom: 20px;
-        }
+th {
+    text-align: left;
+    padding: 12px;
+    background: #fafafa;
+    font-size: 13px;
+}
 
-        /* TABLE */
+td {
+    padding: 12px;
+    border-top: 1px solid #eee;
+    font-size: 13px;
+}
 
-        .table {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        }
+tr:hover {
+    background: #fafafa;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+/* BADGE */
+.badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+}
 
-        th,
-        td {
-            padding: 14px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-            font-size: 14px;
-        }
+/* RESPONSIVE */
+@media(max-width:768px){
+    .nav {
+        flex-direction: column;
+        height: auto;
+        padding: 15px;
+        gap: 10px;
+    }
 
-        th {
-            background: #fafafa;
-        }
-
-        /* BADGES */
-
-        .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-
-        .free {
-            background: #eee;
-        }
-
-        .pro {
-            background: #dff6e4;
-            color: #0a8a42;
-        }
-
-        .business {
-            background: #e3f2ff;
-            color: #0062ff;
-        }
-
-        /* MOBILE */
-
-        @media(max-width:768px) {
-
-            .header {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-        }
-    </style>
+    .container {
+        padding: 20px 10px;
+    }
+}
+</style>
 
 </head>
 
 <body>
 
-    <div class="header">
+<!-- NAV -->
+<div class="nav">
+    <h1>NeuroAssist Admin</h1>
+    <button class="logout" onclick="window.location='/admin/logout'">Logout</button>
+</div>
 
-        <h1>Admin Analytics</h1>
+<div class="container">
 
-        <button class="logout" onclick="window.location='/admin/logout'">
-            Logout
-        </button>
-
+<!-- STATS -->
+<div class="stats">
+    <div class="stat">
+        <h2><%= users.length %></h2>
+        <p>Total Users</p>
     </div>
 
-    <div class="container">
-
-        <!-- STATS -->
-
-        <div class="stats">
-
-            <div class="stat">
-                <h2>
-                    <%= users.length %>
-                </h2>
-                <p>Total Users</p>
-            </div>
-
-            <div class="stat">
-                <h2>
-                    <%= bots.length %>
-                </h2>
-                <p>Total Bots</p>
-            </div>
-
-            <div class="stat">
-                <h2>
-                    <%= conversations.length %>
-                </h2>
-                <p>Total Conversations</p>
-            </div>
-
-            <div class="stat">
-                <h2>₹ <%= totalRevenue %>
-                </h2>
-                <p>Total Revenue</p>
-            </div>
-
-        </div>
-
-
-        <!-- PLAN ANALYTICS -->
-
-        <div class="section">
-
-            <h2>Plan Analytics</h2>
-
-            <div class="stats">
-
-                <div class="stat">
-                    <h2>
-                        <%= freeUsers %>
-                    </h2>
-                    <p>Free Users</p>
-                </div>
-
-                <div class="stat">
-                    <h2>
-                        <%= proUsers %>
-                    </h2>
-                    <p>Pro Plan Users</p>
-                </div>
-
-                <div class="stat">
-                    <h2>
-                        <%= businessUsers %>
-                    </h2>
-                    <p>Business Plan Users</p>
-                </div>
-
-                <div class="stat">
-                    <h2>
-                        <%= mostPopularPlan %>
-                    </h2>
-                    <p>Most Popular Plan</p>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- USERS TABLE -->
-
-        <div class="section">
-
-            <h2>Users & Purchases</h2>
-
-            <div class="table">
-
-                <table>
-
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Company</th>
-                        <th>Plan</th>
-                        <th>Plan Price</th>
-                        <th>Purchased</th>
-                        <th>Joined</th>
-                    </tr>
-
-                    <% users.forEach(user=>{ %>
-
-                        <tr>
-
-                            <td>
-                                <%= user.name %>
-                            </td>
-
-                            <td>
-                                <%= user.email %>
-                            </td>
-
-                            <td>
-                                <%= user.companyname || "—" %>
-                            </td>
-
-                            <td>
-                                <span class="badge <%= user.plan %>">
-                                    <%= user.plan %>
-                                </span>
-                            </td>
-
-                            <td>
-                                ₹ <%= user.planPrice || 0 %>
-                            </td>
-
-                            <td>
-                                <%= user.planPurchasedAt ? new Date(user.planPurchasedAt).toDateString() : "—" %>
-                            </td>
-
-                            <td>
-                                <%= user.createdAt ? new Date(user.createdAt).toDateString() : "—" %>
-                            </td>
-
-                        </tr>
-
-                        <% }) %>
-
-                </table>
-
-            </div>
-
-        </div>
-
-
-        <!-- BOTS TABLE -->
-
-        <div class="section">
-
-            <h2>All Bots</h2>
-
-            <div class="table">
-
-                <table>
-
-                    <tr>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Bot ID</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                    </tr>
-
-                    <% bots.forEach(bot=>{ %>
-
-                        <tr>
-
-                            <td>
-                                <%= bot.name %>
-                            </td>
-
-                            <td>
-                                <%= bot.category %>
-                            </td>
-
-                            <td>
-                                <%= bot.botId %>
-                            </td>
-
-                            <td><span class="badge pro">Active</span></td>
-
-                            <td>
-                                <%= bot.createdAt.toDateString() %>
-                            </td>
-
-                        </tr>
-
-                        <% }) %>
-
-                </table>
-
-            </div>
-
-        </div>
-
+    <div class="stat">
+        <h2><%= bots.length %></h2>
+        <p>Total Bots</p>
     </div>
+
+    <div class="stat">
+        <h2><%= bookings.length %></h2>
+        <p>Total Bookings</p>
+    </div>
+
+    <div class="stat">
+        <h2>₹ <%= totalRevenue %></h2>
+        <p>Total Revenue</p>
+    </div>
+</div>
+
+<!-- GRAPH 1 -->
+<div class="graph">
+    <h3>User Plans</h3>
+    <canvas id="planChart"></canvas>
+</div>
+
+<!-- GRAPH 2 -->
+<div class="graph">
+    <h3>Bot Growth</h3>
+    <canvas id="botChart"></canvas>
+</div>
+
+<!-- GRAPH 3 -->
+<div class="graph">
+    <h3>Booking Growth</h3>
+    <canvas id="bookingChart"></canvas>
+</div>
+
+<!-- USERS -->
+<div class="section">
+<h2>Users</h2>
+<div class="table">
+<table>
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Plan</th>
+<th>Joined</th>
+</tr>
+
+<% users.forEach(u=>{ %>
+<tr>
+<td><%= u.name %></td>
+<td><%= u.email %></td>
+<td><span class="badge"><%= u.plan %></span></td>
+<td><%= new Date(u.createdAt).toDateString() %></td>
+</tr>
+<% }) %>
+
+</table>
+</div>
+</div>
+
+<!-- BOOKINGS -->
+<div class="section">
+<h2>Bookings</h2>
+<div class="table">
+<table>
+<tr>
+<th>Customer</th>
+<th>Phone</th>
+<th>Date</th>
+<th>Time</th>
+</tr>
+
+<% bookings.forEach(b=>{ %>
+<tr>
+<td><%= b.name || "Caller" %></td>
+<td><%= b.phone %></td>
+<td><%= b.date %></td>
+<td><%= b.time %></td>
+</tr>
+<% }) %>
+
+</table>
+</div>
+</div>
+
+</div>
+
+<script>
+
+// SAFE DATA
+const users = JSON.parse('<%- JSON.stringify(users || []) %>');
+const bots = JSON.parse('<%- JSON.stringify(bots || []) %>');
+const bookings = JSON.parse('<%- JSON.stringify(bookings || []) %>');
+
+// PLAN CHART
+new Chart(document.getElementById("planChart"), {
+    type: "pie",
+    data: {
+        labels: ["Free","Pro","Business"],
+        datasets: [{
+            data: [
+                users.filter(u=>u.plan==="free").length,
+                users.filter(u=>u.plan==="pro").length,
+                users.filter(u=>u.plan==="business").length
+            ]
+        }]
+    }
+});
+
+// BOT GRAPH
+const botMap = {};
+bots.forEach(b=>{
+    const d = new Date(b.createdAt).toDateString();
+    botMap[d] = (botMap[d]||0)+1;
+});
+
+new Chart(document.getElementById("botChart"), {
+    type:"line",
+    data:{
+        labels:Object.keys(botMap),
+        datasets:[{data:Object.values(botMap)}]
+    }
+});
+
+// BOOKING GRAPH
+const bookMap = {};
+bookings.forEach(b=>{
+    bookMap[b.date] = (bookMap[b.date]||0)+1;
+});
+
+new Chart(document.getElementById("bookingChart"), {
+    type:"line",
+    data:{
+        labels:Object.keys(bookMap),
+        datasets:[{data:Object.values(bookMap)}]
+    }
+});
+
+</script>
 
 </body>
-
 </html>

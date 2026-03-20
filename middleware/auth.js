@@ -2,25 +2,25 @@ const jwt = require("jsonwebtoken")
 
 function auth(req, res, next) {
 
-const token = req.cookies.token
+    const token = req.cookies.token
 
-if (!token) {
-return res.redirect("/login")
-}
+    if (!token) {
+        return res.redirect("/login")
+    }
 
-try {
+    try {
 
-const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-req.user = decoded
+        req.user = decoded
 
-next()
+        next()
 
-} catch (err) {
+    } catch (err) {
 
-return res.redirect("/login")
+        return res.redirect("/login")
 
-}
+    }
 
 }
 

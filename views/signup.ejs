@@ -159,11 +159,15 @@
 
             <label>Password</label>
             <input id="password" type="password" placeholder="Create password">
+            <button type="button" onclick="getLocation()">Get My Location 📍</button>
+
+            <input type="text" name="state" id="state" placeholder="State" readonly>
+            <input type="text" name="district" id="district" placeholder="District" readonly>
 
 
 
             <button type="submit">Create Account</button>
-           
+
 
         </form>
 
@@ -240,6 +244,25 @@
 
             setTimeout(() => toast.remove(), 3000)
 
+        }
+
+        function getLocation() {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+
+                // 🔥 Reverse geocoding (free API)
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                const data = await res.json();
+
+                const state = data.address.state || "";
+                const district = data.address.county || data.address.city || "";
+
+                document.getElementById("state").value = state;
+                document.getElementById("district").value = district;
+
+            });
         }
 
     </script>

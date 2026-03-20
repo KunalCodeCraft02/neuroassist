@@ -26,6 +26,7 @@ const buildPrompt = require("./services/promptBuilder")
 
 const auth = require("./middleware/auth")
 const passport = require("./config/passport")
+const multer = require("multer")
 
 
 const { v4: uuidv4 } = require("uuid")
@@ -68,6 +69,94 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 
+
+
+
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: "profiles",
+        allowed_formats: ["jpg", "png", "jpeg"]
+    }
+});
+
+const upload = multer({ storage });
+
+const http = require("http");
+const server = http.createServer(app);
+const io = require("socket.io")(server);
+
+let users = {};
+let lastMessageTime = {};
+
+io.on("connection", (socket) => {
+
+    console.log("User connected:", socket.id);
+
+
+    socket.on("joinLocation", ({ state, district, user }) => {
+     
+        const room = `${state}-${district}`;
+        socket.join(room);
+
+        users[socket.id] = { room, user };
+
+        // 🔥 broadcast real name
+        socket.to(room).emit("userJoined", {
+            user
+        });
+
+         
+    });
+
+
+    socket.on("sendMessage", (data) => {
+
+        const now = Date.now();
+
+
+        if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 2000) {
+            return;
+        }
+
+        lastMessageTime[socket.id] = now;
+
+        const { message } = data;
+
+        if (!message || message.length > 300) return;
+
+        const userData = users[socket.id];
+
+        if (!userData) return;
+
+        io.to(userData.room).emit("message", {
+            user: userData.user,
+            text: message,
+            time: new Date()
+        });
+    });
+
+
+    socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+
+        delete users[socket.id];
+        delete lastMessageTime[socket.id];
+    });
+    socket.on("userJoined", (data) => {
+        showToast(`${data.user} joined the chat`);
+    });
+
+});
 
 
 const ADMIN_USERNAME = "admin"
@@ -158,17 +247,15 @@ app.get("/createbot", auth, (req, res) => {
 
 app.get("/profile", auth, async (req, res) => {
 
-    const bots = await Bot.find({ userId: req.user.id });
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id); // 🔥 fresh data
 
-    const botIds = bots.map(b => b.botId);
+    const bots = await Bot.find({ userId: req.user.id });
 
     const bookings = await Booking.find({
-        botId: { $in: botIds }
+        botId: { $in: bots.map(b => b.botId) }
     });
 
-    res.render("profile", { bots, user, bookings });
-
+    res.render("profile", { user, bots, bookings });
 });
 
 app.get("/conversations/:botId", async (req, res) => {
@@ -181,11 +268,25 @@ app.get("/conversations/:botId", async (req, res) => {
 
 })
 
+app.get("/edit-profile", auth, async (req, res) => {
+    try {
+
+        const user = await User.findById(req.user.id);
+
+        res.render("edit-profile", { user });
+
+    } catch (err) {
+        console.log("EDIT PROFILE ERROR:", err);
+        res.send("Error loading page");
+    }
+});
+
 app.get("/admin", protectAdmin, async (req, res) => {
 
     const users = await User.find()
     const bots = await Bot.find()
     const conversations = await Conversation.find()
+    const bookings = await Booking.find();
 
     const freeUsers = users.filter(u => u.plan === "free").length
     const proUsers = users.filter(u => u.plan === "pro").length
@@ -208,6 +309,7 @@ app.get("/admin", protectAdmin, async (req, res) => {
         conversations,
         totalRevenue,
         freeUsers,
+        bookings,
         proUsers,
         businessUsers,
         mostPopularPlan
@@ -273,6 +375,10 @@ app.get("/bookings", auth, async (req, res) => {
 });
 
 
+app.get("/chat", auth, (req, res) => {
+    res.render("chat", { user: req.user });
+});
+
 
 
 // Step 1: Redirect to Google
@@ -310,7 +416,8 @@ const sendOtp = require("./services/sendOtp")
 
 app.post("/signup", async (req, res) => {
 
-    const { name, email, password, companyname } = req.body
+    const { name, email, password, state,
+        district, companyname } = req.body
 
     if (!name || name.length < 3) {
         return res.json({
@@ -352,6 +459,8 @@ app.post("/signup", async (req, res) => {
         email,
         password,
         companyname,
+        state,
+        district,
         otp,
         expires: Date.now() + 300000
     }
@@ -402,7 +511,9 @@ app.post("/verify-otp", async (req, res) => {
         name: sessionData.name,
         email: sessionData.email,
         companyname: sessionData.companyname,
-        password: hashedPassword
+        password: hashedPassword,
+        state: sessionData.state,
+        district: sessionData.district
     })
 
 
@@ -922,6 +1033,58 @@ app.post("/handle-input", (req, res) => {
 });
 
 
+app.post("/report", async (req, res) => {
+    await Report.create({
+        messageId: req.body.message,
+        reason: "Spam"
+    });
+
+    res.json({ success: true });
+});
+
+
+
+
+
+// PROFILE UPDATE ROUTE
+app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
+    try {
+
+        console.log("BODY:", req.body);
+        console.log("FILE:", req.file);
+
+        const { bio, skills, github, linkedin, role } = req.body;
+
+        let updateData = {
+            bio,
+            skills,
+            github,
+            linkedin,
+            role
+        };
+
+        // ✅ SAVE PHOTO
+        if (req.file) {
+            updateData.photo = req.file.path || ("/uploads/" + req.file.filename);
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            updateData,
+            { new: true }
+        );
+
+        console.log("UPDATED USER:", updatedUser);
+
+        res.redirect("/profile");
+
+    } catch (err) {
+        console.log("ERROR:", err);
+        res.send("Profile update failed");
+    }
+});
+
+
 
 
 app.get("/logout", (req, res) => {
@@ -935,6 +1098,6 @@ app.get("/logout", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log("Server running");
 });
