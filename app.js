@@ -126,28 +126,36 @@ io.on("connection", (socket) => {
 
     socket.on("sendMessage", async (data) => {
 
+    try {
+
         const userData = users[socket.id];
         if (!userData) return;
 
-        const { message } = data;
+        let { message } = data;
 
+        // 🔥 VALIDATION
+        if (!message || message.trim().length === 0) return;
+        if (message.length > 300) return;
 
+        message = message.trim();
+
+        // 🔥 ANTI-SPAM
         const now = Date.now();
         if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1500) {
             return;
         }
         lastMessageTime[socket.id] = now;
 
-
+        // 🔥 SAVE IN DB
         const chat = await Chat.create({
             userId: userData.userId,
-            user: userData.user,
+            user: userData.user, // 👈 name
             message,
             state: userData.state,
             district: userData.district
         });
 
-
+        // 🔥 SEND TO ROOM
         io.to(userData.room).emit("message", {
             userId: chat.userId,
             user: chat.user,
@@ -155,7 +163,11 @@ io.on("connection", (socket) => {
             time: chat.createdAt
         });
 
-    });
+    } catch (err) {
+        console.log("SEND MESSAGE ERROR:", err);
+    }
+
+});
 
     socket.on("disconnect", () => {
 

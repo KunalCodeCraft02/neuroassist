@@ -196,6 +196,24 @@
             border-radius: 50%;
         }
 
+        .msg {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 12px;
+            margin: 8px 0;
+        }
+
+        .sent {
+            background: black;
+            color: white;
+            margin-left: auto;
+        }
+
+        .received {
+            background: white;
+            border: 1px solid #eee;
+        }
+
         /* MOBILE */
         @media(max-width:768px) {
 
@@ -338,24 +356,21 @@
         // RECEIVE MESSAGE
         socket.on("message", (data) => {
 
+            const messages = document.getElementById("messages");
+
             const div = document.createElement("div");
 
-            const isMe = data.user === user;
+            const isMe = data.user === user; // 🔥 THIS IS KEY
 
-            div.classList.add("msg");
-            div.classList.add(isMe ? "sent" : "received");
+            div.className = isMe ? "msg sent" : "msg received";
 
             div.innerHTML = `
         <div class="username">${data.user}</div>
         <div>${data.text}</div>
-        <div class="time">
-            ${new Date(data.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </div>
+        <div class="time">${new Date(data.time).toLocaleTimeString()}</div>
     `;
 
-            const messages = document.getElementById("messages");
             messages.appendChild(div);
-
             messages.scrollTop = messages.scrollHeight;
         });
 
@@ -394,25 +409,17 @@
 
         });
 
+
+
         socket.on("onlineUsers", (users) => {
 
             const container = document.getElementById("onlineUsers");
 
-            container.innerHTML = "";
-
-            users.forEach(u => {
-
-                const div = document.createElement("div");
-                div.classList.add("online-user");
-
-                div.innerHTML = `
-            <span class="online-dot"></span>
-            ${u.user}
-        `;
-
-                container.appendChild(div);
-            });
-
+            container.innerHTML = `
+        <div style="font-size:14px;font-weight:500">
+            ${users.length} users online
+        </div>
+    `;
         });
     </script>
 
