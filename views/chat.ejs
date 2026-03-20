@@ -186,6 +186,13 @@
             cursor: pointer;
         }
 
+        .name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            color: #007bff;
+        }
+
         /* TYPING */
         #typing {
             font-size: 12px;
@@ -445,14 +452,15 @@
 
                 const div = document.createElement("div");
 
-                const isMe = data.userId === userId;
+                // ✅ FIX: string compare
+                const isMe = data.userId.toString() === userId.toString();
 
                 div.className = isMe ? "chat-row right" : "chat-row left";
 
                 div.innerHTML = `
             <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-                ${!isMe ? `<div class="name">${data.user}</div>` : ""}
+                ${!isMe ? `<div class="name">${data.user || "Unknown"}</div>` : ""}
 
                 <div class="text">${data.message}</div>
 
