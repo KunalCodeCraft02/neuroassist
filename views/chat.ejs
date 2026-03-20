@@ -66,6 +66,15 @@
             cursor: pointer;
         }
 
+        /* ONLINE USERS */
+        .online-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
         /* CHAT */
         .chat {
             flex: 1;
@@ -75,12 +84,12 @@
 
         /* HEADER */
         .chat-header {
-            padding: 12px 18px;
+            padding: 14px 20px;
             background: white;
             border-bottom: 1px solid #eee;
-            font-size: 14px;
             display: flex;
             justify-content: space-between;
+            font-weight: 500;
         }
 
         /* MESSAGES */
@@ -90,41 +99,65 @@
             overflow-y: auto;
         }
 
-        /* MESSAGE */
-        .msg {
-            max-width: 55%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 13px;
-            line-height: 1.4;
+        /* CHAT ROW */
+        .chat-row {
+            display: flex;
+            margin: 10px 0;
         }
 
-        /* RECEIVED */
-        .msg.received {
-            background: #fff;
+        /* LEFT (OTHERS) */
+        .chat-row.left {
+            justify-content: flex-start;
+        }
+
+        /* RIGHT (ME) */
+        .chat-row.right {
+            justify-content: flex-end;
+        }
+
+        /* BUBBLE */
+        .chat-bubble {
+            max-width: 70%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* MY MESSAGE */
+        .chat-bubble.me {
+            background: black;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* OTHER MESSAGE */
+        .chat-bubble.other {
+            background: white;
             border: 1px solid #eee;
+            border-bottom-left-radius: 4px;
         }
 
-        /* SENT */
-        .msg.sent {
-            background: #000;
-            color: #fff;
-            margin-left: auto;
+        /* USER NAME */
+        .name {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #555;
         }
 
-        /* NAME */
-        .username {
-            font-size: 10px;
-            opacity: 0.6;
-            margin-bottom: 2px;
+        /* MESSAGE TEXT */
+        .text {
+            word-wrap: break-word;
         }
 
         /* TIME */
         .time {
-            font-size: 9px;
-            opacity: 0.5;
-            margin-top: 4px;
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.6;
+            text-align: right;
         }
 
         /* INPUT */
@@ -137,23 +170,31 @@
 
         .input-box input {
             flex: 1;
-            padding: 9px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 8px;
             border: 1px solid #ddd;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .input-box button {
-            margin-left: 8px;
-            padding: 9px 14px;
-            font-size: 13px;
+            margin-left: 10px;
+            padding: 10px 18px;
             border: none;
             background: black;
             color: white;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
         }
 
+        /* TYPING */
+        #typing {
+            font-size: 12px;
+            color: #666;
+            margin-left: 15px;
+            font-style: italic;
+        }
+
+        /* TOAST */
         #toast {
             position: fixed;
             bottom: 20px;
@@ -174,106 +215,6 @@
             transform: translateY(0);
         }
 
-        .online-box {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .online-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            margin: 6px 0;
-        }
-
-        .online-dot {
-            width: 8px;
-            height: 8px;
-            background: green;
-            border-radius: 50%;
-        }
-
-        .msg {
-            max-width: 70%;
-            padding: 10px;
-            border-radius: 12px;
-            margin: 8px 0;
-        }
-
-        .sent {
-            background: black;
-            color: white;
-            margin-left: auto;
-        }
-
-        .received {
-            background: white;
-            border: 1px solid #eee;
-        }
-
-        /* CHAT ROW */
-        .chat-row {
-            display: flex;
-            margin: 10px 0;
-        }
-
-        /* LEFT SIDE */
-        .chat-row.left {
-            justify-content: flex-start;
-        }
-
-        /* RIGHT SIDE */
-        .chat-row.right {
-            justify-content: flex-end;
-        }
-
-        /* BUBBLE */
-        .chat-bubble {
-            max-width: 70%;
-            padding: 12px 14px;
-            border-radius: 14px;
-            font-size: 14px;
-            position: relative;
-        }
-
-        /* MY MESSAGE */
-        .chat-bubble.me {
-            background: black;
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        /* OTHER MESSAGE */
-        .chat-bubble.other {
-            background: white;
-            border: 1px solid #eee;
-            border-bottom-left-radius: 4px;
-        }
-
-        /* NAME */
-        .name {
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: #555;
-        }
-
-        /* TEXT */
-        .text {
-            word-wrap: break-word;
-        }
-
-        /* TIME */
-        .time {
-            font-size: 10px;
-            margin-top: 5px;
-            opacity: 0.6;
-            text-align: right;
-        }
-
         /* MOBILE */
         @media(max-width:768px) {
 
@@ -288,12 +229,12 @@
             }
 
             .chat {
-                height: calc(100vh - 160px);
+                height: calc(100vh - 180px);
             }
 
-            .msg {
-                max-width: 75%;
-                font-size: 12px;
+            .chat-bubble {
+                max-width: 80%;
+                font-size: 13px;
             }
 
             .chat-header {
@@ -362,6 +303,7 @@
 
     <script>
 
+        const user = "<%= user.name %>";
         const socket = io();
         const userId = "<%= user._id %>";
 
@@ -503,14 +445,22 @@
 
                 const div = document.createElement("div");
 
-                const isMe = data.user === user;
+                const isMe = data.userId === userId;
 
-                div.className = isMe ? "msg sent" : "msg received";
+                div.className = isMe ? "chat-row right" : "chat-row left";
 
                 div.innerHTML = `
-            <div class="username">${data.user}</div>
-            <div>${data.message}</div>
-            <div class="time">${new Date(data.createdAt).toLocaleTimeString()}</div>
+            <div class="chat-bubble ${isMe ? "me" : "other"}">
+
+                ${!isMe ? `<div class="name">${data.user}</div>` : ""}
+
+                <div class="text">${data.message}</div>
+
+                <div class="time">
+                    ${new Date(data.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+
+            </div>
         `;
 
                 container.appendChild(div);
