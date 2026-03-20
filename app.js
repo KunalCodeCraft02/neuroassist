@@ -108,7 +108,6 @@ io.on("connection", (socket) => {
         const room = `${state}-${district}`;
         socket.join(room);
 
-
         users[socket.id] = {
             room,
             user,
@@ -116,6 +115,12 @@ io.on("connection", (socket) => {
             state,
             district
         };
+
+
+        const roomUsers = Object.values(users).filter(u => u.room === room);
+
+
+        io.to(room).emit("onlineUsers", roomUsers);
     });
 
 
@@ -153,8 +158,19 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-        delete users[socket.id];
-        delete lastMessageTime[socket.id];
+
+        const userData = users[socket.id];
+
+        if (userData) {
+            const room = userData.room;
+
+            delete users[socket.id];
+
+            const roomUsers = Object.values(users).filter(u => u.room === room);
+
+            // 🔥 UPDATE ONLINE USERS
+            io.to(room).emit("onlineUsers", roomUsers);
+        }
     });
 
 });
