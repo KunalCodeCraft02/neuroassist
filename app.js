@@ -105,7 +105,12 @@ io.on("connection", (socket) => {
 
     socket.on("joinLocation", async ({ state, district, user, userId }) => {
 
+        // 🔥 NORMALIZE AGAIN (SECURITY)
+        state = state.trim().toLowerCase();
+        district = district.trim().toLowerCase();
+
         const room = `${state}-${district}`;
+
         socket.join(room);
 
         users[socket.id] = {
@@ -116,14 +121,13 @@ io.on("connection", (socket) => {
             district
         };
 
-        // 🔥 LOAD OLD MESSAGES (LAST 50)
+        // LOAD OLD MESSAGES
         const oldMessages = await Chat.find({ state, district })
             .sort({ createdAt: -1 })
             .limit(50);
 
         socket.emit("loadMessages", oldMessages.reverse());
 
-        // 🔥 ONLINE USERS UPDATE
         const roomUsers = Object.values(users).filter(u => u.room === room);
         io.to(room).emit("onlineUsers", roomUsers);
     });

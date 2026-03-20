@@ -380,13 +380,17 @@
         // JOIN LOCATION
         function joinLocation() {
 
-            const state = document.getElementById("state").value;
-            const district = document.getElementById("district").value;
+            let state = document.getElementById("state").value;
+            let district = document.getElementById("district").value;
 
             if (!state || !district) {
                 alert("Select state & district");
                 return;
             }
+
+            // 🔥 NORMALIZE
+            state = state.trim().toLowerCase();
+            district = district.trim().toLowerCase();
 
             socket.emit("joinLocation", {
                 state,
@@ -395,9 +399,7 @@
                 userId
             });
 
-            document.getElementById("messages").innerHTML = "";
-
-            alert("Joined chat successfully ");
+            alert("Joined chat");
         }
 
         // SEND MESSAGE
