@@ -222,6 +222,19 @@
             transform: translateY(0);
         }
 
+        .chat-row {
+            width: 100%;
+            display: flex;
+        }
+
+        .chat-row.right {
+            justify-content: flex-end;
+        }
+
+        .chat-row.left {
+            justify-content: flex-start;
+        }
+
         /* MOBILE */
         @media(max-width:768px) {
 
@@ -310,9 +323,12 @@
 
     <script>
 
+        console.log("USER FROM EJS:", "<%= user %>");
+        console.log("USER ID:", "<%= user._id %>");
+
         const user = "<%= user.name %>";
         const socket = io();
-        const userId = "<%= user._id %>";
+       const userId = "<%= user && user._id ? user._id : '' %>";
 
         console.log("User:", user);
 
@@ -373,16 +389,17 @@
 
             const div = document.createElement("div");
 
-            const isMe = data.userId === userId; // ✅ FIXED
+            // 🔥 FORCE STRING COMPARE
+            const isMe = String(data.userId) === String(userId);
 
             div.className = isMe ? "chat-row right" : "chat-row left";
 
             div.innerHTML = `
         <div class="chat-bubble ${isMe ? "me" : "other"}">
-            
-            ${!isMe ? `<div class="name">${data.user}</div>` : ""}
 
-            <div class="text">${data.text}</div>
+            ${!isMe ? `<div class="name">${data.user || "Unknown User"}</div>` : ""}
+
+            <div class="text">${data.text || data.message}</div>
 
             <div class="time">
                 ${new Date(data.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -406,29 +423,29 @@
             }, 3000);
         }
 
-        socket.on("oldMessages", (msgs) => {
+        // socket.on("oldMessages", (msgs) => {
 
-            const messages = document.getElementById("messages");
+        //     const messages = document.getElementById("messages");
 
-            msgs.forEach(data => {
+        //     msgs.forEach(data => {
 
-                const div = document.createElement("div");
+        //         const div = document.createElement("div");
 
-                const isMe = data.user === user;
+        //         const isMe = data.user === user;
 
-                div.classList.add("msg");
-                div.classList.add(isMe ? "sent" : "received");
+        //         div.classList.add("msg");
+        //         div.classList.add(isMe ? "sent" : "received");
 
-                div.innerHTML = `
-            <div class="username">${data.user}</div>
-            <div>${data.message}</div>
-            <div class="time">${new Date(data.createdAt).toLocaleTimeString()}</div>
-        `;
+        //         div.innerHTML = `
+        //     <div class="username">${data.user}</div>
+        //     <div>${data.message}</div>
+        //     <div class="time">${new Date(data.createdAt).toLocaleTimeString()}</div>
+        // `;
 
-                messages.appendChild(div);
-            });
+        //         messages.appendChild(div);
+        //     });
 
-        });
+        // });
 
 
 
@@ -452,15 +469,14 @@
 
                 const div = document.createElement("div");
 
-                // ✅ FIX: string compare
-                const isMe = data.userId.toString() === userId.toString();
+                const isMe = String(data.userId) === String(userId);
 
                 div.className = isMe ? "chat-row right" : "chat-row left";
 
                 div.innerHTML = `
             <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-                ${!isMe ? `<div class="name">${data.user || "Unknown"}</div>` : ""}
+              ${!isMe ? `<div class="name">${data.user || "Unknown User"}</div>` : ""}
 
                 <div class="text">${data.message}</div>
 
@@ -476,6 +492,7 @@
 
             container.scrollTop = container.scrollHeight;
         });
+        console.log(data.user);
 
         const input = document.getElementById("msg");
 

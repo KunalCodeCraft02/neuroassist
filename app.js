@@ -124,7 +124,8 @@ io.on("connection", (socket) => {
         // LOAD OLD MESSAGES
         const oldMessages = await Chat.find({ state, district })
             .sort({ createdAt: -1 })
-            .limit(50);
+            .limit(50)
+            .lean();
 
         socket.emit("loadMessages", oldMessages.reverse());
 
@@ -142,32 +143,37 @@ io.on("connection", (socket) => {
 
             let { message } = data;
 
-            // 🔥 VALIDATION
             if (!message || message.trim().length === 0) return;
             if (message.length > 300) return;
 
             message = message.trim();
 
-            // 🔥 ANTI-SPAM
-            const now = Date.now();
-            if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1500) {
+           
+            if (!userData.userId) {
+                console.log("USER ID MISSING");
                 return;
             }
-            lastMessageTime[socket.id] = now;
 
-            // 🔥 SAVE IN DB
+            const userFromDB = await User.findById(userData.userId);
+
+            if (!userFromDB) {
+                console.log("USER NOT FOUND");
+                return;
+            }
+
+          
             const chat = await Chat.create({
                 userId: userData.userId,
-                user: userData.user, // 👈 name
+                user: userFromDB.name,   // ✅ REAL NAME FROM DB
                 message,
                 state: userData.state,
                 district: userData.district
             });
 
-            // 🔥 SEND TO ROOM
+            // 🔥 SEND MESSAGE
             io.to(userData.room).emit("message", {
                 userId: chat.userId.toString(),
-                user: chat.user,
+                user: userFromDB.name,   // ✅ FIXED
                 text: chat.message,
                 time: chat.createdAt
             });
@@ -423,9 +429,9 @@ app.get("/bookings", auth, async (req, res) => {
 
 
 app.get("/chat", auth, (req, res) => {
+    console.log("REQ.USER:", req.user); // 👈 ADD THIS
     res.render("chat", { user: req.user });
 });
-
 
 
 // Step 1: Redirect to Google

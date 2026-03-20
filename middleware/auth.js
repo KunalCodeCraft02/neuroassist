@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken")
 
-function auth(req, res, next) {
+async function auth(req, res, next) {
 
     const token = req.cookies.token
 
@@ -10,11 +10,13 @@ function auth(req, res, next) {
 
     try {
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        req.user = decoded
+        // 🔥 fetch full user from DB
+        const user = await User.findById(decoded.id);
 
-        next()
+        req.user = user;
+        next();
 
     } catch (err) {
 
