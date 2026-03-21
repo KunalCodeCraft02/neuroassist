@@ -1,29 +1,31 @@
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const User = require("../models/users");
 
-async function auth(req, res, next) {
-
-    const token = req.cookies.token
-
-    if (!token) {
-        return res.redirect("/login")
-    }
+module.exports = async function (req, res, next) {
 
     try {
+        const token = req.cookies.token;
+
+        if (!token) {
+            return res.redirect("/login");
+        }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // 🔥 fetch full user from DB
         const user = await User.findById(decoded.id);
+
+        if (!user) {
+            res.clearCookie("token");
+            return res.redirect("/login");
+        }
 
         req.user = user;
         next();
 
     } catch (err) {
+        console.log("AUTH ERROR:", err);
 
-        return res.redirect("/login")
-
+        res.clearCookie("token"); // 🔥 VERY IMPORTANT
+        return res.redirect("/login");
     }
-
-}
-
-module.exports = auth
+};
