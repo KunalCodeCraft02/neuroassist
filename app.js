@@ -137,51 +137,46 @@ io.on("connection", (socket) => {
 
 
     // ✅ SEND MESSAGE (FIXED)
-    socket.on("sendMessage", async (data) => {
+   socket.on("sendMessage", async (data) => {
 
-        try {
+    try {
 
-            const userData = users[socket.id];
-            if (!userData) return;
+        const userData = users[socket.id];
+        if (!userData) return;
 
-            let { message } = data;
+        let { message } = data;
 
-            if (!message || message.trim().length === 0) return;
-            if (message.length > 300) return;
+        if (!message || message.trim().length === 0) return;
 
-            message = message.trim();
+        message = message.trim();
 
-            // 🔥 ANTI SPAM
-            const now = Date.now();
-            if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1000) {
-                return;
-            }
-            lastMessageTime[socket.id] = now;
+        // 🔥 USER NAME FIX (IMPORTANT)
+        const username = userData.user || "Guest";
 
-            // ✅ SAVE MESSAGE (NO DB USER FETCH)
-            const chat = await Chat.create({
-                userId: userData.userId,
-                user: userData.user || "Guest",   // ✅ FORCE NAME
-                message,
-                state: userData.state,
-                district: userData.district
-            });
+        // SAVE
+        const chat = await Chat.create({
+            userId: userData.userId,
+            user: username,   // ✅ FIXED
+            message,
+            state: userData.state,
+            district: userData.district
+        });
 
-            console.log("SENDING NAME:", userData.user);
+        console.log("SENDING NAME:", username); // 👈 DEBUG
 
-            // ✅ SEND TO ROOM
-            io.to(userData.room).emit("message", {
-                userId: userData.userId,
-                user: userData.user || "Guest",
-                text: message,
-                time: chat.createdAt
-            });
+        // SEND
+        io.to(userData.room).emit("message", {
+            userId: userData.userId,
+            user: username,   // ✅ FIXED
+            text: message,
+            time: chat.createdAt
+        });
 
-        } catch (err) {
-            console.log("SEND MESSAGE ERROR:", err);
-        }
+    } catch (err) {
+        console.log("SEND MESSAGE ERROR:", err);
+    }
 
-    });
+});
 
 
     // ✅ TYPING

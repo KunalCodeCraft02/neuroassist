@@ -395,7 +395,7 @@
             div.innerHTML = `
         <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-            ${!isMe ? `<div class="name">${data.user}</div>` : ""}
+            ${!isMe ? `<div class="name">${data.user ? data.user : "Guest"}</div>` : ""}
 
             <div class="text">${data.text || data.message}</div>
 
@@ -440,7 +440,7 @@
                 div.innerHTML = `
             <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-                ${!isMe ? `<div class="name">${data.user}</div>` : ""}
+                ${!isMe ? `<div class="name">${data.user ? data.user : "Guest"}</div>` : ""}
 
                 <div class="text">${data.message}</div>
 
