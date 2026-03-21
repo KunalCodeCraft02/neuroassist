@@ -102,81 +102,113 @@ io.on("connection", (socket) => {
 
     console.log("User connected");
 
-    // ✅ JOIN LOCATION
+    // ✅ JOIN LOCATION (REAL USER FROM DB)
     socket.on("joinLocation", async ({ state, district, user, userId }) => {
 
-        // 🔥 normalize
-        state = state.trim().toLowerCase();
-        district = district.trim().toLowerCase();
+        try {
 
-        const room = `${state}-${district}`;
-        socket.join(room);
+            state = state.trim().toLowerCase();
+            district = district.trim().toLowerCase();
 
-        // ✅ SAFE STORE (NO EMPTY VALUES)
-        users[socket.id] = {
-            room,
-            user: user && user !== "" ? user : "Guest",
-            userId: userId || socket.id,
-            state,
-            district
-        };
+            const room = `${state}-${district}`;
+            socket.join(room);
 
-        console.log("JOINED:", users[socket.id]);
+            // 🔥 VALIDATE USER ID
+            if (!userId || userId.length < 10) {
+                console.log("❌ INVALID USER ID");
+                return;
+            }
 
-        // ✅ LOAD OLD MESSAGES
-        const oldMessages = await Chat.find({ state, district })
-            .sort({ createdAt: -1 })
-            .limit(50)
-            .lean();
+            // 🔥 FETCH REAL USER FROM DB
+            const userFromDB = await User.findById(userId);
 
-        socket.emit("loadMessages", oldMessages.reverse());
+            if (!userFromDB) {
+                console.log("❌ USER NOT FOUND IN DB");
+                return;
+            }
 
-        const roomUsers = Object.values(users).filter(u => u.room === room);
-        io.to(room).emit("onlineUsers", roomUsers);
+            // ✅ STORE CORRECT USER
+            users[socket.id] = {
+                room,
+                user: userFromDB.name,   // ✅ REAL NAME
+                userId: userFromDB._id.toString(),
+                state,
+                district
+            };
+
+            console.log("JOINED:", users[socket.id]);
+
+            // ✅ LOAD OLD MESSAGES
+            const oldMessages = await Chat.find({ state, district })
+                .sort({ createdAt: -1 })
+                .limit(50)
+                .lean();
+
+            socket.emit("loadMessages", oldMessages.reverse());
+
+            const roomUsers = Object.values(users).filter(u => u.room === room);
+            io.to(room).emit("onlineUsers", roomUsers);
+
+        } catch (err) {
+            console.log("JOIN ERROR:", err);
+        }
     });
 
 
-    // ✅ SEND MESSAGE (FIXED)
-   socket.on("sendMessage", async (data) => {
+    // ✅ SEND MESSAGE (REAL NAME FROM DB)
+    socket.on("sendMessage", async (data) => {
 
-    try {
+        try {
 
-        const userData = users[socket.id];
-        if (!userData) return;
+            const userData = users[socket.id];
+            if (!userData) return;
 
-        let { message } = data;
+            let { message } = data;
 
-        if (!message || message.trim().length === 0) return;
+            if (!message || message.trim().length === 0) return;
 
-        message = message.trim();
+            message = message.trim();
 
-        // 🔥 USER NAME FIX (IMPORTANT)
-        const username = userData.user || "Guest";
+            // 🔥 ANTI SPAM
+            const now = Date.now();
+            if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1000) {
+                return;
+            }
+            lastMessageTime[socket.id] = now;
 
-        // SAVE
-        const chat = await Chat.create({
-            userId: userData.userId,
-            user: username,   // ✅ FIXED
-            message,
-            state: userData.state,
-            district: userData.district
-        });
+            // 🔥 GET USER AGAIN (SAFE)
+            const userFromDB = await User.findById(userData.userId);
 
-        console.log("SENDING NAME:", username); // 👈 DEBUG
+            if (!userFromDB) {
+                console.log("❌ USER NOT FOUND");
+                return;
+            }
 
-        // SEND
-        io.to(userData.room).emit("message", {
-            userId: userData.userId,
-            user: username,   // ✅ FIXED
-            text: message,
-            time: chat.createdAt
-        });
+            const username = userFromDB.name;
 
-    } catch (err) {
-        console.log("SEND MESSAGE ERROR:", err);
-    }
+            // ✅ SAVE MESSAGE
+            const chat = await Chat.create({
+                userId: userFromDB._id,
+                user: username,
+                message,
+                state: userData.state,
+                district: userData.district
+            });
 
-});
+            console.log("SENDING NAME:", username);
+
+            // ✅ EMIT MESSAGE
+            io.to(userData.room).emit("message", {
+                userId: userFromDB._id.toString(),
+                user: username,
+                text: message,
+                time: chat.createdAt
+            });
+
+        } catch (err) {
+            console.log("SEND MESSAGE ERROR:", err);
+        }
+    });
 
 
     // ✅ TYPING
@@ -207,7 +239,6 @@ io.on("connection", (socket) => {
     });
 
 });
-
 const ADMIN_USERNAME = "admin"
 const ADMIN_PASSWORD = "123456"
 

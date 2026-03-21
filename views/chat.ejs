@@ -326,7 +326,7 @@
     <script>
 
        const user = "<%= user && user.name ? user.name : 'Guest' %>";
-        const userId = "<%= user._id ? user._id.toString() : '' %>";
+       const userId = "<%= user._id.toString() %>";
 
         const socket = io();
 
