@@ -466,8 +466,9 @@ app.get("/bookings", auth, async (req, res) => {
 
 
 app.get("/chat", auth, (req, res) => {
-    console.log("REQ.USER:", req.user); // 👈 ADD THIS
+  
     res.render("chat", { user: req.user });
+      console.log("REQ.USER:", req.user); // 👈 ADD THIS
 });
 
 

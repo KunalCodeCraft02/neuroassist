@@ -322,11 +322,10 @@
     <div id="toast"></div>
 
 
-
     <script>
 
-       const user = "<%= user && user.name ? user.name : 'Guest' %>";
-       const userId = "<%= user._id.toString() %>";
+        const user = "<%= user && user.name ? user.name : 'Guest' %>";
+        const userId = "<%= user._id.toString() %>";
 
         const socket = io();
 
@@ -387,7 +386,6 @@
             const container = document.getElementById("messages");
             const div = document.createElement("div");
 
-            // 🔥 FIX (IMPORTANT)
             const isMe = String(data.userId || "") === String(userId || "");
 
             div.className = isMe ? "chat-row right" : "chat-row left";
@@ -395,7 +393,8 @@
             div.innerHTML = `
         <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-            ${!isMe ? `<div class="name">${data.user ? data.user : "Guest"}</div>` : ""}
+            <!-- 🔥 FIX: ALWAYS SHOW NAME -->
+            <div class="name">${data.user}</div>
 
             <div class="text">${data.text || data.message}</div>
 
@@ -432,7 +431,6 @@
 
                 const div = document.createElement("div");
 
-                // 🔥 FIX
                 const isMe = String(data.userId || "") === String(userId || "");
 
                 div.className = isMe ? "chat-row right" : "chat-row left";
@@ -440,7 +438,8 @@
                 div.innerHTML = `
             <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-                ${!isMe ? `<div class="name">${data.user ? data.user : "Guest"}</div>` : ""}
+                <!-- 🔥 FIX: ALWAYS SHOW NAME -->
+                <div class="name">${data.user}</div>
 
                 <div class="text">${data.message}</div>
 
@@ -456,9 +455,6 @@
 
             container.scrollTop = container.scrollHeight;
         });
-
-        // ❌ REMOVED WRONG LINE
-        // console.log(data.user);
 
         // TYPING
         const input = document.getElementById("msg");
