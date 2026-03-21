@@ -115,8 +115,8 @@ io.on("connection", (socket) => {
         // ✅ SAFE STORE (NO EMPTY VALUES)
         users[socket.id] = {
             room,
-            user: user || "Guest",
-            userId: userId || "guest_" + socket.id, 
+            user: user && user !== "" ? user : "Guest",
+            userId: userId || socket.id,
             state,
             district
         };
@@ -161,16 +161,18 @@ io.on("connection", (socket) => {
             // ✅ SAVE MESSAGE (NO DB USER FETCH)
             const chat = await Chat.create({
                 userId: userData.userId,
-                user: userData.user, // ✅ FIXED (no DB dependency)
+                user: userData.user || "Guest",   // ✅ FORCE NAME
                 message,
                 state: userData.state,
                 district: userData.district
             });
 
+            console.log("SENDING NAME:", userData.user);
+
             // ✅ SEND TO ROOM
             io.to(userData.room).emit("message", {
                 userId: userData.userId,
-               user: userData.user || "Guest",
+                user: userData.user || "Guest",
                 text: message,
                 time: chat.createdAt
             });
