@@ -323,12 +323,15 @@
 
     <script>
 
+        const user = "<%= user.name %>";
+        const userId = "<%= user._id.toString() %>";
+
         console.log("USER FROM EJS:", "<%= user %>");
         console.log("USER ID:", "<%= user._id %>");
 
-        const user = "<%= user.name %>";
+
         const socket = io();
-       const userId = "<%= user && user._id ? user._id : '' %>";
+
 
         console.log("User:", user);
 

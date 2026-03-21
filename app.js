@@ -91,10 +91,10 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage });
-
 const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server);
+
 let users = {};
 let lastMessageTime = {};
 
@@ -102,26 +102,28 @@ io.on("connection", (socket) => {
 
     console.log("User connected");
 
-
+    // ✅ JOIN LOCATION
     socket.on("joinLocation", async ({ state, district, user, userId }) => {
 
-        // 🔥 NORMALIZE AGAIN (SECURITY)
+        // 🔥 normalize
         state = state.trim().toLowerCase();
         district = district.trim().toLowerCase();
 
         const room = `${state}-${district}`;
-
         socket.join(room);
 
+        // ✅ SAFE STORE (NO EMPTY VALUES)
         users[socket.id] = {
             room,
-            user,
-            userId,
+            user: user || "Guest",
+            userId: userId || "guest_" + socket.id, // 🔥 fallback
             state,
             district
         };
 
-        // LOAD OLD MESSAGES
+        console.log("JOINED:", users[socket.id]);
+
+        // ✅ LOAD OLD MESSAGES
         const oldMessages = await Chat.find({ state, district })
             .sort({ createdAt: -1 })
             .limit(50)
@@ -134,6 +136,7 @@ io.on("connection", (socket) => {
     });
 
 
+    // ✅ SEND MESSAGE (FIXED)
     socket.on("sendMessage", async (data) => {
 
         try {
@@ -148,33 +151,27 @@ io.on("connection", (socket) => {
 
             message = message.trim();
 
-           
-            if (!userData.userId) {
-                console.log("USER ID MISSING");
+            // 🔥 ANTI SPAM
+            const now = Date.now();
+            if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 1000) {
                 return;
             }
+            lastMessageTime[socket.id] = now;
 
-            const userFromDB = await User.findById(userData.userId);
-
-            if (!userFromDB) {
-                console.log("USER NOT FOUND");
-                return;
-            }
-
-          
+            // ✅ SAVE MESSAGE (NO DB USER FETCH)
             const chat = await Chat.create({
                 userId: userData.userId,
-                user: userFromDB.name,   // ✅ REAL NAME FROM DB
+                user: userData.user, // ✅ FIXED (no DB dependency)
                 message,
                 state: userData.state,
                 district: userData.district
             });
 
-            // 🔥 SEND MESSAGE
+            // ✅ SEND TO ROOM
             io.to(userData.room).emit("message", {
-                userId: chat.userId.toString(),
-                user: userFromDB.name,   // ✅ FIXED
-                text: chat.message,
+                userId: userData.userId,
+                user: userData.user,
+                text: message,
                 time: chat.createdAt
             });
 
@@ -184,6 +181,8 @@ io.on("connection", (socket) => {
 
     });
 
+
+    // ✅ TYPING
     socket.on("typing", () => {
         const userData = users[socket.id];
         if (!userData) return;
@@ -193,6 +192,8 @@ io.on("connection", (socket) => {
         });
     });
 
+
+    // ✅ DISCONNECT
     socket.on("disconnect", () => {
 
         const userData = users[socket.id];
@@ -204,13 +205,11 @@ io.on("connection", (socket) => {
 
             const roomUsers = Object.values(users).filter(u => u.room === room);
 
-            // 🔥 UPDATE ONLINE USERS
             io.to(room).emit("onlineUsers", roomUsers);
         }
     });
 
 });
-
 
 const ADMIN_USERNAME = "admin"
 const ADMIN_PASSWORD = "123456"
