@@ -285,11 +285,21 @@ app.get('/signup', (req, res) => {
 
 
 app.get("/login", (req, res) => {
-    if (req.cookies.token) {
-        return res.redirect("/home")
+    try {
+        const token = req.cookies.token;
+
+        if (token) {
+            jwt.verify(token, process.env.JWT_SECRET);
+            return res.redirect("/home");
+        }
+
+        res.render("login");
+
+    } catch (err) {
+        res.clearCookie("token"); // 🔥 FIX LOOP
+        res.render("login");
     }
-    res.render("login")
-})
+});
 
 
 app.get("/createbot", auth, (req, res) => {
