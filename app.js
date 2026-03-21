@@ -170,7 +170,7 @@ io.on("connection", (socket) => {
             // ✅ SEND TO ROOM
             io.to(userData.room).emit("message", {
                 userId: userData.userId,
-                user: userData.user,
+               user: userData.user || "Guest",
                 text: message,
                 time: chat.createdAt
             });
