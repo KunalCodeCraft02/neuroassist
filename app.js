@@ -116,7 +116,7 @@ io.on("connection", (socket) => {
         users[socket.id] = {
             room,
             user: user || "Guest",
-            userId: userId || "guest_" + socket.id, // 🔥 fallback
+            userId: userId || "guest_" + socket.id, 
             state,
             district
         };
