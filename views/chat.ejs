@@ -321,19 +321,14 @@
 
     <div id="toast"></div>
 
+
+
     <script>
 
         const user = "<%= user.name %>";
-        const userId = "<%= user._id.toString() %>";
-
-        console.log("USER FROM EJS:", "<%= user %>");
-        console.log("USER ID:", "<%= user._id %>");
-
+        const userId = "<%= user._id ? user._id.toString() : '' %>";
 
         const socket = io();
-
-
-        console.log("User:", user);
 
         // AUTO FOCUS
         document.getElementById("msg").focus();
@@ -356,7 +351,6 @@
                 return;
             }
 
-            // 🔥 NORMALIZE
             state = state.trim().toLowerCase();
             district = district.trim().toLowerCase();
 
@@ -385,22 +379,21 @@
             msgInput.value = "";
         }
 
-        // RECEIVE MESSAGE
+        // ✅ RECEIVE MESSAGE (FIXED)
         socket.on("message", (data) => {
 
             const container = document.getElementById("messages");
-
             const div = document.createElement("div");
 
-            // 🔥 FORCE STRING COMPARE
-            const isMe = String(data.userId) === String(userId);
+            // 🔥 FIX (IMPORTANT)
+            const isMe = String(data.userId || "") === String(userId || "");
 
             div.className = isMe ? "chat-row right" : "chat-row left";
 
             div.innerHTML = `
         <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-            ${!isMe ? `<div class="name">${data.user || "Unknown User"}</div>` : ""}
+            ${!isMe ? `<div class="name">${data.user || "User"}</div>` : ""}
 
             <div class="text">${data.text || data.message}</div>
 
@@ -415,43 +408,7 @@
             container.scrollTop = container.scrollHeight;
         });
 
-        function showToast(text) {
-            const toast = document.getElementById("toast");
-
-            toast.innerText = text;
-            toast.classList.add("show");
-
-            setTimeout(() => {
-                toast.classList.remove("show");
-            }, 3000);
-        }
-
-        // socket.on("oldMessages", (msgs) => {
-
-        //     const messages = document.getElementById("messages");
-
-        //     msgs.forEach(data => {
-
-        //         const div = document.createElement("div");
-
-        //         const isMe = data.user === user;
-
-        //         div.classList.add("msg");
-        //         div.classList.add(isMe ? "sent" : "received");
-
-        //         div.innerHTML = `
-        //     <div class="username">${data.user}</div>
-        //     <div>${data.message}</div>
-        //     <div class="time">${new Date(data.createdAt).toLocaleTimeString()}</div>
-        // `;
-
-        //         messages.appendChild(div);
-        //     });
-
-        // });
-
-
-
+        // ONLINE USERS
         socket.on("onlineUsers", (users) => {
 
             const container = document.getElementById("onlineUsers");
@@ -463,6 +420,7 @@
     `;
         });
 
+        // ✅ LOAD OLD (FIXED)
         socket.on("loadMessages", (messages) => {
 
             const container = document.getElementById("messages");
@@ -472,14 +430,15 @@
 
                 const div = document.createElement("div");
 
-                const isMe = String(data.userId) === String(userId);
+                // 🔥 FIX
+                const isMe = String(data.userId || "") === String(userId || "");
 
                 div.className = isMe ? "chat-row right" : "chat-row left";
 
                 div.innerHTML = `
             <div class="chat-bubble ${isMe ? "me" : "other"}">
 
-              ${!isMe ? `<div class="name">${data.user || "Unknown User"}</div>` : ""}
+                ${!isMe ? `<div class="name">${data.user || "User"}</div>` : ""}
 
                 <div class="text">${data.message}</div>
 
@@ -495,8 +454,11 @@
 
             container.scrollTop = container.scrollHeight;
         });
-        console.log(data.user);
 
+        // ❌ REMOVED WRONG LINE
+        // console.log(data.user);
+
+        // TYPING
         const input = document.getElementById("msg");
 
         input.addEventListener("input", () => {
@@ -518,6 +480,7 @@
             }, 2000);
 
         });
+
     </script>
 
 </body>
