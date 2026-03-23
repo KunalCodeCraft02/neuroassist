@@ -385,21 +385,23 @@ app.get("/profile", auth, async (req, res) => {
 
         const bots = await Bot.find({ userId: req.user.id });
 
-        // ✅ FIX 1: BOOKINGS ADD KARO
-        const bookings = await Booking.find({
-            botId: { $in: bots.map(b => b.botId) }
-        });
+        const botIds = bots.map(b => b.botId);
 
-        // ✅ LEADS
+        // 🔥 FETCH LEADS
         const leads = await Lead.find({
-            botId: { $in: bots.map(b => b.botId) }
+            botId: { $in: botIds }
         }).sort({ createdAt: -1 });
+
+        // existing bookings
+        const bookings = await Booking.find({
+            botId: { $in: botIds }
+        });
 
         res.render("profile", {
             user,
             bots,
             bookings,
-            leads
+            leads   // ✅ IMPORTANT
         });
 
     } catch (err) {

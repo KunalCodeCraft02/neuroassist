@@ -10,6 +10,8 @@
 
     <title>Dashboard</title>
 
+
+
     <style>
         * {
             margin: 0;
@@ -19,7 +21,7 @@
         }
 
         body {
-            background: #fff;
+            background: #f5f7fb;
             padding-top: 90px;
         }
 
@@ -33,14 +35,20 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 40px;
+            padding: 0 30px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+        }
+
+        #nav h2 {
+            font-size: 20px;
         }
 
         #nav a {
             text-decoration: none;
             margin-left: 20px;
             color: black;
+            font-weight: 500;
         }
 
         /* CONTAINER */
@@ -51,221 +59,23 @@
         }
 
         h1 {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         /* STATS */
         .stats {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
-            flex-wrap: wrap;
             margin-bottom: 30px;
         }
 
         .stat-box {
-            flex: 1;
-            min-width: 220px;
-            background: #f9f9f9;
+            background: white;
             padding: 20px;
             border-radius: 12px;
-        }
-
-        /* PROFILE HEADER */
-        .profile-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background: white;
-            border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-
-        /* LEFT */
-        .profile-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        /* DP */
-        .profile-dp {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            overflow: hidden;
-            background: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .profile-dp img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-
-        }
-
-        .profile-dp {
-            border: 3px solid #eee;
-        }
-
-        /* INFO */
-        .profile-info h2 {
-            font-size: 22px;
-            margin-bottom: 5px;
-        }
-
-        .role {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .bio {
-            font-size: 13px;
-            color: #888;
-            max-width: 400px;
-        }
-
-        /* BUTTON */
-        .edit-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-            background: black;
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-
-        .edit-btn:hover {
-            background: #333;
-        }
-
-        /* 🔥 LEADS SECTION */
-        h2 {
-            margin: 20px;
-            font-size: 24px;
-        }
-
-        /* TABLE CONTAINER */
-        .table-box {
-            margin: 20px;
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
-            overflow-x: auto;
-        }
-
-        /* TABLE */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 500px;
-        }
-
-        /* HEADER */
-        thead {
-            background: #f7f9fc;
-        }
-
-        th {
-            text-align: left;
-            padding: 14px;
-            font-size: 13px;
-            color: #555;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ROW */
-        td {
-            padding: 14px;
-            font-size: 14px;
-            border-top: 1px solid #eee;
-        }
-
-        /* HOVER EFFECT */
-        tbody tr {
-            transition: 0.2s;
-        }
-
-        tbody tr:hover {
-            background: #f5f7fb;
-        }
-
-        /* BADGE STYLE (OPTIONAL NICE LOOK) */
-        td:nth-child(1) {
-            font-weight: 600;
-            color: #111;
-        }
-
-        /* EMAIL STYLE */
-        td:nth-child(2) {
-            color: #007bff;
-        }
-
-        /* PHONE STYLE */
-        td:nth-child(3) {
-            color: #28a745;
-        }
-
-        /* EMPTY STATE */
-        tbody tr td[colspan] {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             text-align: center;
-            color: #888;
-            padding: 20px;
-        }
-
-        /* MOBILE */
-        @media(max-width:768px) {
-
-            th,
-            td {
-                padding: 10px;
-                font-size: 12px;
-            }
-        }
-
-        /* RESPONSIVE */
-        @media(max-width:768px) {
-
-            .profile-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
-            .profile-left {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .profile-dp img {
-                width: 70px;
-                height: 70px;
-            }
-
-        }
-
-        /* MOBILE */
-        @media(max-width:768px) {
-
-            .profile-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
         }
 
         .stat-box h2 {
@@ -276,31 +86,96 @@
             color: #777;
         }
 
+        /* PROFILE HEADER */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .profile-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .profile-dp {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #eee;
+        }
+
+        .profile-dp img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-info h2 {
+            font-size: 20px;
+        }
+
+        .role {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .bio {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .edit-btn {
+            background: black;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .edit-btn:hover {
+            background: #333;
+        }
+
         /* GRAPH */
         .graph {
-            background: #fff;
+            background: white;
             padding: 20px;
             border-radius: 12px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         /* TABLE */
         .table-box {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+            background: white;
             border-radius: 12px;
-            overflow: hidden;
+            overflow-x: auto;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 600px;
         }
 
         thead {
             background: #111;
-            color: #fff;
+            color: white;
         }
 
         th,
@@ -315,6 +190,21 @@
 
         tr:hover {
             background: #f9f9f9;
+        }
+
+        td[colspan] {
+            text-align: center;
+            color: #888;
+        }
+
+        .section-title {
+            margin: 30px 0 15px;
+            padding-left: 5px;
+        }
+
+        .full-width {
+            width: 100%;
+            margin: 0;
         }
 
         /* BOTS */
@@ -340,8 +230,34 @@
             cursor: pointer;
             border-radius: 6px;
         }
-    </style>
 
+        /* HEADINGS FIX */
+        h2 {
+            margin: 20px 0 10px;
+        }
+
+        /* MOBILE */
+        @media(max-width:768px) {
+
+            .profile-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .profile-left {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            table {
+                min-width: 500px;
+            }
+
+            #nav {
+                padding: 0 15px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -499,47 +415,54 @@
 
     </div>
 
-    <h2>Leads</h2>
 
-    <div class="table-box">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Message</th>
-                </tr>
-            </thead>
+    <div class="container">
 
-            <tbody>
+        <h2 class="section-title">Leads</h2>
 
-                <% if(!leads.length){ %>
+        <div class="table-box full-width">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="4">No leads yet</td>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Message</th>
                     </tr>
-                    <% } %>
+                </thead>
 
-                        <% leads.forEach(l=> { %>
-                            <tr>
-                                <td>
-                                    <%= l.name %>
-                                </td>
-                                <td>
-                                    <%= l.email %>
-                                </td>
-                                <td>
-                                    <%= l.phone %>
-                                </td>
-                                <td>
-                                    <%= l.message %>
-                                </td>
-                            </tr>
-                            <% }) %>
+                <tbody>
 
-            </tbody>
-        </table>
+                    <% if (!leads || leads.length===0) { %>
+                        <tr>
+                            <td colspan="4">No leads yet</td>
+                        </tr>
+                        <% } %>
+
+                            <% leads.forEach(l=> { %>
+                                <tr>
+                                    <td>
+                                        <%= l.name %>
+                                    </td>
+                                    <td>
+                                        <%= l.email %>
+                                    </td>
+                                    <td>
+                                        <%= l.phone %>
+                                    </td>
+                                    <td>
+                                        <%= l.message %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+
+                </tbody>
+            </table>
+        </div>
+
     </div>
+
+    </div> <!-- container ends HERE -->
 
     <script>
 
@@ -573,7 +496,7 @@
                 .then(() => location.reload());
         }
 
-       
+
     </script>
 
 </body>
