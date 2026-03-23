@@ -344,64 +344,6 @@ app.get("/home", auth, async (req, res) => {
 
 })
 
-app.get("/embed.js", (req, res) => {
-
-    const botId = req.query.botId;
-
-    res.type("application/javascript");
-
-    res.send(`
-        (function(){
-
-            const botId = "${botId}";
-            const userId = localStorage.getItem("uid") || Date.now();
-            localStorage.setItem("uid", userId);
-
-            // TRACK PAGE VIEW
-            fetch("https://yourdomain.com/track", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    botId,
-                    userId,
-                    page: window.location.href,
-                    action: "view"
-                })
-            });
-
-            // TRACK CLICKS
-            document.addEventListener("click", () => {
-                fetch("https://yourdomain.com/track", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        botId,
-                        userId,
-                        page: window.location.href,
-                        action: "click"
-                    })
-                });
-            });
-
-            // 🔥 POPUP AFTER 5s
-            setTimeout(() => {
-                const popup = document.createElement("div");
-                popup.innerHTML = "🔥 Need help? Chat with us!";
-                popup.style.position = "fixed";
-                popup.style.bottom = "20px";
-                popup.style.right = "20px";
-                popup.style.background = "black";
-                popup.style.color = "white";
-                popup.style.padding = "10px";
-                popup.style.borderRadius = "10px";
-                popup.style.cursor = "pointer";
-
-                document.body.appendChild(popup);
-            }, 5000);
-
-        })();
-    `);
-});
 
 
 app.get('/signup', (req, res) => {
@@ -848,21 +790,20 @@ app.post("/chat", async (req, res) => {
         const bot = await Bot.findOne({ botId });
 
         if (!bot) {
-            return res.json({
-                reply: "Bot not found"
-            });
+            return res.json({ reply: "Bot not found" });
         }
 
         const msg = message.toLowerCase();
 
+        // ===============================
+        // 🔥 BOOKING LOGIC (UNCHANGED)
+        // ===============================
 
         if (msg.includes("book") || msg.includes("appointment")) {
-
             return res.json({
                 reply: "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
             });
         }
-
 
         const dateTimeMatch = message.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/);
 
@@ -872,7 +813,6 @@ app.post("/chat", async (req, res) => {
 
             const Booking = require("./models/booking");
 
-
             const existing = await Booking.findOne({ botId, date, time });
 
             if (existing) {
@@ -880,7 +820,6 @@ app.post("/chat", async (req, res) => {
                     reply: `This slot (${time}) is already booked. Try another time.`
                 });
             }
-
 
             await Booking.create({
                 botId,
@@ -895,31 +834,60 @@ app.post("/chat", async (req, res) => {
             });
         }
 
+        // ===============================
+        // 🔥 LEAD DETECTION (NEW LOGIC)
+        // ===============================
 
-        const reply = await generateReply(bot, message);
+        const emailMatch = message.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
+        const phoneMatch = message.match(/\b\d{10}\b/);
 
-        if (reply.includes("LEAD_CAPTURED")) {
-
-            const name = reply.match(/Name:\s*(.*)/)?.[1];
-            const email = reply.match(/Email:\s*(.*)/)?.[1];
-            const phone = reply.match(/Phone:\s*(.*)/)?.[1];
+        if (emailMatch || phoneMatch) {
 
             const Lead = require("./models/lead");
+            const sendWhatsAppLead = require("./services/whatsapp");
+            const sendEmailLead = require("./services/email");
 
-            await Lead.create({
+            const newLead = await Lead.create({
                 botId,
-                name,
-                email,
-                phone,
+                name: "User",
+                email: emailMatch ? emailMatch[0] : "",
+                phone: phoneMatch ? phoneMatch[0] : "",
                 message
             });
 
+            // 🔥 NOTIFICATIONS
             await sendWhatsAppLead(newLead);
             await sendEmailLead(newLead);
 
-            console.log("🔥 Lead + Notifications sent");
+            console.log("🔥 Lead saved + notified");
+
+            return res.json({
+                reply: "🔥 Thanks! Our team will contact you soon."
+            });
         }
 
+        // ===============================
+        // 🔥 INTEREST DETECTION
+        // ===============================
+
+        const isInterested =
+            msg.includes("buy") ||
+            msg.includes("price") ||
+            msg.includes("interested") ||
+            msg.includes("demo") ||
+            msg.includes("purchase");
+
+        if (isInterested) {
+            return res.json({
+                reply: "Great! Please share your Name, Email and Phone number 😊"
+            });
+        }
+
+        // ===============================
+        // 🤖 NORMAL AI RESPONSE
+        // ===============================
+
+        const reply = await generateReply(bot, message);
 
         await Conversation.create({
             botId,
@@ -932,7 +900,7 @@ app.post("/chat", async (req, res) => {
         res.json({ reply });
 
     } catch (err) {
-        console.log(err);
+        console.log("CHAT ERROR:", err);
 
         res.json({
             reply: "Server error"

@@ -132,6 +132,66 @@ Send
 
     document.body.appendChild(chat)
 
+
+
+
+    const userId = localStorage.getItem("uid") || Date.now();
+    localStorage.setItem("uid", userId);
+
+    // TRACK VIEW
+    fetch("https://neuroassist-5z1k.onrender.com/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            botId,
+            userId,
+            page: window.location.href,
+            action: "view"
+        })
+    });
+
+    // TRACK CLICK
+    document.addEventListener("click", () => {
+        fetch("https://neuroassist-5z1k.onrender.com/track", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                botId,
+                userId,
+                page: window.location.href,
+                action: "click"
+            })
+        });
+    });
+
+
+    setTimeout(async () => {
+
+        try {
+
+            const API = "https://neuroassist-5z1k.onrender.com";
+
+            const res = await fetch(`${API}/analyze?botId=${botId}&userId=${userId}`);
+            const data = await res.json();
+
+            console.log("USER STATUS:", data.status); // debug
+
+            if (data.status === "HOT") {
+
+                chat.style.display = "flex"; // ✅ OPEN CHAT
+
+                addBotMessage("🔥 Looks like you're interested! Want help choosing the best option?");
+
+            }
+
+        } catch (err) {
+            console.log("Analyze error", err);
+        }
+
+    }, 5000);
+
+
+
     /* OPEN / CLOSE CHAT */
 
     bubble.onclick = () => {
@@ -223,7 +283,7 @@ Send
 
             try {
 
-                const API = "https://neuroassist-2.onrender.com"
+                const API = "https://neuroassist-5z1k.onrender.com"
 
                 const res = await fetch(`${API}/chat`, {
 
