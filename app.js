@@ -87,7 +87,7 @@ async function analyzeUser(botId, userId) {
 }
 
 
-analyzeUser()
+
 
 app.get("/analyze", async (req, res) => {
 
@@ -842,30 +842,45 @@ app.post("/chat", async (req, res) => {
 
         const emailMatch = message.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
         const phoneMatch = message.match(/\b\d{10}\b/);
+        const nameMatch = message.match(/name\s*is\s*([a-zA-Z ]+)/i);
 
         if (emailMatch || phoneMatch) {
 
-            const Lead = require("./models/lead");
-            const sendWhatsAppLead = require("./services/whatsapp");
-            const sendEmailLead = require("./services/email");
+            try {
 
-            const newLead = await Lead.create({
-                botId,
-                name: "User",
-                email: emailMatch ? emailMatch[0] : "",
-                phone: phoneMatch ? phoneMatch[0] : "",
-                message
-            });
+                const newLead = await Lead.create({
+                    botId,
+                    name: nameMatch ? nameMatch[1] : "Unknown",
+                    email: emailMatch ? emailMatch[0] : "",
+                    phone: phoneMatch ? phoneMatch[0] : "",
+                    message
+                });
 
-            // 🔥 NOTIFICATIONS
-            await sendWhatsAppLead(newLead);
-            await sendEmailLead(newLead);
+                console.log("🔥 Lead Saved:", newLead);
 
-            console.log("🔥 Lead saved + notified");
+                try {
+                    await sendWhatsAppLead(newLead);
+                } catch (err) {
+                    console.log("WhatsApp Error:", err.message);
+                }
 
-            return res.json({
-                reply: "🔥 Thanks! Our team will contact you soon."
-            });
+                try {
+                    await sendEmailLead(newLead);
+                } catch (err) {
+                    console.log("Email Error:", err.message);
+                }
+
+                return res.json({
+                    reply: "🔥 Thanks! Our team will contact you soon."
+                });
+
+            } catch (err) {
+                console.log("LEAD SAVE ERROR:", err);
+
+                return res.json({
+                    reply: "Something went wrong while saving your details"
+                });
+            }
         }
 
         // ===============================
