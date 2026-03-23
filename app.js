@@ -28,6 +28,9 @@ const buildPrompt = require("./services/promptBuilder")
 const auth = require("./middleware/auth")
 const passport = require("./config/passport")
 const multer = require("multer")
+const sendWhatsAppLead = require("./services/whatsapp");
+const sendEmailLead = require("./services/email");
+const Behavior = require("./models/behavior");
 
 
 const { v4: uuidv4 } = require("uuid")
@@ -71,6 +74,36 @@ app.use(passport.session())
 
 
 
+async function analyzeUser(botId, userId) {
+
+    const actions = await Behavior.find({ botId, userId });
+
+    const clicks = actions.filter(a => a.action === "click").length;
+
+    if (clicks > 5) return "HOT";
+    if (clicks > 2) return "WARM";
+
+    return "COLD";
+}
+
+
+analyzeUser()
+
+app.get("/analyze", async (req, res) => {
+
+    const { botId, userId } = req.query;
+
+    if (!botId || !userId) {
+        return res.json({ status: "UNKNOWN" });
+    }
+
+    const status = await analyzeUser(botId, userId);
+
+    res.json({ status });
+});
+
+
+
 
 
 const cloudinary = require("cloudinary").v2;
@@ -90,10 +123,15 @@ const storage = new CloudinaryStorage({
     }
 });
 
+
+
+
+
 const upload = multer({ storage });
 const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server);
+
 
 let users = {};
 let lastMessageTime = {};
@@ -113,9 +151,9 @@ io.on("connection", (socket) => {
             const room = `${state}-${district}`;
             socket.join(room);
 
-            // 🔥 VALIDATE USER ID
+            //  VALIDATE USER ID
             if (!userId || userId.length < 10) {
-                console.log("❌ INVALID USER ID");
+                console.log(" INVALID USER ID");
                 return;
             }
 
@@ -123,14 +161,14 @@ io.on("connection", (socket) => {
             const userFromDB = await User.findById(userId);
 
             if (!userFromDB) {
-                console.log("❌ USER NOT FOUND IN DB");
+                console.log("USER NOT FOUND IN DB");
                 return;
             }
 
-            // ✅ STORE CORRECT USER
+            // STORE CORRECT USER
             users[socket.id] = {
                 room,
-                user: userFromDB.name,   // ✅ REAL NAME
+                user: userFromDB.name,   // REAL NAME
                 userId: userFromDB._id.toString(),
                 state,
                 district
@@ -306,6 +344,65 @@ app.get("/home", auth, async (req, res) => {
 
 })
 
+app.get("/embed.js", (req, res) => {
+
+    const botId = req.query.botId;
+
+    res.type("application/javascript");
+
+    res.send(`
+        (function(){
+
+            const botId = "${botId}";
+            const userId = localStorage.getItem("uid") || Date.now();
+            localStorage.setItem("uid", userId);
+
+            // TRACK PAGE VIEW
+            fetch("https://yourdomain.com/track", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    botId,
+                    userId,
+                    page: window.location.href,
+                    action: "view"
+                })
+            });
+
+            // TRACK CLICKS
+            document.addEventListener("click", () => {
+                fetch("https://yourdomain.com/track", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        botId,
+                        userId,
+                        page: window.location.href,
+                        action: "click"
+                    })
+                });
+            });
+
+            // 🔥 POPUP AFTER 5s
+            setTimeout(() => {
+                const popup = document.createElement("div");
+                popup.innerHTML = "🔥 Need help? Chat with us!";
+                popup.style.position = "fixed";
+                popup.style.bottom = "20px";
+                popup.style.right = "20px";
+                popup.style.background = "black";
+                popup.style.color = "white";
+                popup.style.padding = "10px";
+                popup.style.borderRadius = "10px";
+                popup.style.cursor = "pointer";
+
+                document.body.appendChild(popup);
+            }, 5000);
+
+        })();
+    `);
+});
+
 
 app.get('/signup', (req, res) => {
     res.render('signup');
@@ -335,17 +432,39 @@ app.get("/createbot", auth, (req, res) => {
 })
 
 
+const Lead = require("./models/lead");
+
+
 app.get("/profile", auth, async (req, res) => {
 
-    const user = await User.findById(req.user.id); // 🔥 fresh data
+    try {
 
-    const bots = await Bot.find({ userId: req.user.id });
+        const user = await User.findById(req.user.id);
 
-    const bookings = await Booking.find({
-        botId: { $in: bots.map(b => b.botId) }
-    });
+        const bots = await Bot.find({ userId: req.user.id });
 
-    res.render("profile", { user, bots, bookings });
+        // ✅ FIX 1: BOOKINGS ADD KARO
+        const bookings = await Booking.find({
+            botId: { $in: bots.map(b => b.botId) }
+        });
+
+        // ✅ LEADS
+        const leads = await Lead.find({
+            botId: { $in: bots.map(b => b.botId) }
+        }).sort({ createdAt: -1 });
+
+        res.render("profile", {
+            user,
+            bots,
+            bookings,
+            leads
+        });
+
+    } catch (err) {
+        console.log("PROFILE ERROR:", err);
+        res.send("Error loading profile");
+    }
+
 });
 
 app.get("/conversations/:botId", async (req, res) => {
@@ -466,9 +585,9 @@ app.get("/bookings", auth, async (req, res) => {
 
 
 app.get("/chat", auth, (req, res) => {
-  
+
     res.render("chat", { user: req.user });
-      console.log("REQ.USER:", req.user); // 👈 ADD THIS
+    console.log("REQ.USER:", req.user); // 👈 ADD THIS
 });
 
 
@@ -778,6 +897,28 @@ app.post("/chat", async (req, res) => {
 
 
         const reply = await generateReply(bot, message);
+
+        if (reply.includes("LEAD_CAPTURED")) {
+
+            const name = reply.match(/Name:\s*(.*)/)?.[1];
+            const email = reply.match(/Email:\s*(.*)/)?.[1];
+            const phone = reply.match(/Phone:\s*(.*)/)?.[1];
+
+            const Lead = require("./models/lead");
+
+            await Lead.create({
+                botId,
+                name,
+                email,
+                phone,
+                message
+            });
+
+            await sendWhatsAppLead(newLead);
+            await sendEmailLead(newLead);
+
+            console.log("🔥 Lead + Notifications sent");
+        }
 
 
         await Conversation.create({
@@ -1175,6 +1316,11 @@ app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
     }
 });
 
+
+app.post("/track", async (req, res) => {
+    await Behavior.create(req.body);
+    res.sendStatus(200);
+});
 
 
 

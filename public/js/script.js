@@ -106,6 +106,33 @@ function menu() {
 }
 
 
+const userIds = localStorage.getItem("uid") || Date.now();
+localStorage.setItem("uid", userIds);
+
+// PAGE VIEW
+fetch("/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        userId: userIds,
+        page: window.location.pathname,
+        action: "view"
+    })
+});
+
+// CLICK TRACK
+document.addEventListener("click", (e) => {
+    fetch("/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userId: userIds,
+            page: window.location.pathname,
+            action: "click"
+        })
+    });
+});
+
 
 menu();
 

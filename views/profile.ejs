@@ -106,7 +106,11 @@
             height: 100%;
             object-fit: cover;
             object-position: center;
-            
+
+        }
+
+        .profile-dp {
+            border: 3px solid #eee;
         }
 
         /* INFO */
@@ -143,6 +147,93 @@
 
         .edit-btn:hover {
             background: #333;
+        }
+
+        /* 🔥 LEADS SECTION */
+        h2 {
+            margin: 20px;
+            font-size: 24px;
+        }
+
+        /* TABLE CONTAINER */
+        .table-box {
+            margin: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
+        }
+
+        /* TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        /* HEADER */
+        thead {
+            background: #f7f9fc;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px;
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ROW */
+        td {
+            padding: 14px;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+        }
+
+        /* HOVER EFFECT */
+        tbody tr {
+            transition: 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f5f7fb;
+        }
+
+        /* BADGE STYLE (OPTIONAL NICE LOOK) */
+        td:nth-child(1) {
+            font-weight: 600;
+            color: #111;
+        }
+
+        /* EMAIL STYLE */
+        td:nth-child(2) {
+            color: #007bff;
+        }
+
+        /* PHONE STYLE */
+        td:nth-child(3) {
+            color: #28a745;
+        }
+
+        /* EMPTY STATE */
+        tbody tr td[colspan] {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+
+        /* MOBILE */
+        @media(max-width:768px) {
+
+            th,
+            td {
+                padding: 10px;
+                font-size: 12px;
+            }
         }
 
         /* RESPONSIVE */
@@ -408,6 +499,48 @@
 
     </div>
 
+    <h2>Leads</h2>
+
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <% if(!leads.length){ %>
+                    <tr>
+                        <td colspan="4">No leads yet</td>
+                    </tr>
+                    <% } %>
+
+                        <% leads.forEach(l=> { %>
+                            <tr>
+                                <td>
+                                    <%= l.name %>
+                                </td>
+                                <td>
+                                    <%= l.email %>
+                                </td>
+                                <td>
+                                    <%= l.phone %>
+                                </td>
+                                <td>
+                                    <%= l.message %>
+                                </td>
+                            </tr>
+                            <% }) %>
+
+            </tbody>
+        </table>
+    </div>
+
     <script>
 
         // 🔥 SAFE BOOKINGS DATA
@@ -440,6 +573,7 @@
                 .then(() => location.reload());
         }
 
+       
     </script>
 
 </body>
