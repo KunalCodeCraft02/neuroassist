@@ -1,25 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-
-	<title>Sign In</title>
-
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+	<!-- SAME FONTS AS HOME -->
+	<link
+		href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+		rel="stylesheet">
+
+	<title>Sign In</title>
 
 	<style>
 		* {
 			margin: 0;
 			padding: 0;
 			box-sizing: border-box;
-			font-family: 'Inter', sans-serif;
 		}
 
+		/* ROOT MATCH HOME */
+		:root {
+			--bg: #04040a;
+			--surface: #09090f;
+			--accent: #ff7518;
+			--text: #eeeef5;
+			--muted: #5a5a78;
+			--border: rgba(255, 255, 255, 0.07);
+			--radius: 16px;
+		}
+
+		/* BODY */
 		body {
-			background: #ffffff;
-			color: #111;
+			background: var(--bg);
+			color: var(--text);
+			font-family: 'DM Sans', sans-serif;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -27,100 +42,123 @@
 			padding: 20px;
 		}
 
+		/* CARD */
 		.container {
 			width: 100%;
 			max-width: 420px;
-			background: white;
+			background: var(--surface);
 			padding: 40px;
-			border-radius: 12px;
-			border: 1px solid #eee;
-			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
 		}
 
+		/* LOGO */
 		.logo {
-			font-size: 20px;
-			font-weight: 600;
 			margin-bottom: 20px;
 		}
 
 		.logo img {
-			/* height: 100%; */
 			width: 70px;
-			object-fit: cover;
 			border-radius: 50%;
 		}
 
+		/* TITLE */
 		h2 {
-			font-size: 22px;
-			font-weight: 600;
+			font-family: 'Syne', sans-serif;
+			font-size: 26px;
 			margin-bottom: 25px;
 		}
 
+		/* LABEL */
 		label {
-			font-size: 13px;
-			font-weight: 500;
-			display: block;
+			font-size: 12px;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+			color: var(--muted);
 			margin-top: 15px;
 			margin-bottom: 6px;
+			display: block;
 		}
 
+		/* INPUT */
 		input {
 			width: 100%;
-			padding: 12px;
-			border: 1px solid #e3e3e3;
-			border-radius: 8px;
-			font-size: 14px;
+			padding: 13px;
+			border-radius: 10px;
+			border: 1px solid var(--border);
+			background: #0e0e18;
+			color: var(--text);
 			outline: none;
+			font-size: 14px;
+			transition: .3s;
 		}
 
 		input:focus {
-			border-color: #000;
+			border-color: var(--accent);
 		}
 
+		/* BUTTON */
 		button {
-			margin-top: 20px;
+			margin-top: 18px;
 			width: 100%;
-			padding: 13px;
-			background: black;
-			color: white;
+			padding: 14px;
 			border: none;
-			border-radius: 8px;
-			font-size: 14px;
-			font-weight: 500;
+			border-radius: 10px;
+			background: var(--accent);
+			color: #04040a;
+			font-family: 'Syne', sans-serif;
+			font-weight: 700;
+			letter-spacing: .08em;
+			text-transform: uppercase;
 			cursor: pointer;
+			transition: .3s;
 		}
 
 		button:hover {
-			opacity: 0.85;
+			background: #ff8c3d;
+			transform: translateY(-2px);
 		}
 
+		/* GOOGLE BUTTON (kept same logic, styled) */
+		.google-btn {
+			background: transparent;
+			border: 1px solid var(--border);
+			color: var(--muted);
+		}
+
+		.google-btn:hover {
+			border-color: var(--accent);
+			color: var(--accent);
+		}
+
+		/* TEXT */
 		.bottomText {
 			margin-top: 20px;
 			font-size: 13px;
 			text-align: center;
+			color: var(--muted);
 		}
 
 		.bottomText a {
-			color: black;
-			font-weight: 500;
+			color: var(--accent);
 			text-decoration: none;
 		}
 
+		/* TOAST */
 		#toast {
 			position: fixed;
 			top: 30px;
 			right: 30px;
-			z-index: 1000;
 		}
 
 		.toast {
-			background: #111;
-			color: white;
+			background: var(--surface);
+			color: var(--text);
 			padding: 14px 20px;
 			border-radius: 8px;
 			margin-top: 10px;
 			font-size: 14px;
-			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+			border: 1px solid var(--border);
 			opacity: 0;
 			transform: translateY(-20px);
 			transition: .3s;
@@ -142,7 +180,9 @@
 
 	<div class="container">
 
-		<div class="logo"><img src="/assets/image/Neuro Assist.png" alt="Neuro Assist"></div>
+		<div class="logo">
+			<img src="/assets/image/Neuro Assist.png" alt="Neuro Assist">
+		</div>
 
 		<h2>Sign in to your account</h2>
 
@@ -154,12 +194,14 @@
 			<label>Password</label>
 			<input id="loginPassword" type="password" placeholder="Enter password">
 
+			<!-- SAME SUBMIT -->
 			<button type="submit">Sign In</button>
 
 		</form>
 
+		<!-- SAME GOOGLE ROUTE -->
 		<a href="/auth/google">
-			<button style="background:#fff;color:#000;border:1px solid #ddd;margin-top:10px;">
+			<button class="google-btn" style="margin-top:10px;">
 				Continue with Google
 			</button>
 		</a>
@@ -171,6 +213,7 @@
 	</div>
 
 	<div id="toast"></div>
+
 
 	<script>
 

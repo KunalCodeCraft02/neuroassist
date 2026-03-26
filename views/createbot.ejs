@@ -1,349 +1,1687 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-    <title>Bot Designer</title>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NeuroAssist Co — Create Your Bot</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;
+  0,500;1,300&display=swap" rel="stylesheet"/>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #04040a;
+        --surface: #09090f;
+        --surface2: #0e0e18;
+        --accent: #ff7518;
+        --accent-glow: rgba(255,117,24,0.2);
+        --blue: #4f8ef7;
+        --text: #eeeef5;
+        --muted: #5a5a78;
+        --border: rgba(255,255,255,0.07);
+        --radius: 16px;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 300;
+        overflow-x: hidden;
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+        cursor: none;
+      }
+
+      /* Custom Cursor - hide on mobile */
+      #cur, #cur-ring {
+        display: none;
+      }
+
+      @media (pointer: fine) {
+        #cur, #cur-ring {
+          display: block;
+          position: fixed;
+          z-index: 99999;
+        }
+        #cur {
+          width: 10px;
+          height: 10px;
+          background: var(--accent);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: width 0.3s, height 0.3s;
+          mix-blend-mode: difference;
+          pointer-events: none;
+        }
+        #cur-ring {
+          width: 38px;
+          height: 38px;
+          border: 1px solid rgba(255,117,24,.35);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: transform 0.13s ease-out;
+          pointer-events: none;
+          z-index: 99998;
+        }
+        body:has(a:hover) #cur, body:has(button:hover) #cur {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      /* NOISE TEXTURE */
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256'xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9'numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'opacity='.04'/%3E%3C/svg%3E");
+       pointer-events: none;
+        z-index: 1;
+        opacity: 0.35;
+      }
+
+      /* BACKGROUND GRID */
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255,117,24,.03) 1px, transparent 1px),
+          linear-gradient(90deg,rgba(255,117,24,.03) 1px, transparent 1px);
+        background-size: 72px 72px;
+        animation: gridScroll 20s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+        min-width: 100vw;
+        min-height: 100vh;
+      }
+
+      @keyframes gridScroll {
+        from { transform: translate(0, 0); }
+        to { transform: translate(72px, 72px); }
+      }
+
+      /* ORBS - scaled to prevent overflow */
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .orb-1 {
+        top: -100px;
+        right: -80px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,117,24,.1) 0%, transparent 70%);
+        animation: orbA 12s ease-in-out infinite alternate;
+      }
+
+      .orb-2 {
+        bottom: -60px;
+        left: -60px;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(79,142,247,.08) 0%, transparent 70%);
+        animation: orbB 14s ease-in-out infinite alternate;
+      }
+
+      @media (min-width: 768px) {
+        .orb-1 {
+          top: -150px;
+          right: -120px;
+          width: 450px;
+          height: 450px;
+        }
+        .orb-2 {
+          bottom: -80px;
+          left: -80px;
+          width: 350px;
+          height: 350px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .orb-1 {
+          top: -200px;
+          right: -150px;
+          width: 600px;
+          height: 600px;
+        }
+        .orb-2 {
+          bottom: -100px;
+          left: -100px;
+          width: 400px;
+          height: 400px;
+        }
+      }
+
+      @keyframes orbA {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(-30px, 30px) scale(1.1); }
+      }
+
+      @keyframes orbB {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(20px, -20px) scale(1.05); }
+      }
+
+      /* MOBILE FULLSCREEN MENU - from home page */
+      #fixediv {
+        display: none;
+        height: 100vh;
+        width: 100%;
+        background: #04040a;
+        position: fixed;
+        z-index: 9999;
+        top: -110%;
+        transition: top 0.5s cubic-bezier(0.16,1,0.3,1);
+        border-bottom: 1px solid var(--border);
+      }
+
+      #fixediv.open {
+        top: 0;
+      }
+
+      .links-fixed {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 8px;
+        padding-right: 40px;
+      }
+
+      .links-fixed a {
+        color: var(--text);
+        text-decoration: none;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 36px;
+        letter-spacing: -0.02em;
+        opacity: 0.5;
+        transition: opacity 0.3s, color 0.3s;
+        cursor: none;
+      }
+
+      .links-fixed a:hover {
+        opacity: 1;
+        color: var(--accent);
+      }
+
+      #fixediv .close-btn {
+        position: absolute;
+        top: 28px;
+        right: 28px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 28px;
+        cursor: none;
+        transition: color 0.3s;
+      }
+
+      #fixediv .close-btn:hover {
+        color: var(--text);
+      }
+
+      /* NAVBAR - from home page */
+      #nav {
+        height: 80px;
+        width: 100%;
+        position: fixed;
+        z-index: 1000;
+        padding: 0 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
+        border-bottom: 1px solid transparent;
+      }
+
+      #nav.scrolled {
+        background: rgba(4,4,10,0.88);
+        backdrop-filter: blur(20px);
+        border-color: var(--border);
+      }
+
+      .logo {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      .logo h3 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        color: var(--text);
+      }
+
+      .logo h3:nth-child(2) {
+        color: var(--accent);
+      }
+
+      .logo h3:nth-child(3) {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      #navPart2 {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+
+      #nav-links {
+        display: flex;
+        gap: 28px;
+      }
+
+      #nav-links a {
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.3s;
+        cursor: none;
+        white-space: nowrap;
+      }
+
+      #nav-links a:hover {
+        color: var(--text);
+      }
+
+      #icon {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      #icon i {
+        font-size: 20px;
+        color: var(--muted);
+        cursor: none;
+        transition: color 0.3s;
+      }
+
+      #icon i:hover {
+        color: var(--text);
+      }
+
+      #menuicon {
+        display: none;
+        font-size: 22px;
+        cursor: none;
+      }
+
+      .nav-cta-btn {
+        display: none;
+        background: var(--accent);
+        color: #04040a;
+        border: none;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 10px 22px;
+        border-radius: 8px;
+        cursor: none;
+        transition: background 0.3s, transform 0.2s;
+      }
+
+      .nav-cta-btn:hover {
+        background: #ff8c3d;
+        transform: translateY(-1px);
+      }
+
+      @media (max-width: 768px) {
+        #nav {
+          padding: 0 20px;
+          height: 70px;
         }
 
-        body {
-            background: #ffffff;
-            color: #111;
+        #nav-links {
+          display: none;
         }
 
-        main {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        #menuicon {
+          display: block;
         }
 
-        /* MAIN CONTAINER */
-
-        .container {
-            display: flex;
-            gap: 40px;
-            width: 100%;
-            max-width: 1100px;
+        .nav-cta-btn {
+          display: none;
         }
 
-        /* LEFT DESIGN PANEL */
-
-        .left {
-            width: 420px;
-            background: white;
-            padding: 35px;
-            border-radius: 12px;
-            border: 1px solid #eee;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        .logo h3 {
+          font-size: 18px;
         }
 
-        .left h2 {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 25px;
+        .logo h3:nth-child(3) {
+          font-size: 12px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .nav-cta-btn {
+          display: block;
+        }
+      }
+
+      /* MAIN CONTENT WRAPPER */
+      .content-wrapper {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        padding-top: 80px;
+      }
+
+      @media (max-width: 768px) {
+        .content-wrapper {
+          padding-top: 70px;
+        }
+      }
+
+      /* PAGE HEADER */
+      .page-header {
+        padding: 80px 20px 40px;
+        text-align: center;
+        position: relative;
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      @media (min-width: 768px) {
+        .page-header {
+          padding: 100px 32px 50px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .page-header {
+          padding: 140px 50px 60px;
+          text-align: left;
+          max-width: 1400px;
+        }
+      }
+
+      .page-header::before {
+        content: '';
+        position: absolute;
+        top: 100px;
+        left: 20px;
+        right: 20px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+        opacity: 0.5;
+      }
+
+      @media (min-width: 768px) {
+        .page-header::before {
+          left: 32px;
+          right: 32px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .page-header::before {
+          top: 140px;
+          left: 50px;
+          right: 50px;
+        }
+      }
+
+      .breadcrumb {
+        font-size: 11px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      @media (min-width: 1024px) {
+        .breadcrumb {
+          justify-content: flex-start;
+        }
+      }
+
+      .breadcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        color: var(--accent);
+      }
+
+      .breadcrumb .separator {
+        opacity: 0.5;
+      }
+
+      .page-title {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        font-size: clamp(32px, 8vw, 72px);
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+        color: var(--text);
+        margin-bottom: 16px;
+      }
+
+      .page-title .accent {
+        color: var(--accent);
+      }
+
+      .page-subtitle {
+        font-size: clamp(13px, 3vw, 16px);
+        color: var(--muted);
+        max-width: 600px;
+        line-height: 1.7;
+        margin: 0 auto;
+      }
+
+      @media (min-width: 1024px) {
+        .page-subtitle {
+          margin: 0;
+        }
+      }
+
+      /* FORM CONTAINER */
+      .form-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        position: relative;
+      }
+
+      @media (min-width: 1024px) {
+        .form-container {
+          padding: 40px 50px 80px;
+          gap: 60px;
+          max-width: 1400px;
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      /* FORM PANEL */
+      .form-panel {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 28px;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      @media (min-width: 768px) {
+        .form-panel {
+          padding: 36px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .form-panel {
+          padding: 48px;
+        }
+      }
+
+      .form-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--blue));
+      }
+
+      .form-header {
+        margin-bottom: 28px;
+      }
+
+      .form-header h2 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: clamp(20px, 5vw, 28px);
+        letter-spacing: -0.02em;
+        color: var(--text);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .form-header h2 i {
+        color: var(--accent);
+        font-size: clamp(20px, 4vw, 28px);
+      }
+
+      .form-header p {
+        color: var(--muted);
+        font-size: clamp(13px, 2vw, 15px);
+        line-height: 1.6;
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+        position: relative;
+      }
+
+      .form-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text);
+        margin-bottom: 10px;
+      }
+
+      .form-group label i {
+        color: var(--accent);
+        font-size: 14px;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 15px;
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text);
+        transition: all 0.3s ease;
+        min-height: 48px;
+      }
+
+      textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+        line-height: 1.6;
+      }
+
+      @media (min-width: 768px) {
+        textarea.form-control {
+          min-height: 120px;
+        }
+      }
+
+      .form-control:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .form-control::placeholder {
+        color: var(--muted);
+        opacity: 0.6;
+      }
+
+      select.form-control {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ff7518' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 18px;
+        padding-right: 40px;
+      }
+
+      @media (min-width: 768px) {
+        select.form-control {
+          background-position: right 16px center;
+          background-size: 20px;
+          padding-right: 50px;
+        }
+      }
+
+      .color-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .color-picker-wrapper:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      input[type="color"] {
+        width: 48px;
+        height: 48px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 0;
+        background: transparent;
+        flex-shrink: 0;
+        -webkit-appearance: none;
+      }
+
+      @media (min-width: 768px) {
+        input[type="color"] {
+          width: 56px;
+          height: 56px;
+        }
+      }
+
+      input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+      }
+
+      input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 8px;
+      }
+
+      .color-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .color-label {
+        font-size: 13px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .color-value {
+        font-family: 'Syne', sans-serif;
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--text);
+        letter-spacing: 0.02em;
+      }
+
+      .btn-create {
+        width: 100%;
+        padding: 16px 24px;
+        background: linear-gradient(135deg, var(--accent) 0%, #ff8c3d 100%);
+        color: #04040a;
+        border: none;
+        border-radius: 10px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+        min-height: 56px;
+      }
+
+      .btn-create::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.3) 100%);
+        transform: translateX(-100%);
+        transition: transform 0.4s ease;
+      }
+
+      .btn-create:hover::before {
+        transform: translateX(0);
+      }
+
+      .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px rgba(255,117,24,0.3);
+      }
+
+      .btn-create:active {
+        transform: translateY(0);
+      }
+
+      .btn-create span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* PREVIEW PANEL */
+      .preview-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .preview-header {
+        text-align: center;
+      }
+
+      @media (min-width: 1024px) {
+        .preview-header {
+          text-align: left;
+        }
+      }
+
+      .preview-header h3 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: clamp(20px, 5vw, 28px);
+        letter-spacing: -0.02em;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+
+      .preview-header p {
+        color: var(--muted);
+        font-size: clamp(13px, 2vw, 14px);
+        line-height: 1.6;
+      }
+
+      .preview-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        width: 100%;
+      }
+
+      .preview-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        opacity: 0.5;
+      }
+
+      .phone-frame {
+        width: 100%;
+        max-width: 320px;
+        height: 500px;
+        background: #000;
+        border-radius: 32px;
+        overflow: hidden;
+        border: 10px solid #1a1a2e;
+        box-shadow: 0 0 0 2px rgba(255,117,24,0.1), 0 20px 40px -8px rgba(0,0,0,0.7);
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 768px) {
+        .phone-frame {
+          max-width: 360px;
+          height: 580px;
+          border-radius: 40px;
+          border: 14px solid #1a1a2e;
+        }
+      }
+
+      .phone-notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 24px;
+        background: #1a1a2e;
+        border-bottom-left-radius: 14px;
+        border-bottom-right-radius: 14px;
+        z-index: 10;
+      }
+
+      @media (min-width: 768px) {
+        .phone-notch {
+          width: 150px;
+          height: 30px;
+          border-bottom-left-radius: 18px;
+          border-bottom-right-radius: 18px;
+        }
+      }
+
+      .chat-widget {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        position: relative;
+      }
+
+      .chat-header {
+        padding: 16px 18px;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.3s ease;
+        position: relative;
+        z-index: 2;
+        min-height: 68px;
+      }
+
+      @media (min-width: 768px) {
+        .chat-header {
+          padding: 20px 24px;
+          min-height: 80px;
+        }
+      }
+
+      .chat-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 768px) {
+        .chat-avatar {
+          width: 44px;
+          height: 44px;
+          font-size: 20px;
+        }
+      }
+
+      .chat-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .chat-name {
+        font-weight: 600;
+        font-size: 14px;
+        font-family: 'Syne', sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      @media (min-width: 768px) {
+        .chat-name {
+          font-size: 16px;
+        }
+      }
+
+      .chat-status {
+        font-size: 11px;
+        opacity: 0.85;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      @media (min-width: 768px) {
+        .chat-status {
+          font-size: 12px;
+        }
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .chat-body {
+        flex: 1;
+        padding: 16px;
+        background: #f9fafb;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      @media (min-width: 768px) {
+        .chat-body {
+          padding: 20px;
+          gap: 12px;
+        }
+      }
+
+      .message {
+        max-width: 85%;
+        padding: 12px 14px;
+        border-radius: 18px;
+        font-size: 13px;
+        line-height: 1.5;
+        animation: messageSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      @media (min-width: 768px) {
+        .message {
+          padding: 14px 18px;
+          font-size: 14px;
+        }
+      }
+
+      @keyframes messageSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message-bot {
+        background: white;
+        color: #1e293b;
+        align-self: flex-start;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border-bottom-left-radius: 6px;
+      }
+
+      .message-user {
+        align-self: flex-end;
+        color: white;
+        border-bottom-right-radius: 6px;
+      }
+
+      .chat-input-area {
+        padding: 12px;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      @media (min-width: 768px) {
+        .chat-input-area {
+          padding: 16px;
+          gap: 10px;
+        }
+      }
+
+      .chat-input-area input {
+        flex: 1;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        font-size: 13px;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        min-width: 0;
+      }
+
+      @media (min-width: 768px) {
+        .chat-input-area input {
+          padding: 14px 18px;
+          font-size: 14px;
+        }
+      }
+
+      .chat-input-area input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .send-btn {
+        width: 44px;
+        height: 44px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 768px) {
+        .send-btn {
+          width: 50px;
+          height: 50px;
+        }
+      }
+
+      .send-btn:hover {
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255,117,24,0.4);
+      }
+
+      .send-btn:active {
+        transform: scale(0.95);
+      }
+
+      .preview-tag {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: var(--accent-glow);
+        color: var(--accent);
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-family: 'Syne', sans-serif;
+        z-index: 10;
+      }
+
+      @media (min-width: 768px) {
+        .preview-tag {
+          top: 16px;
+          right: 16px;
+          padding: 6px 14px;
+          font-size: 11px;
+        }
+      }
+
+      .live-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 12px;
+        font-style: italic;
+        justify-content: center;
+      }
+
+      .live-dot {
+        width: 6px;
+        height: 6px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 360px) {
+        .phone-frame {
+          width: 280px;
+          height: 460px;
+          border-width: 8px;
         }
 
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            margin-top: 18px;
-            margin-bottom: 6px;
+        .chat-header {
+          padding: 14px 16px;
         }
 
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #e3e3e3;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
+        .chat-avatar {
+          width: 34px;
+          height: 34px;
+          font-size: 16px;
         }
 
-        textarea {
-            min-height: 80px;
-            resize: none;
+        .chat-body {
+          padding: 12px;
         }
 
-        button {
-            margin-top: 25px;
-            width: 100%;
-            padding: 14px;
-            border: none;
-            background: black;
-            color: white;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
+        .chat-input-area {
+          padding: 10px;
         }
 
-        /* RIGHT PREVIEW */
+        .send-btn {
+          width: 40px;
+          height: 40px;
+        }
+      }
 
-        .right {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+      @media (max-height: 700px) and (orientation: portrait) and (max-width: 767px) {
+        .phone-frame {
+          height: 420px;
         }
 
-        .previewTitle {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
+        .page-header {
+          padding: 100px 20px 30px;
         }
 
-        /* CHATBOX */
+        .form-container {
+          padding: 30px 20px 60px;
+        }
+      }
 
-        .previewBox {
-            width: 340px;
-            height: 520px;
-            background: white;
-            border-radius: 14px;
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+      @media (min-width: 768px) and (orientation: landscape) {
+        .page-header {
+          padding: 100px 32px 40px;
         }
 
-        .previewHeader {
-            padding: 16px;
-            font-size: 14px;
-            font-weight: 600;
-            color: white;
+        .form-container {
+          padding: 32px 32px 70px;
         }
 
-        .previewMessages {
-            flex: 1;
-            padding: 18px;
-            background: #f7f7f7;
-            display: flex;
-            align-items: flex-start;
+        .phone-frame {
+          height: 520px;
+        }
+      }
+
+      /* Safe area for notched devices */
+      @supports (padding: env(safe-area-inset-top)) {
+        .page-header {
+          padding-top: calc(80px + env(safe-area-inset-top));
         }
 
-        .botMessage {
-            background: white;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 13px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            max-width: 75%;
+        #nav {
+          padding-top: env(safe-area-inset-top);
+          height: calc(80px + env(safe-area-inset-top));
         }
 
-        .previewInput {
-            display: flex;
-            border-top: 1px solid #eee;
-            padding: 10px;
+        #fixediv {
+          padding-top: calc(100px + env(safe-area-inset-top));
         }
+      }
 
-        .previewInput input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 13px;
+      @media (max-width: 768px) {
+        @supports (padding: env(safe-area-inset-top)) {
+          #nav {
+            height: calc(70px + env(safe-area-inset-top));
+          }
+
+          .content-wrapper {
+            padding-top: calc(70px + env(safe-area-inset-top));
+          }
+
+          #fixediv {
+            padding-top: calc(80px + env(safe-area-inset-top));
+          }
         }
-
-        .previewInput button {
-            width: 70px;
-            background: black;
-            color: white;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-        }
-
-        /* MOBILE RESPONSIVE */
-
-        @media(max-width:900px) {
-
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .left {
-                width: 100%;
-                max-width: 500px;
-            }
-
-            .right {
-                margin-top: 30px;
-            }
-
-            .previewBox {
-                width: 100%;
-                max-width: 360px;
-            }
-
-        }
+      }
     </style>
+  </head>
+  <body>
+    <div id="app-wrapper">
+      <!-- Custom Cursor -->
+      <div id="cur"></div>
+      <div id="cur-ring"></div>
 
-</head>
+      <!-- Background Effects -->
+      <div class="bg-grid"></div>
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
 
-<body>
+      <!-- MOBILE FULLSCREEN MENU (from home page) -->
+      <div id="fixediv">
+        <button class="close-btn" id="closeMenu">
+          <i class="ri-close-line"></i>
+        </button>
+        <div class="links-fixed">
+          <a href="/">HOME</a>
+          <a href="/about">ABOUT</a>
+          <a href="/chat">Community</a>
+          <a href="/profile">PROFILE</a>
+          <a href="/contact">CONTACT</a>
+          <a href="/bookings">BOOKINGS</a>
+          <a href="/createbot">Create Bot</a>
+          <a href="/logout">Logout</a>
+        </div>
+      </div>
 
-    <main>
+      <!-- NAVBAR (from home page) -->
+      <div id="nav">
+        <div class="logo">
+          <h3>Neuro</h3>
+          <h3>Assist</h3>
+          <h3>Co</h3>
+        </div>
+        <div id="navPart2">
+          <div id="nav-links">
+            <a href="/about">About</a>
+            <a href="/chat">Community</a>
+            <a href="/profile">Profile</a>
+            <a href="/bookings">Bookings</a>
+            <a href="/logout">Logout</a>
+          </div>
+          <div id="icon">
+            <i id="menuicon" class="ri-menu-line"></i>
+            <i class="ri-shopping-cart-2-line"></i>
+          </div>
+        </div>
+      </div>
 
-
-        <div class="container">
-
-            <!-- DESIGN PANEL -->
-
-            <div class="left">
-
-                <h2>Design Your Chatbot</h2>
-
-                <form action="/createbot" method="POST">
-
-                    <label>Bot Name</label>
-                    <input name="name" id="botName" placeholder="Support Assistant">
-
-                    <label>Category</label>
-                    <select name="category">
-
-                        <option>Customer Support</option>
-
-                        <option>Sales Assistant</option>
-
-                        <option>FAQ Bot</option>
-
-                        <option>Lead Generation</option>
-
-                        <option>E-commerce Assistant</option>
-
-                        <option>Technical Support</option>
-
-                        <option>Booking Assistant</option>
-
-                        <option>Product Advisor</option>
-
-                        <option>Marketing Assistant</option>
-
-                        <option>HR Assistant</option>
-
-                        <option>Education Assistant</option>
-
-                        <option>Healthcare Assistant</option>
-
-                    </select>
-
-                    <label>Primary Color</label>
-                    <input type="color" id="botColor" name="color" value="#000000">
-
-                    <label>Website URL</label>
-
-                    <input type="url" name="websiteUrl" placeholder="https://example.com">
-
-                    <label>Welcome Message</label>
-                    <textarea name="welcomeMessage" id="welcomeMessage">
-Hello 👋
-How can I help you today?
-</textarea>
-
-                    <label>Training Knowledge</label>
-                    <textarea name="knowledge" placeholder="Example:
-Refund policy is 7 days
-Delivery time is 3 days"></textarea>
-
-                    <button>Create Bot</button>
-
-                </form>
-
-            </div>
-
-
-            <!-- CHAT PREVIEW -->
-
-            <div class="right">
-
-                <h3 class="previewTitle">Live Chatbot Preview</h3>
-
-                <div class="previewBox">
-
-                    <div class="previewHeader" id="previewHeader">
-
-                        <span id="previewName">Support Assistant</span>
-
-                    </div>
-
-                    <div class="previewMessages">
-
-                        <div class="botMessage" id="previewMessage">
-
-                            Hello 👋 How can I help you today?
-
-                        </div>
-
-                    </div>
-
-                    <div class="previewInput">
-
-                        <input placeholder="Type your message">
-
-                        <button>Send</button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+      <!-- Main Content -->
+      <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="breadcrumb">
+            <a href="/">Home</a>
+            <span class="separator">→</span>
+            <span>Create Bot</span>
+          </div>
+          <h1 class="page-title">Design Your <span class="accent">AI Assistant</span></h1>
+          <p class="page-subtitle">Customize every detail of your chatbot. See changes in real-time as you build your
+  perfect AI companion.</p>
         </div>
 
-    </main>
+        <!-- Form Container -->
+        <div class="form-container">
+          <!-- Form Panel -->
+          <div class="form-panel">
+            <div class="form-header">
+              <h2><i class="ri-robot-2-line"></i> Bot Configuration</h2>
+              <p>Configure your chatbot's personality, appearance, and knowledge base</p>
+            </div>
+
+            <form action="/createbot" method="POST" novalidate>
+              <div class="form-group">
+                <label>
+                  <i class="ri-robot-line"></i>
+                  Bot Identity
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="botName"
+                  class="form-control"
+                  placeholder="Enter your bot's name"
+                  value="Support Assistant"
+                  autocomplete="off"
+                  maxlength="50"
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <i class="ri-price-tag-3-line"></i>
+                  Bot Category
+                </label>
+                <select name="category" class="form-control" required>
+                  <option value="customer-support" selected>Customer Support</option>
+                  <option value="sales">Sales Assistant</option>
+                  <option value="faq">FAQ Bot</option>
+                  <option value="lead-generation">Lead Generation</option>
+                  <option value="ecommerce">E-commerce Assistant</option>
+                  <option value="technical">Technical Support</option>
+                  <option value="booking">Booking Assistant</option>
+                  <option value="product-advisor">Product Advisor</option>
+                  <option value="marketing">Marketing Assistant</option>
+                  <option value="hr">HR Assistant</option>
+                  <option value="education">Education Assistant</option>
+                  <option value="healthcare">Healthcare Assistant</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <i class="ri-palette-line"></i>
+                  Theme Color
+                </label>
+                <div class="color-picker-wrapper">
+                  <input type="color" id="botColor" name="color" value="#ff7518" required>
+                  <div class="color-info">
+                    <span class="color-label">Primary accent color</span>
+                    <div class="color-value" id="colorValue">#ff7518</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <i class="ri-global-line"></i>
+                  Website Integration
+                </label>
+                <input
+                  type="url"
+                  name="websiteUrl"
+                  class="form-control"
+                  placeholder="https://yourwebsite.com"
+                  autocomplete="url"
+                >
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <i class="ri-chat-1-line"></i>
+                  Welcome Message
+                </label>
+                <textarea
+                  name="welcomeMessage"
+                  id="welcomeMessage"
+                  class="form-control"
+                  placeholder="The first message your bot will greet visitors with"
+                  rows="3"
+                  maxlength="300"
+                  required
+                >Hello 👋 How can I help you today?</textarea>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <i class="ri-brain-line"></i>
+                  Training Knowledge
+                </label>
+                <textarea
+                  name="knowledge"
+                  class="form-control"
+                  placeholder="Teach your bot important information about your business&#10;&#10;Example:&#10;• Refund
+  policy: 7 days from purchase&#10;• Delivery time: 3-5 business days&#10;• Support hours: 9am - 6pm EST"
+                  rows="5"
+                  maxlength="2000"
+                ></textarea>
+              </div>
+
+              <button type="submit" class="btn-create" id="submitBtn">
+                <i class="ri-rocket-2-line"></i>
+                <span>Create Your Bot</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Preview Panel -->
+          <div class="preview-panel">
+            <div class="preview-header">
+              <h3>Live Preview</h3>
+              <p>Watch your chatbot come to life in real-time</p>
+            </div>
+
+            <div class="preview-card">
+              <span class="preview-tag">Interactive</span>
+              <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="chat-widget">
+                  <div class="chat-header" id="previewHeader">
+                    <div class="chat-avatar">
+                      <i class="ri-robot-line"></i>
+                    </div>
+                    <div class="chat-info">
+                      <div class="chat-name" id="previewName">Support Assistant</div>
+                      <div class="chat-status">
+                        <span class="status-dot"></span>
+                        Online
+                      </div>
+                    </div>
+                  </div>
+                  <div class="chat-body">
+                    <div class="message message-bot" id="previewMessage">
+                      Hello 👋 How can I help you today?
+                    </div>
+                  </div>
+                  <div class="chat-input-area">
+                    <input type="text" placeholder="Type your message..." readonly>
+                    <button class="send-btn" type="button">
+                      <i class="ri-send-plane-fill"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="live-indicator">
+                <span class="live-dot"></span>
+                Changes update instantly
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script>
+      // Mobile menu toggle - from home page
+      const mobileMenuBtn = document.getElementById('menuicon');
+      const mobileMenu = document.getElementById('fixediv');
+      const closeMobileMenuBtn = document.getElementById('closeMenu');
 
-        const nameInput = document.getElementById("botName")
-        const colorInput = document.getElementById("botColor")
-        const messageInput = document.getElementById("welcomeMessage")
+      if (mobileMenuBtn && mobileMenu && closeMobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.add('open');
+        });
 
-        const previewName = document.getElementById("previewName")
-        const previewHeader = document.getElementById("previewHeader")
-        const previewMessage = document.getElementById("previewMessage")
+        closeMobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+        });
 
-        previewHeader.style.background = "#000"
+        // Close menu when clicking on links
+        document.querySelectorAll('.links-fixed a').forEach(link => {
+          link.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+          });
+        });
 
-        nameInput.addEventListener("input", () => {
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+            mobileMenu.classList.remove('open');
+          }
+        });
+      }
 
-            previewName.innerText = nameInput.value || "Support Assistant"
+      // Custom cursor animation (only on desktop)
+      if (window.matchMedia('(pointer: fine)').matches) {
+        const cur = document.getElementById('cur');
+        const ring = document.getElementById('cur-ring');
+        let mx = 0, my = 0, rx = 0, ry = 0;
 
-        })
+        document.addEventListener('mousemove', e => {
+          mx = e.clientX;
+          my = e.clientY;
+          cur.style.left = mx + 'px';
+          cur.style.top = my + 'px';
+        });
 
-        colorInput.addEventListener("input", () => {
+        (function animateRing() {
+          rx += (mx - rx) * 0.13;
+          ry += (my - ry) * 0.13;
+          ring.style.left = rx + 'px';
+          ring.style.top = ry + 'px';
+          requestAnimationFrame(animateRing);
+        })();
+      }
 
-            previewHeader.style.background = colorInput.value
-            document.querySelector(".previewInput button").style.background = colorInput.value
+      // Navbar scroll effect
+      const nav = document.getElementById('nav');
+      const handleScroll = () => {
+        if (window.scrollY > 60) {
+          nav.classList.add('scrolled');
+        } else {
+          nav.classList.remove('scrolled');
+        }
+      };
 
-        })
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll();
 
-        messageInput.addEventListener("input", () => {
+      // Form inputs - live preview updates with debouncing
+      const nameInput = document.getElementById('botName');
+      const colorInput = document.getElementById('botColor');
+      const messageInput = document.getElementById('welcomeMessage');
 
-            previewMessage.innerText = messageInput.value
+      const previewName = document.getElementById('previewName');
+      const previewHeader = document.getElementById('previewHeader');
+      const previewMessage = document.getElementById('previewMessage');
+      const colorValueDisplay = document.getElementById('colorValue');
+      const sendBtn = document.querySelector('.send-btn');
 
-        })
+      // Initialize with default color
+      const defaultColor = colorInput.value;
+      previewHeader.style.background = defaultColor;
+      if (sendBtn) {
+        sendBtn.style.background = defaultColor;
+      }
+      colorValueDisplay.textContent = defaultColor;
 
-        
+      // Debounced update functions
+      const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      };
 
+      const updateName = debounce(() => {
+        const name = nameInput.value.trim() || 'Support Assistant';
+        previewName.textContent = name;
+      }, 100);
+
+      const updateColor = debounce(() => {
+        const color = colorInput.value;
+        previewHeader.style.background = color;
+        if (sendBtn) {
+          sendBtn.style.background = color;
+        }
+        colorValueDisplay.textContent = color;
+      }, 100);
+
+      const updateMessage = debounce(() => {
+        const message = messageInput.value.trim() || 'Hello 👋 How can I help you today?';
+        previewMessage.textContent = message;
+      }, 100);
+
+      nameInput.addEventListener('input', updateName);
+      colorInput.addEventListener('input', updateColor);
+      messageInput.addEventListener('input', updateMessage);
+
+      // Send button animation
+      const sendButton = document.querySelector('.send-btn');
+      if (sendButton) {
+        sendButton.addEventListener('click', function() {
+          this.style.transform = 'scale(0.9)';
+          setTimeout(() => {
+            this.style.transform = 'scale(1)';
+          }, 150);
+        });
+      }
+
+      // Form submission enhancement
+      const form = document.querySelector('form');
+      const submitBtn = document.getElementById('submitBtn');
+
+      form.addEventListener('submit', function(e) {
+        const originalContent = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i><span>Creating...</span>';
+        submitBtn.style.pointerEvents = 'none';
+
+        // Form will submit normally, but button stays disabled temporarily
+        setTimeout(() => {
+          if (document.body.contains(submitBtn)) {
+            submitBtn.innerHTML = originalContent;
+            submitBtn.style.pointerEvents = '';
+          }
+        }, 5000);
+      });
+
+      // Color picker hover effect (desktop only)
+      if (window.matchMedia('(pointer: fine)').matches) {
+        const colorWrapper = document.querySelector('.color-picker-wrapper');
+        colorWrapper.addEventListener('mouseenter', () => {
+          colorInput.style.transform = 'scale(1.02)';
+        });
+        colorWrapper.addEventListener('mouseleave', () => {
+          colorInput.style.transform = 'scale(1)';
+        });
+      }
+
+      // Prevent zoom on input focus in iOS
+      let viewport = document.querySelector('meta[name="viewport"]');
+      const originalViewportContent = viewport.getAttribute('content');
+
+      document.querySelectorAll('input, textarea, select').forEach(element => {
+        element.addEventListener('focus', () => {
+          if (window.innerWidth <= 768) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+          }
+        });
+
+        element.addEventListener('blur', () => {
+          viewport.setAttribute('content', originalViewportContent);
+        });
+      });
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (mobileMenu && mobileMenu.classList.contains('open')) {
+          mobileMenu.classList.remove('open');
+        }
+      });
+
+      // Resize handler
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          // Close mobile menu on resize to desktop
+          if (window.innerWidth > 768 && mobileMenu.classList.contains('open')) {
+            mobileMenu.classList.remove('open');
+          }
+        }, 250);
+      });
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        // Close mobile menu if navigating back
+        window.addEventListener('pageshow', (event) => {
+          if (event.persisted) {
+            mobileMenu.classList.remove('open');
+          }
+        });
+
+        // Set initial viewport for mobile
+        if (window.innerWidth <= 768) {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+      });
     </script>
-
-</body>
-
-</html>
+  </body>
+  </html>

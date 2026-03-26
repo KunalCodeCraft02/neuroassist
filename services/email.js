@@ -8,13 +8,11 @@ const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 async function sendEmailLead(lead) {
 
-    // ===============================
-    // 1️⃣ OWNER EMAIL (YOU)
-    // ===============================
+   
     const ownerEmail = {
         sender: { email: "hyperboy022@gmail.com", name: "AI Agent" },
-        to: [{ email: "kunalbodkhe080@gmail.com" }], // 👉 YOUR EMAIL
-        subject: "🔥 New Lead Captured",
+        to: [{ email: "kunalbodkhe080@gmail.com" }],
+        subject: "New Lead Captured",
         htmlContent: `
             <h2>New Lead</h2>
             <p><b>Name:</b> ${lead.name}</p>
@@ -24,15 +22,13 @@ async function sendEmailLead(lead) {
         `
     };
 
-    // ===============================
-    // 2️⃣ USER EMAIL (DYNAMIC 🔥)
-    // ===============================
+  
     const userEmail = {
         sender: { email: "hyperboy022@gmail.com", name: "AI Agent" },
-        to: [{ email: lead.email }], // 🔥 DYNAMIC USER EMAIL
-        subject: "Thanks for contacting us 🚀",
+        to: [{ email: lead.email }],
+        subject: "Thanks for contacting us",
         htmlContent: `
-            <h2>Hey ${lead.name || "there"} 👋</h2>
+            <h2>Hey ${lead.name || "there"}</h2>
             <p>Thanks for reaching out!</p>
             <p>Our team will contact you soon.</p>
             <br/>
@@ -40,9 +36,7 @@ async function sendEmailLead(lead) {
         `
     };
 
-    // ===============================
-    // 🔥 SEND BOTH EMAILS
-    // ===============================
+
 
     try {
         await apiInstance.sendTransacEmail(ownerEmail);

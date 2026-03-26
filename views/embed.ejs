@@ -1,127 +1,948 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-
+  <html lang="en">
+  <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
-
-    <title>Embed Your Bot</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NeuroAssist Co — Embed Your Bot</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+  rel="stylesheet"/>
     <style>
-        body {
-            font-family: Inter, sans-serif;
-            background: #f7f7f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #04040a;
+        --surface: #09090f;
+        --surface2: #0e0e18;
+        --accent: #ff7518;
+        --accent-glow: rgba(255,117,24,0.2);
+        --text: #eeeef5;
+        --muted: #5a5a78;
+        --border: rgba(255,255,255,0.07);
+        --radius: 16px;
+      }
+
+      html { scroll-behavior: smooth; overflow-x: hidden; }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 300;
+        overflow-x: hidden;
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+        cursor: none;
+      }
+
+      /* Custom Cursor - hide on mobile */
+      #cur, #cur-ring {
+        display: none;
+      }
+
+      @media (pointer: fine) {
+        #cur, #cur-ring {
+          display: block;
+          position: fixed;
+          z-index: 99999;
+        }
+        #cur {
+          width: 10px;
+          height: 10px;
+          background: var(--accent);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: width 0.3s, height 0.3s;
+          mix-blend-mode: difference;
+          pointer-events: none;
+        }
+        #cur-ring {
+          width: 38px;
+          height: 38px;
+          border: 1px solid rgba(255,117,24,.35);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: transform 0.13s ease-out;
+          pointer-events: none;
+          z-index: 99998;
+        }
+        body:has(a:hover) #cur, body:has(button:hover) #cur {
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      /* NOISE TEXTURE */
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'opacity='.04'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.35;
+      }
+
+      /* BACKGROUND GRID */
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255,117,24,.03) 1px, transparent 1px),
+          linear-gradient(90deg,rgba(255,117,24,.03) 1px, transparent 1px);
+        background-size: 72px 72px;
+        animation: gridScroll 20s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+        min-width: 100vw;
+        min-height: 100vh;
+      }
+
+      @keyframes gridScroll {
+        from { transform: translate(0, 0); }
+        to { transform: translate(72px, 72px); }
+      }
+
+      /* ORBS */
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .orb-1 {
+        top: -100px;
+        right: -80px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,117,24,.1) 0%, transparent 70%);
+        animation: orbA 12s ease-in-out infinite alternate;
+      }
+
+      .orb-2 {
+        bottom: -60px;
+        left: -60px;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(79,142,247,.08) 0%, transparent 70%);
+        animation: orbB 14s ease-in-out infinite alternate;
+      }
+
+      @media (min-width: 768px) {
+        .orb-1 {
+          top: -150px;
+          right: -120px;
+          width: 450px;
+          height: 450px;
+        }
+        .orb-2 {
+          bottom: -80px;
+          left: -80px;
+          width: 350px;
+          height: 350px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .orb-1 {
+          top: -200px;
+          right: -150px;
+          width: 600px;
+          height: 600px;
+        }
+        .orb-2 {
+          bottom: -100px;
+          left: -100px;
+          width: 400px;
+          height: 400px;
+        }
+      }
+
+      @keyframes orbA {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(-30px, 30px) scale(1.1); }
+      }
+
+      @keyframes orbB {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(20px, -20px) scale(1.05); }
+      }
+
+      /* MOBILE FULLSCREEN MENU */
+      #fixediv {
+        display: none;
+        height: 100vh;
+        width: 100%;
+        background: #04040a;
+        position: fixed;
+        z-index: 9999;
+        top: -110%;
+        transition: top 0.5s cubic-bezier(0.16,1,0.3,1);
+        border-bottom: 1px solid var(--border);
+      }
+
+      #fixediv.open {
+        top: 0;
+      }
+
+      .links-fixed {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 8px;
+        padding-right: 40px;
+      }
+
+      .links-fixed a {
+        color: var(--text);
+        text-decoration: none;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 36px;
+        letter-spacing: -0.02em;
+        opacity: 0.5;
+        transition: opacity 0.3s, color 0.3s;
+        cursor: none;
+      }
+
+      .links-fixed a:hover {
+        opacity: 1;
+        color: var(--accent);
+      }
+
+      #fixediv .close-btn {
+        position: absolute;
+        top: 28px;
+        right: 28px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 28px;
+        cursor: none;
+        transition: color 0.3s;
+      }
+
+      #fixediv .close-btn:hover {
+        color: var(--text);
+      }
+
+      /* NAVBAR */
+      #nav {
+        height: 80px;
+        width: 100%;
+        position: fixed;
+        z-index: 1000;
+        padding: 0 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
+        border-bottom: 1px solid transparent;
+      }
+
+      #nav.scrolled {
+        background: rgba(4,4,10,0.88);
+        backdrop-filter: blur(20px);
+        border-color: var(--border);
+      }
+
+      .logo {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        text-decoration: none;
+      }
+
+      .logo h3 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        color: var(--text);
+      }
+
+      .logo h3:nth-child(2) { color: var(--accent); }
+      .logo h3:nth-child(3) {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      #navPart2 {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+
+      #nav-links {
+        display: flex;
+        gap: 28px;
+      }
+
+      #nav-links a {
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.3s;
+        cursor: none;
+        white-space: nowrap;
+      }
+
+      #nav-links a:hover {
+        color: var(--text);
+      }
+
+      #icon {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      #icon i {
+        font-size: 20px;
+        color: var(--muted);
+        cursor: none;
+        transition: color 0.3s;
+      }
+
+      #icon i:hover {
+        color: var(--text);
+      }
+
+      #menuicon {
+        display: none;
+        font-size: 22px;
+        cursor: none;
+      }
+
+      .nav-cta-btn {
+        display: none;
+        background: var(--accent);
+        color: #04040a;
+        border: none;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 10px 22px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+      }
+
+      .nav-cta-btn:hover {
+        background: #ff8c3d;
+        transform: translateY(-1px);
+      }
+
+      @media (max-width: 768px) {
+        #nav {
+          padding: 0 20px;
+          height: 70px;
         }
 
-        .container {
-
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            width: 500px;
-            text-align: center;
-
+        .logo h3 {
+          font-size: 18px;
         }
 
-        h1 {
-            margin-bottom: 10px;
+        .logo h3:nth-child(3) {
+          font-size: 12px;
         }
 
-        p {
-            color: #666;
-            margin-bottom: 30px;
+        #nav-links {
+          display: none;
+        }
+
+        #menuicon {
+          display: block;
+        }
+
+        .nav-cta-btn {
+          display: none;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .nav-cta-btn {
+          display: block;
+        }
+      }
+
+      /* MAIN CONTENT WRAPPER */
+      .content-wrapper {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        padding-top: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 80px);
+      }
+
+      @media (max-width: 768px) {
+        .content-wrapper {
+          padding-top: 70px;
+          min-height: calc(100vh - 70px);
+        }
+      }
+
+      /* CONTAINER */
+      .container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      /* CARD */
+      .embed-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 48px;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+      }
+
+      .embed-card::before {
+        content: '';
+        position: absolute;
+          top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--blue));
+      }
+
+      .success-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .success-badge.show {
+        opacity: 1;
+      }
+
+      .embed-icon {
+        font-size: 64px;
+        color: var(--accent);
+        margin-bottom: 24px;
+        display: inline-block;
+      }
+
+      .embed-card h1 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800;
+        font-size: clamp(32px, 5vw, 48px);
+        color: var(--text);
+        margin-bottom: 16px;
+        letter-spacing: -0.03em;
+      }
+
+      .embed-card > p {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+        margin-bottom: 32px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .code-container {
+        position: relative;
+        margin-bottom: 32px;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .code-box {
+        background: #0a0a0f;
+        padding: 24px;
+        border-radius: 12px;
+        font-family: 'DM Mono', 'Consolas', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #00ff9d;
+        text-align: left;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        position: relative;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        word-break: break-all;
+      }
+
+      .code-box::before {
+        content: 'HTML';
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: var(--surface);
+        color: var(--muted);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border: 1px solid var(--border);
+      }
+
+      .copy-btn {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: var(--accent);
+        color: #04040a;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 140px;
+        justify-content: center;
+      }
+
+      .copy-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255,117,24,0.3);
+      }
+
+      .copy-btn:active {
+        transform: translateY(0);
+      }
+
+      .copy-btn.copied {
+        background: #10b981;
+        color: white;
+      }
+
+      .copy-btn i {
+        font-size: 16px;
+      }
+
+      .instructions {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 32px;
+        text-align: left;
+      }
+
+      .instructions h3 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--text);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .instructions h3 i {
+        color: var(--accent);
+        font-size: 20px;
+      }
+
+      .instructions ol {
+        margin-left: 20px;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .instructions li {
+        margin-bottom: 12px;
+        font-size: 14px;
+      }
+
+      .instructions code {
+        background: var(--bg);
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: var(--accent);
+        font-family: 'DM Mono', monospace;
+        font-size: 13px;
+      }
+
+      .bot-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 32px;
+      }
+
+      .bot-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--accent), var(--blue));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        flex-shrink: 0;
+      }
+
+      .bot-details {
+        flex: 1;
+        text-align: left;
+      }
+
+      .bot-name {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .bot-id {
+        font-size: 13px;
+        color: var(--muted);
+        font-family: 'DM Mono', monospace;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .embed-card {
+          padding: 32px 24px;
         }
 
         .code-box {
-
-            background: #111;
-            color: #00ff9d;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            word-break: break-all;
-            margin-bottom: 20px;
-
+          padding: 20px;
+          font-size: 13px;
         }
 
-        button {
-
-            background: black;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-
+        .copy-btn {
+          position: static;
+          width: 100%;
+          margin-top: 16px;
         }
 
-        button:hover {
-            opacity: 0.9;
+        .bot-info {
+          flex-direction: column;
+          text-align: center;
         }
 
-        .success {
-
-            margin-top: 15px;
-            color: green;
-            display: none;
-
+        .bot-details {
+          text-align: center;
         }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 20px 16px;
+        }
+
+        .embed-card {
+          padding: 24px 20px;
+        }
+
+        .instructions {
+          padding: 20px;
+        }
+      }
+
+      /* Safe area for notched devices */
+      @supports (padding: env(safe-area-inset-top)) {
+        .content-wrapper {
+          padding-top: calc(80px + env(safe-area-inset-top));
+        }
+
+        #nav {
+          padding-top: env(safe-area-inset-top);
+          height: calc(80px + env(safe-area-inset-top));
+        }
+
+        #fixediv {
+          padding-top: calc(100px + env(safe-area-inset-top));
+        }
+      }
+
+      @media (max-width: 768px) {
+        @supports (padding: env(safe-area-inset-top)) {
+          #nav {
+            height: calc(70px + env(safe-area-inset-top));
+          }
+
+          .content-wrapper {
+            padding-top: calc(70px + env(safe-area-inset-top));
+          }
+
+          #fixediv {
+            padding-top: calc(80px + env(safe-area-inset-top));
+          }
+        }
+      }
     </style>
+  </head>
+  <body>
+    <div id="app-wrapper">
+      <!-- Custom Cursor -->
+      <div id="cur"></div>
+      <div id="cur-ring"></div>
 
-</head>
+      <!-- Background Effects -->
+      <div class="bg-grid"></div>
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
 
-<body>
-
-    <div class="container">
-
-        <h1>Your Bot Is Ready</h1>
-
-        <p>Copy the script below and paste it into your website before the closing &lt;/body&gt; tag.</p>
-
-        <div class="code-box" id="scriptCode">
-            &lt;script src="https://neuroassist-5z1k.onrender.com/js/bot.js"
-            data-bot="<%= bot.botId %>"
-                data-name="<%= bot.name %>"&gt;&lt;/script&gt;
-        </div>
-
-        <button onclick="copyScript()">
-            Copy Script
+      <!-- MOBILE FULLSCREEN MENU -->
+      <div id="fixediv">
+        <button class="close-btn" id="closeMenu">
+          <i class="ri-close-line"></i>
         </button>
-
-        <div class="success" id="successMsg">
-            Script copied successfully!
+        <div class="links-fixed">
+          <a href="/home">HOME</a>
+          <a href="/about">ABOUT</a>
+          <a href="/chat">Community</a>
+          <a href="/profile">PROFILE</a>
+          <a href="/contact">CONTACT</a>
+          <a href="/bookings">BOOKINGS</a>
+          <a href="/createbot">Create Bot</a>
+          <a href="/logout">Logout</a>
         </div>
+      </div>
 
-    </div>
+      <!-- NAVBAR -->
+      <div id="nav">
+        <div class="logo">
+          <h3>Neuro</h3>
+          <h3>Assist</h3>
+          <h3>Co</h3>
+        </div>
+        <div id="navPart2">
+          <div id="nav-links">
+            <a href="/home">Home</a>
+            <a href="/about">About</a>
+            <a href="/profile">Profile</a>
+            <a href="/bookings">Bookings</a>
+            <a href="/logout">Logout</a>
+          </div>
+          <div id="icon">
+            <i id="menuicon" class="ri-menu-line"></i>
+            <i class="ri-shopping-cart-2-line"></i>
+          </div>
+        </div>
+      </div>
 
-    <script>
+      <!-- Main Content -->
+      <div class="content-wrapper">
+        <div class="container">
+          <div class="embed-card">
+            <div class="success-badge" id="successBadge">
+              <i class="ri-checkbox-circle-fill"></i>
+              Copied successfully!
+            </div>
 
+            <div class="embed-icon">
+              <i class="ri-embed-line"></i>
+            </div>
+
+            <h1>Your Bot Is Ready</h1>
+            <p>Copy the script below and paste it into your website before the closing <code>&lt;/body&gt;</code> tag.</p>
+
+            <div class="code-container">
+              <div class="code-box" id="scriptCode">
+  &lt;script src="https://neuroassist-5z1k.onrender.com/js/bot.js"
+    data-bot="<%= bot.botId %>"
+    data-name="<%= bot.name %>"&gt;&lt;/script&gt;
+              </div>
+              <button class="copy-btn" onclick="copyScript()">
+                <i class="ri-file-copy-line"></i>
+                <span>Copy Script</span>
+              </button>
+            </div>
+
+            <div class="bot-info">
+              <div class="bot-icon">
+                <i class="ri-robot-line"></i>
+              </div>
+              <div class="bot-details">
+                <div class="bot-name"><%= bot.name %></div>
+                <div class="bot-id">Bot ID: <%= bot.botId %></div>
+              </div>
+            </div>
+
+            <div class="instructions">
+              <h3><i class="ri-information-line"></i> How to Install</h3>
+              <ol>
+                <li>Copy the script above using the <strong>Copy Script</strong> button</li>
+                <li>Open your website's HTML file in a text editor</li>
+                <li>Paste the script just before the closing <code>&lt;/body&gt;</code> tag</li>
+                <li>Save the file and refresh your website</li>
+                <li>Your chatbot will appear automatically!</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Copy script functionality
         function copyScript() {
+          const codeElement = document.getElementById("scriptCode");
+          const text = codeElement.innerText.trim();
 
-            const text = document.getElementById("scriptCode").innerText
+          navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            const originalContent = btn.innerHTML;
 
-            navigator.clipboard.writeText(text)
+            // Change button state
+            btn.classList.add('copied');
+            btn.innerHTML = '<i class="ri-check-line"></i><span>Copied!</span>';
 
-            document.getElementById("successMsg").style.display = "block"
+            // Show success badge
+            const badge = document.getElementById('successBadge');
+            badge.classList.add('show');
+
+            // Reset after 3 seconds
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              btn.innerHTML = originalContent;
+              badge.classList.remove('show');
+            }, 3000);
+          }).catch(err => {
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+
+            // Show success message
+            const btn = document.querySelector('.copy-btn');
+            btn.classList.add('copied');
+            btn.innerHTML = '<i class="ri-check-line"></i><span>Copied!</span>';
 
             setTimeout(() => {
-                document.getElementById("successMsg").style.display = "none"
-            }, 2000)
-
+              btn.classList.remove('copied');
+              btn.innerHTML = '<i class="ri-file-copy-line"></i><span>Copy Script</span>';
+            }, 3000);
+          });
         }
 
-    </script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('menuicon');
+        const mobileMenu = document.getElementById('fixediv');
+        const closeMobileMenuBtn = document.getElementById('closeMenu');
 
-</body>
+        if (mobileMenuBtn && mobileMenu && closeMobileMenuBtn) {
+          mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('open');
+          });
 
-</html>
+          closeMobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+          });
+
+          document.querySelectorAll('.links-fixed a').forEach(link => {
+            link.addEventListener('click', () => {
+              mobileMenu.classList.remove('open');
+            });
+          });
+
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+              mobileMenu.classList.remove('open');
+            }
+          });
+        }
+
+        // Custom cursor animation (desktop only)
+        if (window.matchMedia('(pointer: fine)').matches) {
+          const cur = document.getElementById('cur');
+          const ring = document.getElementById('cur-ring');
+          let mx = 0, my = 0, rx = 0, ry = 0;
+
+          document.addEventListener('mousemove', e => {
+            mx = e.clientX;
+            my = e.clientY;
+            cur.style.left = mx + 'px';
+            cur.style.top = my + 'px';
+          });
+
+          (function animateRing() {
+            rx += (mx - rx) * 0.13;
+            ry += (my - ry) * 0.13;
+            ring.style.left = rx + 'px';
+            ring.style.top = ry + 'px';
+            requestAnimationFrame(animateRing);
+          })();
+        }
+
+        // Navbar scroll effect
+        const nav = document.getElementById('nav');
+        const handleScroll = () => {
+          if (window.scrollY > 60) {
+            nav.classList.add('scrolled');
+          } else {
+            nav.classList.remove('scrolled');
+          }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+          window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+              mobileMenu.classList.remove('open');
+            }
+          });
+        });
+
+        // Handle window resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            if (window.innerWidth > 768 && mobileMenu.classList.contains('open')) {
+              mobileMenu.classList.remove('open');
+            }
+          }, 250);
+        });
+      </script>
+  </body>
+  </html>
