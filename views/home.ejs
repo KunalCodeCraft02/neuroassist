@@ -41,6 +41,7 @@
       font-family: 'DM Sans', sans-serif;
       font-weight: 300;
       overflow-x: hidden;
+      max-width: 100vw;
       cursor: none;
     }
 
@@ -70,6 +71,11 @@
       transition: transform .13s ease-out;
     }
 
+    #cur,
+    #cur-ring {
+      pointer-events: none !important;
+    }
+
     body:has(a:hover) #cur,
     body:has(button:hover) #cur {
       width: 18px;
@@ -88,63 +94,66 @@
     }
 
     /* ─────── MOBILE FULLSCREEN MENU ─────── */
+    /* ===== CLEAN MOBILE MENU FIX ===== */
+
     #fixediv {
-      display: none;
-      height: 100vh;
-      width: 100%;
-      background: #04040a;
       position: fixed;
-      z-index: 9999;
       top: -110%;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: #04040a;
+      z-index: 100000;
       transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      border-bottom: 1px solid var(--border);
+      display: block;
+      /* 🔥 IMPORTANT */
+      overflow-y: auto;
     }
 
     #fixediv.open {
       top: 0;
     }
 
+    /* LINKS */
     .links-fixed {
       height: 100%;
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: center;
+      /* FIX */
       justify-content: center;
-      gap: 8px;
-      padding-right: 40px;
+      gap: 25px;
     }
 
     .links-fixed a {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
       color: var(--text);
       text-decoration: none;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 36px;
-      letter-spacing: -0.02em;
-      opacity: 0.5;
-      transition: opacity .3s, color .3s;
-      cursor: none;
+
+      transition: all 0.4s ease;
+    }
+
+    #fixediv.open .links-fixed a {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .links-fixed a:hover {
-      opacity: 1;
       color: var(--accent);
     }
 
+    /* CLOSE BUTTON */
     #fixediv .close-btn {
       position: absolute;
-      top: 28px;
-      right: 28px;
+      top: 25px;
+      right: 25px;
+      font-size: 28px;
+      color: var(--text);
       background: none;
       border: none;
-      color: var(--muted);
-      font-size: 28px;
-      cursor: none;
-      transition: color .3s;
-    }
-
-    #fixediv .close-btn:hover {
-      color: var(--text);
+      cursor: pointer;
     }
 
     /* ─────── NAVBAR ─────── */
@@ -160,6 +169,18 @@
       transition: background .4s, border-color .4s, backdrop-filter .4s;
       border-bottom: 1px solid transparent;
     }
+
+    #nav.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+
+
+
+
+
 
     #nav.scrolled {
       background: rgba(4, 4, 10, 0.88);
@@ -268,7 +289,7 @@
       position: relative;
       padding: 0 50px;
       padding-top: 160px;
-      overflow: visiblef;
+      overflow-x: hidden;
     }
 
     /* BG grid */
@@ -1322,7 +1343,7 @@
       inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
       pointer-events: none;
-      z-index: -1;
+      z-index: -1 !important;
       /* 🔥 KEY CHANGE */
       opacity: .35;
     }
@@ -1395,7 +1416,9 @@
 
       #fixediv {
         display: block;
+        height: 100dvh;
       }
+
 
       .nav-cta-btn {
         display: none;
@@ -1467,11 +1490,13 @@
 
   <!-- ── MOBILE MENU (backend links preserved) ── -->
   <div id="fixediv">
-    <button class="close-btn" id="closeMenu"><i class="ri-close-line"></i></button>
+    <button class="close-btn" id="closeMenu">
+      <i class="ri-close-line"></i>
+    </button>
+
     <div class="links-fixed">
       <a href="/">HOME</a>
       <a href="/about">ABOUT</a>
-      <a href="/chat">Community</a>
       <a href="/profile">PROFILE</a>
       <a href="/contact">CONTACT</a>
       <a href="/bookings">BOOKINGS</a>
@@ -1801,7 +1826,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"
     integrity="sha512-NcZdtrT77bJr4STcmsGAESr06BYGE8woZdSdEgqnpyqac7sugNO+Tr4bGwGF3MsnEkGKhU2KL2xh6Ec+BqsaHA=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="/js/script.js"></script>
+  <!-- <script src="/js/script.js"></script> -->
 
   <script>
     // ── Custom cursor ──
@@ -1822,11 +1847,25 @@
     });
 
     // ── Mobile menu ──
-    document.getElementById('menuicon').addEventListener('click', () => {
-      document.getElementById('fixediv').classList.add('open');
+    const menuBtn = document.getElementById('menuicon');
+    const closeBtn = document.getElementById('closeMenu');
+    const menuDiv = document.getElementById('fixediv');
+
+    // OPEN
+    menuBtn.addEventListener('click', () => {
+      menuDiv.classList.add('open');
     });
-    document.getElementById('closeMenu').addEventListener('click', () => {
-      document.getElementById('fixediv').classList.remove('open');
+
+    // CLOSE
+    closeBtn.addEventListener('click', () => {
+      menuDiv.classList.remove('open');
+    });
+
+    // OUTSIDE CLICK CLOSE
+    menuDiv.addEventListener('click', (e) => {
+      if (e.target === menuDiv) {
+        menuDiv.classList.remove('open');
+      }
     });
 
     // ── Scroll reveal ──
