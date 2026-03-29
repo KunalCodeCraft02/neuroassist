@@ -782,18 +782,20 @@
                     <!-- GitHub -->
                     <div class="form-group">
                         <label for="github">GitHub</label>
-                        <input type="text" name="github" id="github" placeholder="https://github.com/username" value="<%=user.github || "" %>">
+                        <input type="text" name="github" id="github" placeholder="https://github.com/username"
+                            value="<%=user.github || "" %>">
                     </div>
+                    <% const showLinkedIn=user && user.role==='Business' ; %>
 
-                    <!-- LinkedIn (conditionally shown) -->
-                    <div class="form-group" id="linkedinBox"
-                        style="<%= user.role === 'Business' ? '' : 'display: none;' %>">
-                        <label for="linkedin">LinkedIn</label>
-                        <input type="text" name="linkedin" id="linkedin" placeholder="https://linkedin.com/in/username" value="<%=user.linkedin || "" %>">
-                    </div>
+                        <div class="form-group" id="linkedinBox" style="<%= showLinkedIn ? '' : 'display: none;' %>">
+                            <label for="linkedin">LinkedIn</label>
+                            <input type="text" name="linkedin" id="linkedin"
+                                placeholder="https://linkedin.com/in/username"
+                                value="<%= user && user.linkedin ? user.linkedin : '' %>">
+                        </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" class="submit-btn">Save Changes</button>
+                        <!-- Submit Button -->
+                        <button type="submit" class="submit-btn">Save Changes</button>
                 </form>
             </div>
         </div>
