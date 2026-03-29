@@ -4,207 +4,904 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Edit Profile</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <title>Edit Profile — NeuroAssist Co</title>
     <style>
-        * {
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
+        }
+
+        :root {
+            --bg: #04040a;
+            --surface: #09090f;
+            --surface2: #0e0e18;
+            --accent: #ff7518;
+            --accent-glow: rgba(255, 117, 24, 0.2);
+            --text: #eeeef5;
+            --muted: #5a5a78;
+            --border: rgba(255, 255, 255, 0.07);
+            --radius: 16px;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            background: #f5f7fb;
-        }
-
-        /* CONTAINER */
-        .wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            overflow-x: hidden;
             min-height: 100vh;
-            padding: 20px;
+            cursor: none;
         }
 
-        /* CARD */
-        .container {
+        /* CUSTOM CURSOR */
+        #cur {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width .3s, height .3s;
+            mix-blend-mode: difference;
+        }
+
+        #cur-ring {
+            position: fixed;
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(255, 117, 24, .35);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            transition: transform .13s ease-out;
+        }
+
+        #cur,
+        #cur-ring {
+            pointer-events: none !important;
+        }
+
+        body:has(a:hover) #cur,
+        body:has(button:hover) #cur,
+        body:has(input:hover) #cur,
+        body:has(select:hover) #cur,
+        body:has(textarea:hover) #cur {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* NOISE OVERLAY */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256'xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9'numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+            opacity: .35;
+        }
+
+        /* NAVBAR */
+        #nav {
+            height: 80px;
             width: 100%;
-            max-width: 550px;
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-            animation: fadeIn 0.5s ease;
+            position: fixed;
+            z-index: 1000;
+            padding: 0 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background .4s, border-color .4s, backdrop-filter .4s;
+            border-bottom: 1px solid transparent;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px)
-            }
+        #nav.scrolled {
+            background: rgba(4, 4, 10, 0.88);
+            backdrop-filter: blur(20px);
+            border-color: var(--border);
+        }
 
+        .logo {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            text-decoration: none;
+        }
+
+        .logo h3 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            color: var(--text);
+        }
+
+        .logo h3:nth-child(2) {
+            color: var(--accent);
+        }
+
+        .logo h3:nth-child(3) {
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        #navPart2 {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        #nav-links {
+            display: flex;
+            gap: 28px;
+        }
+
+        #nav-links a {
+            font-size: 13px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--muted);
+            transition: color .3s;
+        }
+
+        #nav-links a:hover {
+            color: var(--text);
+        }
+
+        #icon {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #icon i {
+            font-size: 20px;
+            color: var(--muted);
+            transition: color .3s;
+        }
+
+        #icon i:hover {
+            color: var(--text);
+        }
+
+        #menuicon {
+            display: none;
+        }
+
+        /* MOBILE MENU */
+        #fixediv {
+            position: fixed;
+            top: -110%;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: var(--bg);
+            z-index: 100000;
+            transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: block;
+            overflow-y: auto;
+        }
+
+        #fixediv.open {
+            top: 0;
+        }
+
+        .links-fixed {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+        }
+
+        .links-fixed a {
+            font-family: 'Syne', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.4s ease;
+        }
+
+        #fixediv.open .links-fixed a {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .links-fixed a:hover {
+            color: var(--accent);
+        }
+
+        #fixediv .close-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            font-size: 28px;
+            color: var(--text);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* MAIN CONTENT */
+        #main {
+            min-height: 100vh;
+            padding-top: 120px;
+            padding-bottom: 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 0 50px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
+        }
+
+        /* BACK BUTTON */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 32px;
+            transition: color .3s;
+            cursor: none;
+        }
+
+        .back-btn:hover {
+            color: var(--accent);
+        }
+
+        .back-btn i {
+            font-size: 18px;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp .8s .2s ease forwards;
+        }
+
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(32px, 5vw, 52px);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 480px;
+        }
+
+        /* FORM CARD */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 48px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp .8s .4s ease forwards;
+        }
+
+        @keyframes fadeUp {
             to {
                 opacity: 1;
-                transform: translateY(0)
+                transform: translateY(0);
             }
         }
 
-        h2 {
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        /* PROFILE IMAGE */
-        .profile-img {
+        /* PROFILE IMAGE SECTION */
+        .profile-section {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .profile-img img {
-            width: 100px;
-            height: 100px;
+        .profile-img-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid #eee;
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow);
+            transition: transform .3s, box-shadow .3s;
+            cursor: none;
         }
 
-        .upload {
-            margin-top: 10px;
+        .profile-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 45px rgba(255, 117, 24, 0.35);
+        }
+
+        .upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 100px;
             font-size: 13px;
+            color: var(--muted);
+            text-decoration: none;
+            cursor: none;
+            transition: border-color .3s, color .3s, background .3s;
         }
 
-        /* INPUTS */
-        .input-group {
-            margin-bottom: 15px;
+        .upload-label:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
         }
 
-        .input-group label {
-            font-size: 13px;
-            color: #555;
+        .upload-label i {
+            font-size: 16px;
         }
 
-        input,
-        textarea,
-        select {
+        #photo {
+            display: none;
+        }
+
+        /* FORM GROUPS */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
             width: 100%;
-            padding: 12px;
+            padding: 14px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 10px;
-            border: 1px solid #ddd;
-            margin-top: 5px;
+            color: var(--text);
             font-size: 14px;
-            transition: 0.3s;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color .3s, box-shadow .3s;
+            cursor: none;
         }
 
-        input:focus,
-        textarea:focus,
-        select:focus {
-            border-color: black;
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
         }
 
-        /* BUTTON */
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            background: black;
-            color: white;
-            border-radius: 10px;
-            font-size: 15px;
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .form-group select {
             cursor: pointer;
-            margin-top: 10px;
-            transition: 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'viewBox='0 0 12 12'%3E%3Cpath fill='%235a5a78' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
         }
 
-        button:hover {
-            background: #333;
+        .form-group select option {
+            background: var(--surface);
+            color: var(--text);
         }
 
-        /* MOBILE */
-        @media(max-width:600px) {
-            .container {
-                padding: 20px;
+        /* SUBMIT BUTTON */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: #04040a;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: none;
+            transition: background .3s, transform .2s, box-shadow .3s;
+            margin-top: 32px;
+        }
+
+        .submit-btn:hover {
+            background: #ff8c3d;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 117, 24, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* FOOTER */
+        .pg-footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer {
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: auto;
+            padding: 48px 50px 60px;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+            gap: 48px;
+        }
+
+        .footer-content-column {
+            float: none;
+            width: auto;
+            padding: 0;
+        }
+
+        .footer-logo {
+            margin-bottom: 16px;
+        }
+
+        .footer-logo h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .footer-logo span {
+            color: var(--accent);
+        }
+
+        .footer-logo-link {
+            text-decoration: none;
+        }
+
+        .hidden-link-text {
+            display: none;
+        }
+
+        .footer-desc {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+            margin-top: 12px;
+            max-width: 300px;
+        }
+
+        .footer-menu {
+            margin-top: 0;
+        }
+
+        .footer-menu-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .footer-menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-menu-list li a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            opacity: .7;
+            transition: opacity .3s, color .3s;
+        }
+
+        .footer-menu-list li a:hover {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        .footer-call-to-action-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .footer-call-to-action-description {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .footer-call-to-action-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent);
+            color: #04040a;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 10px 22px;
+            border-radius: 100px;
+            text-decoration: none;
+            cursor: none;
+            transition: background .3s;
+        }
+
+        .footer-call-to-action-button:hover {
+            background: #ff8c3d;
+        }
+
+        .footer-call-to-action-link-wrapper a {
+            color: var(--muted);
+            font-size: 14px;
+            text-decoration: none;
+            transition: color .3s;
+        }
+
+        .footer-call-to-action-link-wrapper a:hover {
+            color: var(--accent);
+        }
+
+        .footer-copyright {
+            border-top: 1px solid var(--border);
+            padding: 20px 50px;
+            text-align: center;
+        }
+
+        .footer-copyright-text {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #nav {
+                padding: 0 24px;
             }
 
-            h2 {
-                font-size: 20px;
+            #nav-links {
+                display: none;
+            }
+
+            #menuicon {
+                display: block;
+                font-size: 22px;
+                cursor: none;
+            }
+
+            .form-card {
+                padding: 30px 24px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                padding: 40px 24px 50px;
+                gap: 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-card {
+                padding: 24px 20px;
+            }
+
+            .profile-img {
+                width: 100px;
+                height: 100px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-copyright {
+                padding: 20px;
             }
         }
     </style>
-
 </head>
 
 <body>
+    <!-- Custom Cursor -->
+    <div id="cur"></div>
+    <div id="cur-ring"></div>
 
-    <div class="wrapper">
+    <!-- NAVBAR -->
+    <div id="nav">
+        <a href="/" class="logo">
+            <h3>Neuro</h3>
+            <h3>Assist</h3>
+            <h3>Co</h3>
+        </a>
+        <div id="navPart2">
+            <div id="nav-links">
+                <a href="/about">About</a>
+                <a href="/chat">Community</a>
+                <a href="/profile">Profile</a>
+                <a href="/bookings">Bookings</a>
+                <a href="/logout">Logout</a>
+            </div>
+            <div id="icon">
+                <i id="menuicon" class="ri-menu-line"></i>
+                <i class="ri-shopping-cart-2-line"></i>
+            </div>
+        </div>
+    </div>
 
+    <!-- MOBILE MENU -->
+    <div id="fixediv">
+        <button class="close-btn" id="closeMenu">
+            <i class="ri-close-line"></i>
+        </button>
+        <div class="links-fixed">
+            <a href="/">HOME</a>
+            <a href="/about">ABOUT</a>
+            <a href="/profile">PROFILE</a>
+            <a href="/contact">CONTACT</a>
+            <a href="/bookings">BOOKINGS</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main">
         <div class="container">
+            <!-- Back Button -->
+            <a href="/profile" class="back-btn">
+                <i class="ri-arrow-left-line"></i>
+                Back to Profile
+            </a>
 
-            <h2>Edit Profile</h2>
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">Edit Profile</h1>
+                <p class="page-subtitle">Customize your profile information and preferences</p>
+            </div>
 
-            <form action="/update-profile" method="POST" enctype="multipart/form-data">
+            <!-- Form Card -->
+            <div class="form-card">
+                <form action="/update-profile" method="POST" enctype="multipart/form-data">
+                    <!-- Profile Image -->
+                    <div class="profile-section">
+                        <div class="profile-img-wrapper">
+                            <img src="<%= user.photo || 'https://via.placeholder.com/120/ff7518/04040a?text=N' %>"
+                                alt="Profile" class="profile-img">
+                        </div>
+                        <label for="photo" class="upload-label">
+                            <i class="ri-camera-line"></i>
+                            Change Photo
+                        </label>
+                        <input type="file" name="photo" id="photo" accept="image/*">
+                    </div>
 
-                <!-- PROFILE IMAGE -->
-                <div class="profile-img">
-                    <img src="<%= user.photo || 'https://via.placeholder.com/100' %>" alt="Profile">
-                    <div class="upload">
-                        <input type="file" name="photo">
+                    <!-- Role -->
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <select name="role" id="role" onchange="toggleLinkedin()">
+                            <option value="" disabled <%=!user.role ? 'selected' : '' %>>Select Role</option>
+                            <option value="Student" <%=user.role==="Student" ? "selected" : "" %>>Student</option>
+                            <option value="Developer" <%=user.role==="Developer" ? "selected" : "" %>>Developer</option>
+                            <option value="Business" <%=user.role==="Business" ? "selected" : "" %>>Business</option>
+                        </select>
+                    </div>
+
+                    <!-- Bio -->
+                    <div class="form-group">
+                        <label for="bio">Bio</label>
+                        <textarea name="bio" id="bio"
+                            placeholder="Tell us about yourself..."><%= user.bio || "" %></textarea>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="form-group">
+                        <label for="skills">Skills</label>
+                        <input type="text" name="skills" id="skills"
+                            placeholder="e.g. React, Node.js, AI, Machine Learning" value="<%= user.skills || "" %>">
+                    </div>
+
+                    <!-- GitHub -->
+                    <div class="form-group">
+                        <label for="github">GitHub</label>
+                        <input type="text" name="github" id="github" placeholder="https://github.com/username" value="<%=user.github || "" %>">
+                    </div>
+
+                    <!-- LinkedIn (conditionally shown) -->
+                    <div class="form-group" id="linkedinBox"
+                        style="<%= user.role === 'Business' ? '' : 'display: none;' %>">
+                        <label for="linkedin">LinkedIn</label>
+                        <input type="text" name="linkedin" id="linkedin" placeholder="https://linkedin.com/in/username" value="<%=user.linkedin || "" %>">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="pg-footer">
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-content-column">
+                    <div class="footer-logo">
+                        <a class="footer-logo-link" href="/">
+                            <span class="hidden-link-text">LOGO</span>
+                            <h1>Neuro<span>Assist</span></h1>
+                        </a>
+                    </div>
+                    <p class="footer-desc">The AI platform for building smart chatbots that work for your business
+                        around the
+                        clock.</p>
+                </div>
+
+                <div class="footer-content-column">
+                    <div class="footer-menu">
+                        <h2 class="footer-menu-name">Get Started</h2>
+                        <ul class="footer-menu-list">
+                            <li><a href="/about">About</a></li>
+                            <li><a href="/profile">Profile</a></li>
+                            <li><a href="/bookings">Bookings</a></li>
+                        </ul>
                     </div>
                 </div>
 
-                <!-- ROLE -->
-                <div class="input-group">
-                    <label>Role</label>
-                    <select name="role" id="role" onchange="toggleLinkedin()">
-                        <option value="">Select Role</option>
-                        <option value="Student" <%=user.role==="Student" ?"selected":"" %>>Student</option>
-                        <option value="Developer" <%=user.role==="Developer" ?"selected":"" %>>Developer</option>
-                        <option value="Business" <%=user.role==="Business" ?"selected":"" %>>Business</option>
-                    </select>
+                <div class="footer-content-column">
+                    <div class="footer-menu">
+                        <h2 class="footer-menu-name">Legal</h2>
+                        <ul class="footer-menu-list">
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Terms of Service</a></li>
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- BIO -->
-                <div class="input-group">
-                    <label>Bio</label>
-                    <textarea name="bio" placeholder="Tell about yourself"><%= user.bio || "" %></textarea>
+                <div class="footer-content-column">
+                    <div class="footer-call-to-action">
+                        <h2 class="footer-call-to-action-title">Let's Chat</h2>
+                        <p class="footer-call-to-action-description">Have a support question?</p>
+                        <a class="footer-call-to-action-button" href="/contact">Get in Touch</a>
+                    </div>
+                    <div class="footer-call-to-action" style="margin-top:28px">
+                        <h2 class="footer-call-to-action-title">You Call Us</h2>
+                        <p class="footer-call-to-action-link-wrapper">
+                            <a class="footer-call-to-action-link" href="tel:0124-64XXXX">0124-64XXXX</a>
+                        </p>
+                    </div>
                 </div>
+            </div>
 
-                <!-- SKILLS -->
-                <div class="input-group">
-                    <label>Skills</label>
-                    <input name="skills" placeholder="e.g. React, Node, AI" value="<%= user.skills || "" %>">
-                </div>
-
-                <!-- GITHUB -->
-                <div class="input-group">
-                    <label>GitHub</label>
-                    <input name="github" placeholder="GitHub URL" value="<%= user.github || "" %>">
-                </div>
-
-                <!-- LINKEDIN -->
-                <div class="input-group" id="linkedinBox">
-                    <label>LinkedIn</label>
-                    <input name="linkedin" id="linkedin" placeholder="LinkedIn URL" value="<%= user.linkedin || "" %>">
-                </div>
-
-                <button type="submit">Save Profile</button>
-
-            </form>
-
-        </div>
-
+            <div class="footer-copyright">
+                <p class="footer-copyright-text">
+                    ©2025 NeuroAssist Co. All rights reserved.
+                </p>
+            </div>
+        </footer>
     </div>
 
-    <script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
 
+    <script>
+        // ── Custom cursor ──
+        const cur = document.getElementById('cur');
+        const ring = document.getElementById('cur-ring');
+        let mx = 0, my = 0, rx = 0, ry = 0;
+        document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        (function ani() {
+            cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+            rx += (mx - rx) * .13; ry += (my - ry) * .13;
+            ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+            requestAnimationFrame(ani);
+        })();
+
+        // ── Navbar scroll ──
+        window.addEventListener('scroll', () => {
+            document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+        });
+
+        // ── Mobile menu ──
+        const menuBtn = document.getElementById('menuicon');
+        const closeBtn = document.getElementById('closeMenu');
+        const menuDiv = document.getElementById('fixediv');
+
+        menuBtn.addEventListener('click', () => {
+            menuDiv.classList.add('open');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            menuDiv.classList.remove('open');
+        });
+
+        menuDiv.addEventListener('click', (e) => {
+            if (e.target === menuDiv) {
+                menuDiv.classList.remove('open');
+            }
+        });
+
+        // ── LinkedIn field toggle ──
         function toggleLinkedin() {
             const role = document.getElementById("role").value;
             const linkedinBox = document.getElementById("linkedinBox");
-
             if (role === "Business") {
                 linkedinBox.style.display = "block";
             } else {
@@ -212,11 +909,20 @@
             }
         }
 
-        // run on load
+        // Run on load
         toggleLinkedin();
 
+        // ── File input preview ──
+        document.getElementById('photo').addEventListener('change', function (e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.querySelector('.profile-img').src = e.target.result;
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
     </script>
-
 </body>
 
 </html>
