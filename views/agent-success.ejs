@@ -2,151 +2,609 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Created</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NeuroAssist Co — Agent Created</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
-        }
+    :root {
+      --bg: #04040a;
+      --surface: #09090f;
+      --surface2: #0e0e18;
+      --accent: #ff7518;
+      --accent-glow: rgba(255, 117, 24, 0.2);
+      --text: #eeeef5;
+      --muted: #5a5a78;
+      --border: rgba(255, 255, 255, 0.07);
+      --radius: 16px;
+    }
 
-        body {
-            background: #ffffff;
-            color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
 
-        .container {
-            text-align: center;
-            max-width: 500px;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            background: #fff;
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: none;
+    }
 
-        .icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
+    /* CUSTOM CURSOR */
+    #cur,
+    #cur-ring {
+      display: none;
+    }
 
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
+    @media (pointer: fine) {
+      #cur,
+      #cur-ring {
+        display: block;
+        position: fixed;
+        z-index: 99999;
+      }
 
-        p {
-            color: #555;
-            margin-bottom: 20px;
-        }
+      #cur {
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+        mix-blend-mode: difference;
+        pointer-events: none;
+      }
 
-        .number-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-        }
+      #cur-ring {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 117, 24, 0.35);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: transform 0.13s ease-out;
+        pointer-events: none;
+        z-index: 99998;
+      }
 
-        .copy-btn {
-            background: #111;
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 25px;
-            transition: 0.3s;
-        }
+      body:has(a:hover) #cur,
+      body:has(button:hover) #cur {
+        width: 18px;
+        height: 18px;
+      }
+    }
 
-        .copy-btn:hover {
-            background: #333;
-        }
+    /* NOISE OVERLAY */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+    }
 
-        .actions {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
+    /* BACKGROUND GRID */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 117, 24, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 117, 24, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: 0.3s;
-        }
+    @keyframes gridScroll {
+      from {
+        transform: translate(0, 0);
+      }
+      to {
+        transform: translate(72px, 72px);
+      }
+    }
 
-        .primary {
-            background: #111;
-            color: #fff;
-        }
+    /* ORBS */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        .primary:hover {
-            background: #333;
-        }
+    .orb-1 {
+      top: -150px;
+      right: -120px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(255, 117, 24, 0.1) 0%, transparent 70%);
+      animation: orbA 12s ease-in-out infinite alternate;
+    }
 
-        .secondary {
-            background: #f1f1f1;
-            color: #111;
-        }
+    .orb-2 {
+      bottom: -80px;
+      left: -80px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(79, 142, 247, 0.08) 0%, transparent 70%);
+      animation: orbB 14s ease-in-out infinite alternate;
+    }
 
-        .secondary:hover {
-            background: #ddd;
-        }
+    @media (min-width: 768px) {
+      .orb-1 {
+        top: -200px;
+        right: -150px;
+        width: 600px;
+        height: 600px;
+      }
 
-        .note {
-            font-size: 13px;
-            margin-top: 15px;
-            color: #777;
-        }
-    </style>
+      .orb-2 {
+        bottom: -100px;
+        left: -100px;
+        width: 400px;
+        height: 400px;
+      }
+    }
+
+    @keyframes orbA {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        transform: translate(-30px, 30px) scale(1.1);
+      }
+    }
+
+    @keyframes orbB {
+      0% {
+        transform: translate(0, 0);
+      }
+      100% {
+        transform: translate(20px, -20px) scale(1.05);
+      }
+    }
+
+    /* MAIN CONTAINER */
+    .content-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding: 40px 20px;
+    }
+
+    @media (min-width: 768px) {
+      .content-wrapper {
+        padding: 60px 50px;
+      }
+    }
+
+    /* SUCCESS CARD */
+    .success-card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .success-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent) 0%, #ff8c3d 50%, var(--accent) 100%);
+    }
+
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      background: var(--accent-glow);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 117, 24, 0.4);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 20px rgba(255, 117, 24, 0);
+      }
+    }
+
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 117, 24, 0.06);
+      padding: 7px 16px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+
+    .page-badge span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .number-display {
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 32px 0;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .number-display:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    .number-label {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .number-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(24px, 4vw, 36px);
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      word-break: break-all;
+    }
+
+    .btn-copy {
+      background: linear-gradient(135deg, var(--accent) 0%, #ff8c3d 100%);
+      color: #04040a;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.3s ease;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-copy::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .btn-copy:hover::before {
+      transform: scaleX(1);
+    }
+
+    .btn-copy span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-copy:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 117, 24, 0.3);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 480px) {
+      .button-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      transition: all 0.3s ease;
+      cursor: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #04040a;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #ff8c3d;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 117, 24, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .info-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 32px;
+    }
+
+    .info-box h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-box h3 i {
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .info-box ul {
+      list-style: none;
+      text-align: left;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .info-box ul li {
+      padding-left: 24px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .info-box ul li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--accent);
+      color: #04040a;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 99999;
+      box-shadow: 0 4px 20px rgba(255, 117, 24, 0.3);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .success-card {
+        padding: 40px 24px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="cur"></div>
+  <div id="cur-ring"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-    <div class="container">
+  <div class="content-wrapper">
+    <div class="success-card">
+      <div class="success-icon">🎉</div>
 
-        <div class="icon">🎉</div>
+      <div class="page-badge"><span></span>Setup Complete</div>
 
-        <h1>Your AI Booking Agent is Ready</h1>
+      <h1 class="page-title">Your AI Call Booking<br>Agent is Ready!</h1>
 
-        <p>Share this number with your customers to start receiving bookings automatically.</p>
+      <p class="page-subtitle">
+        Share this phone number with your customers. Your AI assistant will handle bookings automatically.
+      </p>
 
-        <div class="number-box" id="number">
-            <%= phoneNumber %>
-        </div>
+      <div class="number-display">
+        <div class="number-label">Your Dedicated Phone Number</div>
+        <div class="number-value" id="phoneNumber"><%= phoneNumber %></div>
+      </div>
 
-        <button class="copy-btn" onclick="copyNumber()">Copy Number</button>
+      <button class="btn-copy" onclick="copyNumber()">
+        <span><i class="ri-file-copy-line"></i> Copy Number</span>
+      </button>
 
-        <div class="actions">
-            <a href="/bookings" class="btn primary">View Bookings</a>
-            <a href="/home" class="btn secondary">Back to Home</a>
-        </div>
+      <div class="button-group">
+        <a href="/bookings" class="btn btn-primary">
+          <i class="ri-calendar-check-line"></i> View Bookings
+        </a>
+        <a href="/home" class="btn btn-secondary">
+          <i class="ri-home-4-line"></i> Back to Home
+        </a>
+      </div>
 
-        <p class="note">
-            When customers call this number, your AI will handle bookings automatically 📞
-        </p>
-
+      <div class="info-box">
+        <h3><i class="ri-lightbulb-flash-line"></i> How it works</h3>
+        <ul>
+          <li>Customers call your dedicated number anytime</li>
+          <li>AI greets them and collects booking details</li>
+          <li>Automatic reminders sent to customers</li>
+          <li>Bookings appear in your dashboard instantly</li>
+          <li>No human intervention needed - 24/7 automation</li>
+        </ul>
+      </div>
     </div>
+  </div>
 
-    <script>
-        function copyNumber() {
-            const number = document.getElementById("number").innerText;
-            navigator.clipboard.writeText(number);
-            alert("Number copied!");
-        }
-    </script>
+  <div id="toast" class="toast">Number copied to clipboard!</div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+
+  <script>
+    // Custom cursor
+    const cur = document.getElementById('cur');
+    const ring = document.getElementById('cur-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
+
+      (function ani() {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+        rx += (mx - rx) * 0.13;
+        ry += (my - ry) * 0.13;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(ani);
+      })();
+    }
+
+    // Copy number functionality
+    function copyNumber() {
+      const number = document.getElementById('phoneNumber').innerText;
+      navigator.clipboard.writeText(number).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2500);
+      }).catch(err => {
+        console.error('Copy failed:', err);
+        alert('Failed to copy. Please copy manually: ' + number);
+      });
+    }
+
+    // Animate card on page load
+    const card = document.querySelector('.success-card');
+    gsap.fromTo(card,
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }
+    );
+  </script>
 </body>
 
 </html>

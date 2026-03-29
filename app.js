@@ -5,6 +5,7 @@ const app = express()
 const path = require("path")
 const mongoose = require("mongoose")
 const dbconnection = require("./databaseconection/database")
+const cron = require("node-cron")
 
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
@@ -29,7 +30,7 @@ const auth = require("./middleware/auth")
 const passport = require("./config/passport")
 const multer = require("multer")
 const sendWhatsAppLead = require("./services/whatsapp");
-const sendEmailLead = require("./services/email");
+const { sendEmailLead, sendDailyLeadsSummary } = require("./services/email");
 const Behavior = require("./models/behavior");
 
 
@@ -353,10 +354,22 @@ app.get("/profile", auth, async (req, res) => {
 
         const botIds = bots.map(b => b.botId);
 
-        // 🔥 FETCH LEADS
+        // 🔥 FETCH LEADS with bot details
         const leads = await Lead.find({
             botId: { $in: botIds }
-        }).sort({ createdAt: -1 });
+        })
+        .sort({ createdAt: -1 })
+        .lean();
+
+        // Add bot names to leads
+        const botMap = {};
+        bots.forEach(bot => {
+            botMap[bot.botId] = bot.name;
+        });
+
+        leads.forEach(lead => {
+            lead.botName = botMap[lead.botId] || 'Unknown Bot';
+        });
 
         // existing bookings
         const bookings = await Booking.find({
@@ -814,16 +827,104 @@ app.post("/chat", async (req, res) => {
 
             try {
 
+                // Get bot and user info for email notification
+                const bot = await Bot.findOne({ botId });
+                const user = bot ? await User.findById(bot.userId) : null;
+                const botName = bot ? bot.name : 'Unknown Bot';
+
+                // 🔥 LEAD SCORING ENGINE
+                let leadScore = 0;
+                const keywordsDetected = [];
+                const lowerMsg = message.toLowerCase();
+
+                // Contact Information (Max: 30 points)
+                if (emailMatch) {
+                    leadScore += 15;
+                    keywordsDetected.push('email_provided');
+                }
+                if (phoneMatch) {
+                    leadScore += 15;
+                    keywordsDetected.push('phone_provided');
+                }
+                if (nameMatch) {
+                    leadScore += 10;
+                    keywordsDetected.push('name_provided');
+                }
+
+                // Buying Intent Keywords (Max: 40 points)
+                const intentKeywords = {
+                    'price': 10,
+                    'cost': 10,
+                    'pricing': 10,
+                    'how much': 10,
+                    'demo': 10,
+                    'trial': 10,
+                    'consultation': 10,
+                    'consultation call': 10,
+                    'meeting': 8,
+                    'call me': 8,
+                    'contact me': 8,
+                    'buy': 15,
+                    'purchase': 15,
+                    'order': 10,
+                    'subscribe': 10,
+                    'get started': 10,
+                    'interested': 12
+                };
+
+                for (const [keyword, points] of Object.entries(intentKeywords)) {
+                    if (lowerMsg.includes(keyword)) {
+                        leadScore += points;
+                        keywordsDetected.push(keyword);
+                    }
+                }
+
+                // Message Length & Quality (Max: 20 points)
+                if (message.length > 20) leadScore += 5;
+                if (message.length > 50) leadScore += 5;
+                if (message.length > 100) leadScore += 5;
+                if (lowerMsg.includes('?')) leadScore += 5; // Asking questions shows engagement
+
+                // Urgency Indicators (Max: 10 points)
+                const urgencyWords = ['asap', 'urgent', 'immediately', 'today', 'tomorrow', 'this week'];
+                if (urgencyWords.some(word => lowerMsg.includes(word))) {
+                    leadScore += 10;
+                    keywordsDetected.push('urgent');
+                }
+
+                // Cap at 100
+                leadScore = Math.min(100, leadScore);
+
+                // Determine interest level and status
+                let interestLevel = 'low';
+                let leadStatus = 'new';
+
+                if (leadScore >= 70) {
+                    interestLevel = 'high';
+                    leadStatus = 'qualified';
+                } else if (leadScore >= 40) {
+                    interestLevel = 'medium';
+                } else if (leadScore < 20 && leadScore > 0) {
+                    leadStatus = 'cold';
+                }
+
                 const newLead = await Lead.create({
                     botId,
                     name: nameMatch ? nameMatch[1] : "Unknown",
                     email: emailMatch ? emailMatch[0] : "",
                     phone: phoneMatch ? phoneMatch[0] : "",
-                    message
+                    message,
+                    leadScore,
+                    interestLevel,
+                    leadStatus,
+                    keywordsDetected,
+                    wantsDemo: lowerMsg.includes('demo') || lowerMsg.includes('trial'),
+                    askedPricing: intentKeywords.some(k => lowerMsg.includes(k))
                 });
 
-                console.log("🔥 Lead Saved:", newLead);
+                console.log("🔥 Lead Saved with score:", leadScore, newLead);
 
+                // Send notifications
                 try {
                     await sendWhatsAppLead(newLead);
                 } catch (err) {
@@ -831,14 +932,20 @@ app.post("/chat", async (req, res) => {
                 }
 
                 try {
-                    await sendEmailLead(newLead);
+                    await sendEmailLead(newLead, user ? user.email : null, botName);
                 } catch (err) {
                     console.log("Email Error:", err.message);
                 }
 
-                return res.json({
-                    reply: "🔥 Thanks! Our team will contact you soon."
-                });
+                // Custom response based on lead score
+                let reply = "🔥 Thanks! Our team will contact you soon.";
+                if (leadScore >= 70) {
+                    reply = "🎯 Excellent! We'll reach out to you within 24 hours. Our team is excited to help!";
+                } else if (leadScore >= 40) {
+                    reply = "👍 Thanks for your interest! Someone from our team will get back to you soon.";
+                }
+
+                return res.json({ reply });
 
             } catch (err) {
                 console.log("LEAD SAVE ERROR:", err);
@@ -1292,9 +1399,101 @@ app.get("/logout", (req, res) => {
 
 })
 
+// ============================================
+// 📅 DAILY LEAD SUMMARY CRON JOB
+// Runs every day at 9:00 AM
+// Sends summary of yesterday's leads to all users
+// ============================================
+
+cron.schedule('0 9 * * *', async () => {
+    console.log('\n📅 Running daily lead summary job...');
+
+    try {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStart = new Date(yesterday.setHours(0, 0, 0, 0));
+        const yesterdayEnd = new Date(yesterday.setHours(23, 59, 59, 999));
+
+        // Fetch all users
+        const users = await User.find({});
+
+        for (const user of users) {
+            try {
+                // Get user's bots
+                const bots = await Bot.find({ userId: user._id });
+                const botIds = bots.map(b => b.botId);
+
+                // Fetch yesterday's leads for this user
+                const yesterdayLeads = await Lead.find({
+                    botId: { $in: botIds },
+                    createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd }
+                });
+
+                if (yesterdayLeads.length === 0) {
+                    console.log(`📭 No leads for ${user.email} yesterday`);
+                    continue;
+                }
+
+                // Calculate stats
+                const totalLeads = yesterdayLeads.length;
+                const hotLeads = yesterdayLeads.filter(l => l.leadScore >= 70).length;
+                const warmLeads = yesterdayLeads.filter(l => l.leadScore >= 40 && l.leadScore < 70).length;
+                const avgScore = Math.round(yesterdayLeads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / totalLeads);
+
+                // Group leads by bot
+                const botLeadMap = {};
+                yesterdayLeads.forEach(lead => {
+                    const botName = bots.find(b => b.botId === lead.botId)?.name || 'Unknown Bot';
+                    botLeadMap[botName] = (botLeadMap[botName] || 0) + 1;
+                });
+
+                const topBots = Object.entries(botLeadMap)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 3)
+                    .map(([name, leads]) => ({ name, leads }));
+
+                // Estimate potential revenue (₹100 per qualified lead)
+                const potentialRevenue = yesterdayLeads.filter(l => l.leadStatus === 'qualified' || l.interestLevel === 'high').length * 100;
+
+                const stats = {
+                    totalLeads,
+                    hotLeads,
+                    warmLeads,
+                    avgScore,
+                    potentialRevenue,
+                    topBots
+                };
+
+                // Send summary email
+                await sendDailyLeadsSummary(user.email, stats);
+
+                console.log(`📊 Summary sent to ${user.email} - ${totalLeads} leads`);
+
+            } catch (err) {
+                console.error(`❌ Error processing summary for user ${user.email}:`, err.message);
+            }
+        }
+
+        console.log('✅ Daily lead summary job completed\n');
+
+    } catch (err) {
+        console.error('❌ Daily summary job failed:', err);
+    }
+});
+
+// Also send a test email on startup (optional - for debugging)
+// setTimeout(async () => {
+//     console.log('🧪 Testing email service...');
+//     const testUser = await User.findOne({});
+//     if (testUser) {
+//         console.log('Would send test email to:', testUser.email);
+//     }
+// }, 5000);
+
 
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-    console.log("Server running on port " + PORT);
+    console.log("🚀 Server running on port " + PORT);
+    console.log("📧 Daily lead summaries will be sent at 9:00 AM every day");
 });
