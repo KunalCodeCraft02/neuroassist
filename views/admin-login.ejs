@@ -1,116 +1,489 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NeuroAssist Co — Admin Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    :root {
+      --bg: #04040a;
+      --surface: #09090f;
+      --surface2: #0e0e18;
+      --accent: #ff7518;
+      --accent-glow: rgba(255, 117, 24, 0.2);
+      --text: #eeeef5;
+      --muted: #5a5a78;
+      --border: rgba(255, 255, 255, 0.07);
+      --radius: 16px;
+    }
 
-    <title>Admin Login</title>
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: none;
+    }
 
-    <style>
-         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Macondo&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap');
-        @font-face {
-            font-family: ramen;
-            src: url(/assets/ramen.ttf);
-        }
+    /* CUSTOM CURSOR */
+    #cur,
+    #cur-ring {
+      display: none;
+    }
 
-        @font-face {
-            font-family: futura;
-            src: url(/assets/Futura-Bold.ttf);
-        }
+    @media (pointer: fine) {
+      #cur,
+      #cur-ring {
+        display: block;
+        position: fixed;
+        z-index: 99999;
+      }
 
-        @font-face {
-            font-family: gilroy;
-            src: url(/assets/Gilroy-Medium.ttf);
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: poppins;
-        }
+      #cur {
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+        mix-blend-mode: difference;
+        pointer-events: none;
+      }
 
-        body {
-            background: #f5f6fa;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+      #cur-ring {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 117, 24, 0.35);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: transform 0.13s ease-out;
+        pointer-events: none;
+        z-index: 99998;
+      }
 
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            width: 360px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        }
+      body:has(a:hover) #cur,
+      body:has(button:hover) #cur,
+      body:has(input:hover) #cur {
+        width: 18px;
+        height: 18px;
+      }
+    }
 
-        h1 {
-            margin-bottom: 20px;
-            font-size: 22px;
-        }
+    /* NOISE OVERLAY */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+    }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
+    /* BACKGROUND GRID */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 117, 24, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 117, 24, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            background: black;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
+    @keyframes gridScroll {
+      from {
+        transform: translate(0, 0);
+      }
+      to {
+        transform: translate(72px, 72px);
+      }
+    }
 
-        button:hover {
-            opacity: 0.9;
-        }
+    /* ORBS */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        .error {
-            color: red;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-    </style>
+    .orb-1 {
+      top: -150px;
+      right: -120px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(255, 117, 24, 0.1) 0%, transparent 70%);
+      animation: orbA 12s ease-in-out infinite alternate;
+    }
 
+    .orb-2 {
+      bottom: -80px;
+      left: -80px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(79, 142, 247, 0.08) 0%, transparent 70%);
+      animation: orbB 14s ease-in-out infinite alternate;
+    }
+
+    @media (min-width: 768px) {
+      .orb-1 {
+        top: -200px;
+        right: -150px;
+        width: 600px;
+        height: 600px;
+      }
+
+      .orb-2 {
+        bottom: -100px;
+        left: -100px;
+        width: 400px;
+        height: 400px;
+      }
+    }
+
+    @keyframes orbA {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        transform: translate(-30px, 30px) scale(1.1);
+      }
+    }
+
+    @keyframes orbB {
+      0% {
+        transform: translate(0, 0);
+      }
+      100% {
+        transform: translate(20px, -20px) scale(1.05);
+      }
+    }
+
+    /* LOGIN CONTAINER */
+    .login-container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent) 0%, #ff8c3d 100%);
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .login-logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .login-logo h1:nth-child(2) {
+      color: var(--accent);
+    }
+
+    .login-logo h1:nth-child(3) {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .login-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.3s ease;
+      cursor: none;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input::placeholder {
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, #ff8c3d 100%);
+      color: #04040a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.3s ease;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .btn-login:hover::before {
+      transform: scaleX(1);
+    }
+
+    .btn-login span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 117, 24, 0.3);
+    }
+
+    .error-message {
+      background: rgba(255, 117, 24, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.3s;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        padding: 15px;
+      }
+
+      .login-card {
+        padding: 30px 24px;
+      }
+
+      .login-title {
+        font-size: 24px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="cur"></div>
+  <div id="cur-ring"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-    <div class="container">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <h1>Neuro</h1>
+          <h1>Assist</h1>
+          <h1>Co</h1>
+        </div>
+        <h2 class="login-title">Admin Access</h2>
+        <p class="login-subtitle">Sign in to manage the platform</p>
+      </div>
 
-        <h1>Admin Login</h1>
+      <% if(error) { %>
+        <div class="error-message">
+          <%= error %>
+        </div>
+      <% } %>
 
-        <% if(error){ %>
-            <div class="error">
-                <%= error %>
-            </div>
-            <% } %>
+      <form method="POST" action="/admin/login">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Enter admin username" required autocomplete="off">
+        </div>
 
-                <form method="POST" action="/admin/login">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter admin password" required autocomplete="off">
+        </div>
 
-                    <input type="text" name="username" placeholder="Admin Username" required>
+        <button type="submit" class="btn-login">
+          <span>Sign In</span>
+        </button>
+      </form>
 
-                    <input type="password" name="password" placeholder="Admin Password" required>
-
-                    <button type="submit">Login</button>
-
-                </form>
-
+      <a href="/home" class="back-link">← Back to Home</a>
     </div>
+  </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+
+  <script>
+    // Custom cursor
+    const cur = document.getElementById('cur');
+    const ring = document.getElementById('cur-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
+
+      (function ani() {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+        rx += (mx - rx) * 0.13;
+        ry += (my - ry) * 0.13;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(ani);
+      })();
+    }
+
+    // Form submission feedback
+    const form = document.querySelector('form');
+    const btn = document.querySelector('.btn-login');
+
+    form.addEventListener('submit', (e) => {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Signing in...</span>';
+      btn.style.pointerEvents = 'none';
+    });
+
+    // Reveal animation
+    const card = document.querySelector('.login-card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+      card.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 100);
+  </script>
 </body>
 
 </html>

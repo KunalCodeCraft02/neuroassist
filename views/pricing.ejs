@@ -1,339 +1,1114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NeuroAssist Co — Pricing</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    :root {
+      --bg: #04040a;
+      --surface: #09090f;
+      --surface2: #0e0e18;
+      --accent: #ff7518;
+      --accent-glow: rgba(255, 117, 24, 0.2);
+      --text: #eeeef5;
+      --muted: #5a5a78;
+      --border: rgba(255, 255, 255, 0.07);
+      --radius: 16px;
+    }
 
-    <title>Pricing - Neuro Assist</title>
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      cursor: none;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+    /* CUSTOM CURSOR */
+    #cur,
+    #cur-ring {
+      display: none;
+    }
 
-        body {
-            background: white;
-            color: #111;
-        }
+    @media (pointer: fine) {
+      #cur,
+      #cur-ring {
+        display: block;
+        position: fixed;
+        z-index: 99999;
+      }
 
-        /* HEADER */
+      #cur {
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+        mix-blend-mode: difference;
+        pointer-events: none;
+      }
 
-        .header {
-            text-align: center;
-            padding: 80px 20px 40px 20px;
-        }
+      #cur-ring {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 117, 24, 0.35);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: transform 0.13s ease-out;
+        pointer-events: none;
+        z-index: 99998;
+      }
 
-        .header h1 {
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+      body:has(a:hover) #cur,
+      body:has(button:hover) #cur,
+      body:has(.pricing-card:hover) #cur {
+        width: 18px;
+        height: 18px;
+      }
+    }
 
-        .header p {
-            color: #666;
-            font-size: 16px;
-        }
+    /* NOISE OVERLAY */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+    }
 
-        /* PRICING SECTION */
+    /* BACKGROUND GRID */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 117, 24, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 117, 24, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+      min-width: 100vw;
+      min-height: 100vh;
+    }
 
-        .pricing-container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 40px 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-        }
+    @keyframes gridScroll {
+      from {
+        transform: translate(0, 0);
+      }
+      to {
+        transform: translate(72px, 72px);
+      }
+    }
 
-        /* CARD */
+    /* ORBS */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        .pricing-card {
+    .orb-1 {
+      top: -150px;
+      right: -120px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(255, 117, 24, 0.1) 0%, transparent 70%);
+      animation: orbA 12s ease-in-out infinite alternate;
+    }
 
-            border: 1px solid #eee;
-            border-radius: 14px;
-            padding: 35px;
-            background: white;
-            transition: 0.3s;
-            position: relative;
+    .orb-2 {
+      bottom: -80px;
+      left: -80px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(79, 142, 247, 0.08) 0%, transparent 70%);
+      animation: orbB 14s ease-in-out infinite alternate;
+    }
 
-        }
+    @media (min-width: 768px) {
+      .orb-1 {
+        top: -200px;
+        right: -150px;
+        width: 600px;
+        height: 600px;
+      }
 
-        .pricing-card:hover {
+      .orb-2 {
+        bottom: -100px;
+        left: -100px;
+        width: 400px;
+        height: 400px;
+      }
+    }
 
-            transform: translateY(-6px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    @keyframes orbA {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        transform: translate(-30px, 30px) scale(1.1);
+      }
+    }
 
-        }
+    @keyframes orbB {
+      0% {
+        transform: translate(0, 0);
+      }
+      100% {
+        transform: translate(20px, -20px) scale(1.05);
+      }
+    }
 
-        /* POPULAR PLAN */
+    /* MOBILE MENU */
+    #fixediv {
+      position: fixed;
+      top: -110%;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: var(--bg);
+      z-index: 100000;
+      transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      display: block;
+      overflow-y: auto;
+    }
 
-        .popular {
+    #fixediv.open {
+      top: 0;
+    }
 
-            border: 2px solid black;
+    .links-fixed {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+    }
 
-        }
+    .links-fixed a {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.4s ease;
+    }
 
-        .popular-badge {
+    #fixediv.open .links-fixed a {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: black;
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
+    .links-fixed a:hover {
+      color: var(--accent);
+    }
 
-        }
+    #fixediv .close-btn {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      font-size: 28px;
+      color: var(--text);
+      background: none;
+      border: none;
+      cursor: none;
+    }
 
-        /* PLAN NAME */
+    #fixediv .close-btn:hover {
+      color: var(--muted);
+    }
 
-        .plan-name {
+    /* NAVBAR */
+    #nav {
+      height: 80px;
+      width: 100%;
+      position: fixed;
+      z-index: 1000;
+      padding: 0 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
+      border-bottom: 1px solid transparent;
+    }
 
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 10px;
+    #nav.scrolled {
+      background: rgba(4, 4, 10, 0.88);
+      backdrop-filter: blur(20px);
+      border-color: var(--border);
+    }
 
-        }
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      text-decoration: none;
+    }
 
-        /* PRICE */
+    .logo h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--text);
+    }
 
-        .price {
+    .logo h3:nth-child(2) {
+      color: var(--accent);
+    }
 
-            font-size: 36px;
-            font-weight: 700;
-            margin: 10px 0;
+    .logo h3:nth-child(3) {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+    }
 
-        }
+    #navPart2 {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
 
-        .price span {
+    #nav-links {
+      display: flex;
+      gap: 28px;
+    }
 
-            font-size: 14px;
-            color: #666;
+    #nav-links a {
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 0.3s;
+      cursor: none;
+      white-space: nowrap;
+    }
 
-        }
+    #nav-links a:hover {
+      color: var(--text);
+    }
 
-        /* FEATURES */
+    #icon {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
 
-        .features {
+    #icon i {
+      font-size: 20px;
+      color: var(--muted);
+      cursor: none;
+      transition: color 0.3s;
+    }
 
-            margin-top: 20px;
-            list-style: none;
+    #icon i:hover {
+      color: var(--text);
+    }
 
-        }
+    #menuicon {
+      display: none;
+      font-size: 22px;
+      cursor: none;
+    }
 
-        .features li {
+    .nav-cta-btn {
+      display: none;
+      background: var(--accent);
+      color: #04040a;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: none;
+      transition: background 0.3s, transform 0.2s;
+    }
 
-            margin-bottom: 10px;
-            color: #444;
-            font-size: 14px;
+    .nav-cta-btn:hover {
+      background: #ff8c3d;
+      transform: translateY(-1px);
+    }
 
-        }
+    @media (max-width: 768px) {
+      #nav {
+        padding: 0 20px;
+        height: 70px;
+      }
 
-        /* BUTTON */
+      .logo h3 {
+        font-size: 18px;
+      }
 
-        .btn {
+      .logo h3:nth-child(3) {
+        font-size: 12px;
+      }
 
-            margin-top: 25px;
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: black;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.2s;
+      #nav-links {
+        display: none;
+      }
 
-        }
+      #menuicon {
+        display: block;
+      }
 
-        .btn:hover {
+      .nav-cta-btn {
+        display: none;
+      }
+    }
 
-            opacity: 0.85;
+    @media (min-width: 1024px) {
+      .nav-cta-btn {
+        display: block;
+      }
+    }
 
-        }
+    /* CONTENT WRAPPER */
+    .content-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding-top: 80px;
+      min-height: 100vh;
+    }
 
-        /* MOBILE */
+    @media (max-width: 768px) {
+      .content-wrapper {
+        padding-top: 70px;
+      }
+    }
 
-        @media(max-width:768px) {
+    /* PAGE HEADER */
+    .page-header {
+      padding: 80px 50px 60px;
+      text-align: center;
+      position: relative;
+    }
 
-            .header h1 {
-                font-size: 32px;
-            }
+    @media (max-width: 768px) {
+      .page-header {
+        padding: 60px 24px 40px;
+      }
+    }
 
-            .price {
-                font-size: 30px;
-            }
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 117, 24, 0.06);
+      padding: 7px 16px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-radius: 100px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s ease both;
+    }
 
-        }
-    </style>
+    .page-badge span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
 
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      animation: fadeUp 0.9s 0.1s ease both;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 600px;
+      margin: 0 auto;
+      animation: fadeUp 0.9s 0.2s ease both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* PRICING CONTAINER */
+    .pricing-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 50px 80px;
+    }
+
+    @media (max-width: 768px) {
+      .pricing-wrapper {
+        padding: 30px 24px 60px;
+      }
+    }
+
+    .pricing-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .pricing-container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+
+    /* PRICING CARD */
+    .pricing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pricing-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--accent);
+      box-shadow: 0 20px 50px rgba(255, 117, 24, 0.15);
+    }
+
+    .pricing-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    /* POPULAR CARD */
+    .pricing-card.popular {
+      border: 2px solid var(--accent);
+      background: rgba(255, 117, 24, 0.03);
+    }
+
+    .pricing-card.popular::before {
+      transform: scaleX(1);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #04040a;
+      padding: 6px 20px;
+      border-radius: 100px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(255, 117, 24, 0.3);
+      z-index: 10;
+    }
+
+    /* PLAN NAME */
+    .plan-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    /* PRICE */
+    .price {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 48px;
+      line-height: 1;
+      margin: 16px 0 8px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .price span {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    /* DESCRIPTION */
+    .plan-description {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* FEATURES */
+    .features {
+      list-style: none;
+      margin: 28px 0;
+      flex-grow: 1;
+    }
+
+    .features li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .features li:last-child {
+      margin-bottom: 0;
+    }
+
+    .features li i {
+      color: var(--accent);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* BUTTON */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.3s ease;
+      margin-top: auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #ff8c3d 100%);
+      color: #04040a;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .btn-primary:hover::before {
+      transform: scaleX(1);
+    }
+
+    .btn-primary span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 117, 24, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .btn-disabled {
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: not-allowed;
+      border: 1px solid var(--border);
+    }
+
+    .btn-disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* FOOTER */
+    .pg-footer {
+      font-family: 'DM Sans', sans-serif;
+      margin-top: 60px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer {
+      background: #04040a;
+      color: var(--text);
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: auto;
+      padding: 60px 50px 30px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    @media (min-width: 768px) {
+      .footer-content {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .footer-content {
+        grid-template-columns: 1fr 1fr 1fr 1.2fr;
+      }
+    }
+
+    .footer-logo {
+      margin-bottom: 16px;
+    }
+
+    .footer-logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .footer-logo span {
+      color: var(--accent);
+    }
+
+    .footer-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      margin-top: 12px;
+    }
+
+    .footer-menu {
+      margin-top: 0;
+    }
+
+    .footer-menu-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .footer-menu-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-menu-list li a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.7;
+      transition: opacity 0.3s, color 0.3s;
+    }
+
+    .footer-menu-list li a:hover {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .footer-copyright {
+      border-top: 1px solid var(--border);
+      padding: 20px 50px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .footer-copyright-text {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-copyright-link {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .footer-copyright-link:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+      .footer-content {
+        padding: 40px 24px 50px;
+      }
+
+      .footer-copyright {
+        padding: 20px 24px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="cur"></div>
+  <div id="cur-ring"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-    <div class="header">
+  <!-- Mobile Menu -->
+  <div id="fixediv">
+    <button class="close-btn" id="closeMenu">
+      <i class="ri-close-line"></i>
+    </button>
+    <div class="links-fixed">
+      <a href="/home">HOME</a>
+      <a href="/about">ABOUT</a>
+      <a href="/profile">PROFILE</a>
+      <a href="/contact">CONTACT</a>
+      <a href="/bookings">BOOKINGS</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
 
-        <h1>Simple Pricing</h1>
-        <p>Choose a plan that fits your business</p>
+  <!-- Navigation -->
+  <div id="nav">
+    <div class="logo">
+      <a href="/home" class="logo-link">
+        <h3>Neuro</h3>
+        <h3>Assist</h3>
+        <h3>Co</h3>
+      </a>
+    </div>
+    <div id="navPart2">
+      <div id="nav-links">
+        <a href="/home">Home</a>
+        <a href="/about">About</a>
+        <a href="/profile">Profile</a>
+        <a href="/bookings">Bookings</a>
+        <a href="/logout">Logout</a>
+      </div>
+      <div id="icon">
+        <i id="menuicon" class="ri-menu-line"></i>
+        <i class="ri-shopping-cart-2-line"></i>
+      </div>
+    </div>
+  </div>
 
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="page-header">
+      <div class="page-badge"><span></span>Pricing Plans</div>
+      <h1 class="page-title">Choose Your<br>Perfect Plan</h1>
+      <p class="page-subtitle">Simple, transparent pricing. No hidden fees. Start free and scale as you grow.</p>
     </div>
 
-
-    <div class="pricing-container">
+    <div class="pricing-wrapper">
+      <div class="pricing-container">
 
         <!-- FREE PLAN -->
-
         <div class="pricing-card">
-
-            <div class="plan-name">Free</div>
-
-            <div class="price">
-                ₹0 <span>/ forever</span>
-            </div>
-
-            <ul class="features">
-
-                <li>2 Chatbots</li>
-                <li>Basic AI replies</li>
-                <li>Website embedding</li>
-                <li>Community support</li>
-
-            </ul>
-
-            <button class="btn" disabled>
-                Current Plan
-            </button>
-
+          <div class="plan-name">Free</div>
+          <div class="price">₹0 <span>/ forever</span></div>
+          <p class="plan-description">Perfect for trying out NeuroAssist and small projects</p>
+          <ul class="features">
+            <li><i class="ri-checkbox-circle-fill"></i> 2 Chatbots</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Basic AI replies</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Website embedding</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Community support</li>
+          </ul>
+          <button class="btn btn-disabled" disabled>
+            Current Plan
+          </button>
         </div>
-
 
         <!-- PRO PLAN -->
-
         <div class="pricing-card popular">
-
-            <div class="popular-badge">
-                Most Popular
-            </div>
-
-            <div class="plan-name">
-                Pro
-            </div>
-
-            <div class="price">
-                ₹499 <span>/ month</span>
-            </div>
-
-            <ul class="features">
-
-                <li>10 Chatbots</li>
-                <li>Website AI training</li>
-                <li>Conversation analytics</li>
-                <li>Priority support</li>
-
-            </ul>
-
-            <button class="btn" onclick="pay(499)">
-                Upgrade
-            </button>
-
+          <div class="popular-badge">Most Popular</div>
+          <div class="plan-name">Pro</div>
+          <div class="price">₹499 <span>/ month</span></div>
+          <p class="plan-description">Best for growing businesses that need more power</p>
+          <ul class="features">
+            <li><i class="ri-checkbox-circle-fill"></i> 10 Chatbots</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Website AI training</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Conversation analytics</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Priority support</li>
+          </ul>
+          <button class="btn btn-primary" onclick="pay(499, 'pro')">
+            <span>Upgrade</span>
+          </button>
         </div>
-
 
         <!-- BUSINESS PLAN -->
-
         <div class="pricing-card">
-
-            <div class="plan-name">
-                Business
-            </div>
-
-            <div class="price">
-                ₹999 <span>/ month</span>
-            </div>
-
-            <ul class="features">
-
-                <li>Unlimited chatbots</li>
-                <li>Advanced AI responses</li>
-                <li>Full analytics dashboard</li>
-                <li>Priority support</li>
-
-            </ul>
-
-            <button class="btn" onclick="pay(999)">
-                Upgrade
-            </button>
-
+          <div class="plan-name">Business</div>
+          <div class="price">₹999 <span>/ month</span></div>
+          <p class="plan-description">For large teams requiring enterprise-grade features</p>
+          <ul class="features">
+            <li><i class="ri-checkbox-circle-fill"></i> Unlimited chatbots</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Advanced AI responses</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Full analytics dashboard</li>
+            <li><i class="ri-checkbox-circle-fill"></i> Dedicated account manager</li>
+          </ul>
+          <button class="btn btn-primary" onclick="pay(999, 'business')">
+            <span>Upgrade</span>
+          </button>
         </div>
 
+      </div>
     </div>
+  </div>
 
+  <!-- Footer -->
+  <div class="pg-footer">
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-content-column">
+          <div class="footer-logo">
+            <h1>Neuro<span>Assist</span></h1>
+          </div>
+          <p class="footer-desc">The AI platform for building smart chatbots that work for your business around the clock.</p>
+        </div>
 
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <div class="footer-content-column">
+          <div class="footer-menu">
+            <h2 class="footer-menu-name">Get Started</h2>
+            <ul class="footer-menu-list">
+              <li><a href="/home">Home</a></li>
+              <li><a href="#">Documentation</a></li>
+              <li><a href="/createbot">Create Bot</a></li>
+            </ul>
+          </div>
+        </div>
 
-    <script>
+        <div class="footer-content-column">
+          <div class="footer-menu">
+            <h2 class="footer-menu-name">Company</h2>
+            <ul class="footer-menu-list">
+              <li><a href="/contact">Contact</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+            </ul>
+          </div>
+        </div>
 
-        async function pay(amount) {
+        <div class="footer-content-column">
+          <div class="footer-call-to-action">
+            <h2 class="footer-call-to-action-title">Need Help?</h2>
+            <p class="footer-call-to-action-description">Our team is here to assist you.</p>
+            <a class="footer-call-to-action-button" href="/contact">Get in Touch</a>
+          </div>
+        </div>
+      </div>
 
-            const res = await fetch("/create-order", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ amount })
-            })
+      <div class="footer-copyright">
+        <p class="footer-copyright-text">
+          © 2025 <a href="/home" class="footer-copyright-link">NeuroAssist Co.</a> All rights reserved.
+        </p>
+      </div>
+    </footer>
+  </div>
 
-            const order = await res.json()
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
 
-            const options = {
+  <script>
+    // Custom cursor
+    const cur = document.getElementById('cur');
+    const ring = document.getElementById('cur-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
 
-                key: "<%= process.env.RAZORPAY_KEY_ID %>",
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
 
-                amount: order.amount,
+      (function ani() {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+        rx += (mx - rx) * 0.13;
+        ry += (my - ry) * 0.13;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(ani);
+      })();
+    }
 
-                currency: "INR",
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+    });
 
-                name: "Neuro Assist",
+    // Mobile menu
+    const menuBtn = document.getElementById('menuicon');
+    const closeBtn = document.getElementById('closeMenu');
+    const menuDiv = document.getElementById('fixediv');
 
-                description: "Subscription Plan",
+    menuBtn.addEventListener('click', () => {
+      menuDiv.classList.add('open');
+    });
 
-                order_id: order.id,
+    closeBtn.addEventListener('click', () => {
+      menuDiv.classList.remove('open');
+    });
 
-                handler: async function (response) {
+    menuDiv.addEventListener('click', (e) => {
+      if (e.target === menuDiv) {
+        menuDiv.classList.remove('open');
+      }
+    });
 
-                    await fetch("/verify-payment", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(response)
-                    })
-
-                    alert("Payment Successful!")
-
-                    location.reload()
-
-                }
-
-            }
-
-            const rzp = new Razorpay(options)
-
-            rzp.open()
-
+    // Scroll reveal animations
+    const revealEls = document.querySelectorAll('.page-header, .pricing-wrapper, .pricing-card');
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, index * 100);
+          revealObs.unobserve(entry.target);
         }
+      });
+    }, { threshold: 0.1 });
 
-    </script>
+    revealEls.forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+      revealObs.observe(el);
+    });
 
+    // Payment function
+    async function pay(amount, planType = 'pro') {
+      try {
+        const res = await fetch("/create-order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ amount })
+        });
+
+        const order = await res.json();
+
+        const options = {
+          key: "<%= process.env.RAZORPAY_KEY_ID %>",
+          amount: order.amount,
+          currency: "INR",
+          name: "Neuro Assist",
+          description: "Subscription Plan",
+          order_id: order.id,
+          handler: async function(response) {
+            await fetch("/verify-payment", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                ...response,
+                planType: planType
+              })
+            });
+
+            alert("Payment Successful!");
+            location.reload();
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } catch (error) {
+        console.error("Payment error:", error);
+        alert("Payment failed. Please try again.");
+      }
+    }
+  </script>
 </body>
 
 </html>

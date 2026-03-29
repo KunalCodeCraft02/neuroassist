@@ -2,190 +2,1102 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Booking Agent</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NeuroAssist Co — Create Booking Agent</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
-        }
+    :root {
+      --bg: #04040a;
+      --surface: #09090f;
+      --surface2: #0e0e18;
+      --accent: #ff7518;
+      --accent-glow: rgba(255, 117, 24, 0.2);
+      --text: #eeeef5;
+      --muted: #5a5a78;
+      --border: rgba(255, 255, 255, 0.07);
+      --radius: 16px;
+    }
 
-        body {
-            background: #ffffff;
-            color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            background: #fff;
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      cursor: none;
+    }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-        }
+    /* CUSTOM CURSOR */
+    #cur,
+    #cur-ring {
+      display: none;
+    }
 
-        .form-group {
-            margin-bottom: 18px;
-        }
+    @media (pointer: fine) {
+      #cur,
+      #cur-ring {
+        display: block;
+        position: fixed;
+        z-index: 99999;
+      }
 
-        label {
-            font-size: 14px;
-            margin-bottom: 6px;
-            display: block;
-            color: #555;
-        }
+      #cur {
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+        mix-blend-mode: difference;
+        pointer-events: none;
+      }
 
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            outline: none;
-            transition: 0.2s;
-        }
+      #cur-ring {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 117, 24, 0.35);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: transform 0.13s ease-out;
+        pointer-events: none;
+        z-index: 99998;
+      }
 
-        input:focus, select:focus {
-            border-color: #111;
-        }
+      body:has(a:hover) #cur,
+      body:has(button:hover) #cur,
+      body:has(input:hover) #cur,
+      body:has(select:hover) #cur {
+        width: 18px;
+        height: 18px;
+      }
+    }
 
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 8px;
-        }
+    /* NOISE OVERLAY */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+    }
 
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 13px;
-            background: #f5f5f5;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+    /* BACKGROUND GRID */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 117, 24, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 117, 24, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+      min-width: 100vw;
+      min-height: 100vh;
+    }
 
-        .time-row {
-            display: flex;
-            gap: 10px;
-        }
+    @keyframes gridScroll {
+      from {
+        transform: translate(0, 0);
+      }
+      to {
+        transform: translate(72px, 72px);
+      }
+    }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            background: #111;
-            color: #fff;
-            font-size: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: 0.3s;
-        }
+    /* ORBS */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        button:hover {
-            background: #333;
-        }
+    .orb-1 {
+      top: -150px;
+      right: -120px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(255, 117, 24, 0.1) 0%, transparent 70%);
+      animation: orbA 12s ease-in-out infinite alternate;
+    }
 
-        .note {
-            font-size: 13px;
-            color: #777;
-            margin-top: 10px;
-            text-align: center;
-        }
+    .orb-2 {
+      bottom: -80px;
+      left: -80px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(79, 142, 247, 0.08) 0%, transparent 70%);
+      animation: orbB 14s ease-in-out infinite alternate;
+    }
 
-    </style>
+    @media (min-width: 768px) {
+      .orb-1 {
+        top: -200px;
+        right: -150px;
+        width: 600px;
+        height: 600px;
+      }
+
+      .orb-2 {
+        bottom: -100px;
+        left: -100px;
+        width: 400px;
+        height: 400px;
+      }
+    }
+
+    @keyframes orbA {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        transform: translate(-30px, 30px) scale(1.1);
+      }
+    }
+
+    @keyframes orbB {
+      0% {
+        transform: translate(0, 0);
+      }
+      100% {
+        transform: translate(20px, -20px) scale(1.05);
+      }
+    }
+
+    /* NAVBAR */
+    #nav {
+      height: 80px;
+      width: 100%;
+      position: fixed;
+      z-index: 1000;
+      padding: 0 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.4s, border-color 0.4s, backdrop-filter 0.4s;
+      border-bottom: 1px solid transparent;
+    }
+
+    #nav.scrolled {
+      background: rgba(4, 4, 10, 0.88);
+      backdrop-filter: blur(20px);
+      border-color: var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      text-decoration: none;
+    }
+
+    .logo h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .logo h3:nth-child(2) {
+      color: var(--accent);
+    }
+
+    .logo h3:nth-child(3) {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    #navPart2 {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    #nav-links {
+      display: flex;
+      gap: 28px;
+    }
+
+    #nav-links a {
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 0.3s;
+      cursor: none;
+      white-space: nowrap;
+    }
+
+    #nav-links a:hover {
+      color: var(--text);
+    }
+
+    #icon {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #icon i {
+      font-size: 20px;
+      color: var(--muted);
+      cursor: none;
+      transition: color 0.3s;
+    }
+
+    #icon i:hover {
+      color: var(--text);
+    }
+
+    #menuicon {
+      display: none;
+      font-size: 22px;
+      cursor: none;
+    }
+
+    .nav-cta-btn {
+      display: none;
+      background: var(--accent);
+      color: #04040a;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: none;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .nav-cta-btn:hover {
+      background: #ff8c3d;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+      #nav {
+        padding: 0 20px;
+        height: 70px;
+      }
+
+      .logo h3 {
+        font-size: 18px;
+      }
+
+      .logo h3:nth-child(3) {
+        font-size: 12px;
+      }
+
+      #nav-links {
+        display: none;
+      }
+
+      #menuicon {
+        display: block;
+      }
+
+      .nav-cta-btn {
+        display: none;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .nav-cta-btn {
+        display: block;
+      }
+    }
+
+    /* MOBILE MENU */
+    #fixediv {
+      position: fixed;
+      top: -110%;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: var(--bg);
+      z-index: 100000;
+      transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      display: block;
+      overflow-y: auto;
+    }
+
+    #fixediv.open {
+      top: 0;
+    }
+
+    .links-fixed {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+    }
+
+    .links-fixed a {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.4s ease;
+    }
+
+    #fixediv.open .links-fixed a {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .links-fixed a:hover {
+      color: var(--accent);
+    }
+
+    #fixediv .close-btn {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      font-size: 28px;
+      color: var(--text);
+      background: none;
+      border: none;
+      cursor: none;
+    }
+
+    #fixediv .close-btn:hover {
+      color: var(--muted);
+    }
+
+    /* CONTENT WRAPPER */
+    .content-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding-top: 80px;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 768px) {
+      .content-wrapper {
+        padding-top: 70px;
+      }
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+      padding: 60px 50px 40px;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .page-header {
+        padding: 50px 24px 30px;
+      }
+    }
+
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 117, 24, 0.06);
+      padding: 7px 16px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-radius: 100px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .page-badge span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(36px, 5vw, 64px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      animation: fadeUp 0.9s 0.1s ease both;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 600px;
+      margin: 0 auto;
+      animation: fadeUp 0.9s 0.2s ease both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* FORM CONTAINER */
+    .form-container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 50px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      animation: fadeUp 0.9s 0.3s ease both;
+    }
+
+    @media (max-width: 768px) {
+      .form-container {
+        padding: 30px 24px;
+        margin: 20px 24px;
+      }
+    }
+
+    .form-section {
+      margin-bottom: 36px;
+    }
+
+    .form-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+      letter-spacing: 0.02em;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.3s ease;
+      cursor: none;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%235a5a78' viewBox='0 0 16 16'%3E%3Cpath d='M8 10.5a.5.5 0 0 0 .5-.5V4.567l2.683 2.684a.5.5 0 0 0 .768-.617l-2.94-2.94A.5.5 0 0 0 8.683 3.1l-2.94 2.94a.5.5 0 0 0 .768.617L8 4.121V10.5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+
+    select option {
+      background: var(--surface);
+      color: var(--text);
+      padding: 10px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: none;
+      transition: all 0.3s ease;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      font-weight: 400;
+      margin-bottom: 0;
+    }
+
+    .checkbox-group label:hover {
+      border-color: var(--accent);
+      background: rgba(255, 117, 24, 0.05);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: none;
+    }
+
+    .time-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent) 0%, #ff8c3d 100%);
+      color: #04040a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.3s ease;
+      margin-top: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-submit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .btn-submit:hover::before {
+      transform: scaleX(1);
+    }
+
+    .btn-submit span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 117, 24, 0.3);
+    }
+
+    .form-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 20px;
+      text-align: center;
+      padding: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .form-note i {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    /* FOOTER */
+    .pg-footer {
+      font-family: 'DM Sans', sans-serif;
+      margin-top: 60px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer {
+      background: #04040a;
+      color: var(--text);
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: auto;
+      padding: 60px 50px 30px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    @media (min-width: 768px) {
+      .footer-content {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .footer-content {
+        grid-template-columns: 1fr 1fr 1fr 1.2fr;
+      }
+    }
+
+    .footer-logo {
+      margin-bottom: 16px;
+    }
+
+    .footer-logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .footer-logo span {
+      color: var(--accent);
+    }
+
+    .footer-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      margin-top: 12px;
+    }
+
+    .footer-menu {
+      margin-top: 0;
+    }
+
+    .footer-menu-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .footer-menu-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-menu-list li a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.7;
+      transition: opacity 0.3s, color 0.3s;
+    }
+
+    .footer-menu-list li a:hover {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .footer-copyright {
+      border-top: 1px solid var(--border);
+      padding: 20px 50px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .footer-copyright-text {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-copyright-link {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .footer-copyright-link:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+      .footer-content {
+        padding: 40px 24px 50px;
+      }
+
+      .footer-copyright {
+        padding: 20px 24px;
+      }
+    }
+
+    .required-star {
+      color: var(--accent);
+    }
+  </style>
 </head>
 
 <body>
+  <div id="cur"></div>
+  <div id="cur-ring"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-    <div class="container">
+  <!-- Mobile Menu -->
+  <div id="fixediv">
+    <button class="close-btn" id="closeMenu">
+      <i class="ri-close-line"></i>
+    </button>
+    <div class="links-fixed">
+      <a href="/home">HOME</a>
+      <a href="/about">ABOUT</a>
+      <a href="/pricing">PRICING</a>
+      <a href="/profile">PROFILE</a>
+      <a href="/bookings">BOOKINGS</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
 
-        <h2>Create AI Call Booking Agent</h2>
+  <!-- Navigation -->
+  <div id="nav">
+    <div class="logo">
+      <a href="/home" class="logo-link">
+        <h3>Neuro</h3>
+        <h3>Assist</h3>
+        <h3>Co</h3>
+      </a>
+    </div>
+    <div id="navPart2">
+      <div id="nav-links">
+        <a href="/home">Home</a>
+        <a href="/about">About</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/profile">Profile</a>
+        <a href="/bookings">Bookings</a>
+        <a href="/logout">Logout</a>
+      </div>
+      <div id="icon">
+        <i id="menuicon" class="ri-menu-line"></i>
+        <i class="ri-shopping-cart-2-line"></i>
+      </div>
+    </div>
+  </div>
 
-        <form action="/create-booking-agent" method="POST">
-
-            <!-- Company Name -->
-            <div class="form-group">
-                <label>Business Name</label>
-                <input type="text" name="businessName" placeholder="Enter your company name" required>
-            </div>
-
-            <!-- Category -->
-            <div class="form-group">
-                <label>Category</label>
-                <select name="category" required>
-                    <option value="">Select Category</option>
-                    <option value="hospital">Hospital</option>
-                    <option value="salon">Salon</option>
-                    <option value="gym">Gym</option>
-                    <option value="restaurant">Restaurant</option>
-                </select>
-            </div>
-
-            <!-- Phone -->
-            <div class="form-group">
-                <label>Business Phone Number</label>
-                <input type="text" name="customerNumber" placeholder="+91XXXXXXXXXX" required>
-            </div>
-
-            <!-- Working Days -->
-            <div class="form-group">
-                <label>Working Days</label>
-                <div class="checkbox-group">
-                    <label><input type="checkbox" name="workingDays" value="Mon"> Mon</label>
-                    <label><input type="checkbox" name="workingDays" value="Tue"> Tue</label>
-                    <label><input type="checkbox" name="workingDays" value="Wed"> Wed</label>
-                    <label><input type="checkbox" name="workingDays" value="Thu"> Thu</label>
-                    <label><input type="checkbox" name="workingDays" value="Fri"> Fri</label>
-                    <label><input type="checkbox" name="workingDays" value="Sat"> Sat</label>
-                </div>
-            </div>
-
-            <!-- Time -->
-            <div class="form-group">
-                <label>Working Hours</label>
-                <div class="time-row">
-                    <input type="text" name="startTime" placeholder="Start (09:00)">
-                    <input type="text" name="endTime" placeholder="End (18:00)">
-                </div>
-            </div>
-
-            <!-- Slot -->
-            <div class="form-group">
-                <label>Slot Duration</label>
-                <select name="slotDuration">
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="60">1 hour</option>
-                </select>
-            </div>
-
-            <button type="submit">Create Agent 🚀</button>
-
-            <p class="note">
-                Your AI will handle calls & bookings automatically 📞
-            </p>
-
-        </form>
-
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="page-header">
+      <div class="page-badge"><span></span>AI Bot Builder</div>
+      <h1 class="page-title">Create Booking<br>Agent</h1>
+      <p class="page-subtitle">Set up your AI calling agent in minutes. Let it handle bookings, reminders, and customer inquiries automatically.</p>
     </div>
 
+    <div class="form-container">
+      <form action="/create-booking-agent" method="POST">
+
+        <!-- Business Info Section -->
+        <div class="form-section">
+          <h2 class="section-title"><i class="ri-building-line"></i> Business Information</h2>
+
+          <div class="form-group">
+            <label for="businessName">Business Name <span class="required-star">*</span></label>
+            <input type="text" id="businessName" name="businessName" placeholder="Enter your company name" required autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="category">Category <span class="required-star">*</span></label>
+            <select id="category" name="category" required>
+              <option value="">Select Category</option>
+              <option value="hospital">Hospital / Clinic</option>
+              <option value="salon">Salon / Spa</option>
+              <option value="gym">Gym / Fitness</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="hotel">Hotel</option>
+              <option value="clinic">Dental Clinic</option>
+              <option value="education">Education</option>
+              <option value="legal">Legal Services</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="customerNumber">Business Phone Number <span class="required-star">*</span></label>
+            <input type="text" id="customerNumber" name="customerNumber" placeholder="+91XXXXXXXXXX" required autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Schedule Section -->
+        <div class="form-section">
+          <h2 class="section-title"><i class="ri-calendar-line"></i> Schedule</h2>
+
+          <div class="form-group">
+            <label>Working Days</label>
+            <div class="checkbox-group">
+              <label>
+                <input type="checkbox" name="workingDays" value="Mon"> Mon
+              </label>
+              <label>
+                <input type="checkbox" name="workingDays" value="Tue"> Tue
+              </label>
+              <label>
+                <input type="checkbox" name="workingDays" value="Wed"> Wed
+              </label>
+              <label>
+                <input type="checkbox" name="workingDays" value="Thu"> Thu
+              </label>
+              <label>
+                <input type="checkbox" name="workingDays" value="Fri"> Fri
+              </label>
+              <label>
+                <input type="checkbox" name="workingDays" value="Sat"> Sat
+              </label>
+              <label>
+                <input type="checkbox" name="workingDays" value="Sun"> Sun
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Working Hours</label>
+            <div class="time-row">
+              <input type="text" id="startTime" name="startTime" placeholder="Start time (e.g., 09:00)" autocomplete="off">
+              <input type="text" id="endTime" name="endTime" placeholder="End time (e.g., 18:00)" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="slotDuration">Slot Duration</label>
+            <select id="slotDuration" name="slotDuration">
+              <option value="15">15 minutes</option>
+              <option value="30" selected>30 minutes</option>
+              <option value="60">1 hour</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit">
+          <span>Create Agent 🚀</span>
+        </button>
+
+        <p class="form-note">
+          <i class="ri-magic-line"></i>
+          Your AI assistant will handle calls, bookings, and reminders automatically.
+        </p>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="pg-footer">
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-content-column">
+          <div class="footer-logo">
+            <h1>Neuro<span>Assist</span></h1>
+          </div>
+          <p class="footer-desc">The AI platform for building smart chatbots that work for your business around the clock.</p>
+        </div>
+
+        <div class="footer-content-column">
+          <div class="footer-menu">
+            <h2 class="footer-menu-name">Get Started</h2>
+            <ul class="footer-menu-list">
+              <li><a href="/home">Home</a></li>
+              <li><a href="#">Documentation</a></li>
+              <li><a href="/createbot">Create Bot</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-content-column">
+          <div class="footer-menu">
+            <h2 class="footer-menu-name">Company</h2>
+            <ul class="footer-menu-list">
+              <li><a href="/contact">Contact</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-content-column">
+          <div class="footer-call-to-action">
+            <h2 class="footer-call-to-action-title">Need Help?</h2>
+            <p class="footer-call-to-action-description">Our team is here to assist you.</p>
+            <a class="footer-call-to-action-button" href="/contact">Get in Touch</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-copyright">
+        <p class="footer-copyright-text">
+          © 2025 <a href="/home" class="footer-copyright-link">NeuroAssist Co.</a> All rights reserved.
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+
+  <script>
+    // Custom cursor
+    const cur = document.getElementById('cur');
+    const ring = document.getElementById('cur-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
+
+      (function ani() {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+        rx += (mx - rx) * 0.13;
+        ry += (my - ry) * 0.13;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(ani);
+      })();
+    }
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // Mobile menu
+    const menuBtn = document.getElementById('menuicon');
+    const closeBtn = document.getElementById('closeMenu');
+    const menuDiv = document.getElementById('fixediv');
+
+    menuBtn.addEventListener('click', () => {
+      menuDiv.classList.add('open');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      menuDiv.classList.remove('open');
+    });
+
+    menuDiv.addEventListener('click', (e) => {
+      if (e.target === menuDiv) {
+        menuDiv.classList.remove('open');
+      }
+    });
+
+    // Scroll reveal animations for form sections
+    const revealEls = document.querySelectorAll('.form-section, .page-header, .form-container');
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, index * 100);
+          revealObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    revealEls.forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+      revealObs.observe(el);
+    });
+
+    // Form submission feedback
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (e) => {
+      const btn = document.querySelector('.btn-submit');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.style.pointerEvents = 'none';
+
+      // Re-enable after 3 seconds (or you can remove this if your form submission navigates away)
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+      }, 3000);
+    });
+  </script>
 </body>
 
 </html>

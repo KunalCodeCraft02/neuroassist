@@ -714,7 +714,7 @@ app.post("/createbot", auth, async (req, res) => {
 
         res.send(`<script>
       alert("Bot limit reached. Please upgrade to plan.");
-      window.location="/pharmacyadmin";
+      window.location="/pricing";
     </script>`);
 
     }
@@ -962,7 +962,8 @@ app.post("/verify-payment", async (req, res) => {
     const {
         razorpay_order_id,
         razorpay_payment_id,
-        razorpay_signature
+        razorpay_signature,
+        planType
     } = req.body
 
     const body = razorpay_order_id + "|" + razorpay_payment_id
@@ -974,9 +975,17 @@ app.post("/verify-payment", async (req, res) => {
 
     if (expected === razorpay_signature) {
 
+        let plan = "pro";
+        let botsLimit = 10;
+
+        if (planType === "business") {
+            plan = "business";
+            botsLimit = 999; // effectively unlimited
+        }
+
         await User.findByIdAndUpdate(req.user.id, {
-            plan: "pro",
-            botsLimit: 10
+            plan: plan,
+            botsLimit: botsLimit
         })
 
         res.json({ success: true })

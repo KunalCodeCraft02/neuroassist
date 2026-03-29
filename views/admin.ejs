@@ -2,313 +2,871 @@
 <html lang="en">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NeuroAssist Co — Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-<title>Admin Dashboard</title>
+    :root {
+      --bg: #04040a;
+      --surface: #09090f;
+      --surface2: #0e0e18;
+      --accent: #ff7518;
+      --accent-glow: rgba(255, 117, 24, 0.2);
+      --text: #eeeef5;
+      --muted: #5a5a78;
+      --border: rgba(255, 255, 255, 0.07);
+      --radius: 16px;
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
-}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      cursor: none;
+    }
 
-body {
-    background: #ffffff;
-    color: #111;
-}
+    /* CUSTOM CURSOR */
+    #cur,
+    #cur-ring {
+      display: none;
+    }
 
-/* NAVBAR */
-.nav {
-    height: 70px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 30px;
-}
+    @media (pointer: fine) {
+      #cur,
+      #cur-ring {
+        display: block;
+        position: fixed;
+        z-index: 99999;
+      }
 
-.nav h1 {
-    font-size: 18px;
-    font-weight: 600;
-}
+      #cur {
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+        mix-blend-mode: difference;
+        pointer-events: none;
+      }
 
-.logout {
-    border: 1px solid #111;
-    background: transparent;
-    padding: 8px 14px;
-    cursor: pointer;
-    border-radius: 6px;
-}
+      #cur-ring {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(255, 117, 24, 0.35);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: transform 0.13s ease-out;
+        pointer-events: none;
+        z-index: 99998;
+      }
 
-/* CONTAINER */
-.container {
-    max-width: 1300px;
-    margin: auto;
-    padding: 30px 20px;
-}
+      body:has(a:hover) #cur,
+      body:has(button:hover) #cur {
+        width: 18px;
+        height: 18px;
+      }
+    }
 
-/* STATS */
-.stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-    gap: 20px;
-    margin-bottom: 40px;
-}
+    /* NOISE OVERLAY */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+    }
 
-.stat {
-    border: 1px solid #eee;
-    padding: 20px;
-    border-radius: 10px;
-}
+    /* BACKGROUND GRID */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 117, 24, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 117, 24, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-.stat h2 {
-    font-size: 28px;
-    margin-bottom: 5px;
-}
+    @keyframes gridScroll {
+      from {
+        transform: translate(0, 0);
+      }
+      to {
+        transform: translate(72px, 72px);
+      }
+    }
 
-.stat p {
-    font-size: 13px;
-    color: #666;
-}
+    /* ORBS */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-/* GRAPH */
-.graph {
-    border: 1px solid #eee;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-}
+    .orb-1 {
+      top: -150px;
+      right: -120px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(255, 117, 24, 0.1) 0%, transparent 70%);
+      animation: orbA 12s ease-in-out infinite alternate;
+    }
 
-.graph h3 {
-    margin-bottom: 15px;
-    font-size: 15px;
-}
+    .orb-2 {
+      bottom: -80px;
+      left: -80px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(79, 142, 247, 0.08) 0%, transparent 70%);
+      animation: orbB 14s ease-in-out infinite alternate;
+    }
 
-/* TABLE */
-.section {
-    margin-top: 40px;
-}
+    @media (min-width: 768px) {
+      .orb-1 {
+        top: -200px;
+        right: -150px;
+        width: 600px;
+        height: 600px;
+      }
 
-.section h2 {
-    margin-bottom: 15px;
-    font-size: 16px;
-}
+      .orb-2 {
+        bottom: -100px;
+        left: -100px;
+        width: 400px;
+        height: 400px;
+      }
+    }
 
-.table {
-    border: 1px solid #eee;
-    border-radius: 10px;
-    overflow-x: auto;
-}
+    @keyframes orbA {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        transform: translate(-30px, 30px) scale(1.1);
+      }
+    }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-}
+    @keyframes orbB {
+      0% {
+        transform: translate(0, 0);
+      }
+      100% {
+        transform: translate(20px, -20px) scale(1.05);
+      }
+    }
 
-th {
-    text-align: left;
-    padding: 12px;
-    background: #fafafa;
-    font-size: 13px;
-}
-
-td {
-    padding: 12px;
-    border-top: 1px solid #eee;
-    font-size: 13px;
-}
-
-tr:hover {
-    background: #fafafa;
-}
-
-/* BADGE */
-.badge {
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    border: 1px solid #ddd;
-}
-
-/* RESPONSIVE */
-@media(max-width:768px){
+    /* NAVBAR */
     .nav {
-        flex-direction: column;
-        height: auto;
-        padding: 15px;
-        gap: 10px;
+      height: 80px;
+      width: 100%;
+      position: fixed;
+      z-index: 1000;
+      padding: 0 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(4, 4, 10, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
     }
 
+    .nav h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, var(--accent) 0%, #ff8c3d 100%);
+      color: #04040a;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 117, 24, 0.3);
+    }
+
+    /* CONTAINER */
     .container {
-        padding: 20px 10px;
+      position: relative;
+      z-index: 2;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 100px 50px 60px;
+      min-height: 100vh;
     }
-}
-</style>
 
+    @media (max-width: 768px) {
+      .container {
+        padding: 90px 24px 40px;
+      }
+
+      .nav {
+        padding: 0 20px;
+        height: 70px;
+      }
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+      margin-bottom: 40px;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 117, 24, 0.06);
+      padding: 7px 16px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-radius: 100px;
+      margin-bottom: 16px;
+    }
+
+    .page-badge span {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.4;
+        transform: scale(0.8);
+      }
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* STATS GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 50px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent) 0%, #ff8c3d 100%);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(255, 117, 24, 0.1);
+    }
+
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 36px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    /* CHARTS */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 50px;
+    }
+
+    @media (max-width: 768px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .chart-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chart-title i {
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* TABLES */
+    .table-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 40px;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: var(--surface2);
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-free {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge-pro {
+      background: rgba(255, 117, 24, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(255, 117, 24, 0.2);
+    }
+
+    .badge-business {
+      background: rgba(79, 142, 247, 0.1);
+      color: var(--blue);
+      border: 1px solid rgba(79, 142, 247, 0.2);
+    }
+
+    /* NO DATA */
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .no-data i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .table-section {
+        padding: 16px;
+      }
+
+      th, td {
+        padding: 12px;
+        font-size: 13px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="cur"></div>
+  <div id="cur-ring"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
 
-<!-- NAV -->
-<div class="nav">
+  <!-- NAVBAR -->
+  <div class="nav">
     <h1>NeuroAssist Admin</h1>
-    <button class="logout" onclick="window.location='/admin/logout'">Logout</button>
-</div>
+    <button class="logout-btn" onclick="window.location='/admin/logout'">Logout</button>
+  </div>
 
-<div class="container">
-
-<!-- STATS -->
-<div class="stats">
-    <div class="stat">
-        <h2><%= users.length %></h2>
-        <p>Total Users</p>
+  <div class="container">
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div class="page-badge"><span></span>Admin Dashboard</div>
+      <h1 class="page-title">Platform<br>Overview</h1>
     </div>
 
-    <div class="stat">
-        <h2><%= bots.length %></h2>
-        <p>Total Bots</p>
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-user-line"></i></div>
+        <div class="stat-value"><%= users.length %></div>
+        <div class="stat-label">Total Users</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-robot-line"></i></div>
+        <div class="stat-value"><%= bots.length %></div>
+        <div class="stat-label">Total Bots</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-calendar-check-line"></i></div>
+        <div class="stat-value"><%= bookings.length %></div>
+        <div class="stat-label">Total Bookings</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-money-rupee-circle-line"></i></div>
+        <div class="stat-value">₹ <%= totalRevenue.toLocaleString() %></div>
+        <div class="stat-label">Total Revenue</div>
+      </div>
     </div>
 
-    <div class="stat">
-        <h2><%= bookings.length %></h2>
-        <p>Total Bookings</p>
+    <!-- CHARTS -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3 class="chart-title"><i class="ri-pie-chart-line"></i> User Plans</h3>
+        <div class="chart-container">
+          <canvas id="planChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title"><i class="ri-line-chart-line"></i> Bot Growth</h3>
+        <div class="chart-container">
+          <canvas id="botChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title"><i class="ri-bar-chart-line"></i> Booking Growth</h3>
+        <div class="chart-container">
+          <canvas id="bookingChart"></canvas>
+        </div>
+      </div>
     </div>
 
-    <div class="stat">
-        <h2>₹ <%= totalRevenue %></h2>
-        <p>Total Revenue</p>
+    <!-- USERS TABLE -->
+    <div class="table-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="ri-user-line"></i> Users</h2>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if(users && users.length) { %>
+              <% users.forEach(u => { %>
+                <tr>
+                  <td><%= u.name %></td>
+                  <td><%= u.email %></td>
+                  <td>
+                    <% if(u.plan === 'free') { %>
+                      <span class="badge badge-free"><i class="ri-checkbox-blank-circle-line"></i> Free</span>
+                    <% } else if(u.plan === 'pro') { %>
+                      <span class="badge badge-pro"><i class="ri-checkbox-blank-circle-line"></i> Pro</span>
+                    <% } else if(u.plan === 'business') { %>
+                      <span class="badge badge-business"><i class="ri-checkbox-blank-circle-line"></i> Business</span>
+                    <% } %>
+                  </td>
+                  <td><%= new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4">
+                  <div class="no-data">
+                    <i class="ri-user-unfollow-line"></i>
+                    <p>No users found</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
     </div>
-</div>
 
-<!-- GRAPH 1 -->
-<div class="graph">
-    <h3>User Plans</h3>
-    <canvas id="planChart"></canvas>
-</div>
+    <!-- BOOKINGS TABLE -->
+    <div class="table-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="ri-calendar-line"></i> Bookings</h2>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Date</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if(bookings && bookings.length) { %>
+              <% bookings.forEach(b => { %>
+                <tr>
+                  <td><%= b.name || 'Caller' %></td>
+                  <td><%= b.phone %></td>
+                  <td><%= b.date %></td>
+                  <td><%= b.time %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4">
+                  <div class="no-data">
+                    <i class="ri-calendar-close-line"></i>
+                    <p>No bookings found</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-<!-- GRAPH 2 -->
-<div class="graph">
-    <h3>Bot Growth</h3>
-    <canvas id="botChart"></canvas>
-</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
 
-<!-- GRAPH 3 -->
-<div class="graph">
-    <h3>Booking Growth</h3>
-    <canvas id="bookingChart"></canvas>
-</div>
+  <script>
+    // Custom cursor
+    const cur = document.getElementById('cur');
+    const ring = document.getElementById('cur-ring');
+    let mx = 0, my = 0, rx = 0, ry = 0;
 
-<!-- USERS -->
-<div class="section">
-<h2>Users</h2>
-<div class="table">
-<table>
-<tr>
-<th>Name</th>
-<th>Email</th>
-<th>Plan</th>
-<th>Joined</th>
-</tr>
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+      });
 
-<% users.forEach(u=>{ %>
-<tr>
-<td><%= u.name %></td>
-<td><%= u.email %></td>
-<td><span class="badge"><%= u.plan %></span></td>
-<td><%= new Date(u.createdAt).toDateString() %></td>
-</tr>
-<% }) %>
+      (function ani() {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+        rx += (mx - rx) * 0.13;
+        ry += (my - ry) * 0.13;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(ani);
+      })();
+    }
 
-</table>
-</div>
-</div>
+    // Safe data parsing
+    const users = <%- JSON.stringify(users || []) %>;
+    const bots = <%- JSON.stringify(bots || []) %>;
+    const bookings = <%- JSON.stringify(bookings || []) %>;
 
-<!-- BOOKINGS -->
-<div class="section">
-<h2>Bookings</h2>
-<div class="table">
-<table>
-<tr>
-<th>Customer</th>
-<th>Phone</th>
-<th>Date</th>
-<th>Time</th>
-</tr>
+    // Chart.js default config
+    Chart.defaults.color = '#5a5a78';
+    Chart.defaults.font.family = 'DM Sans, sans-serif';
 
-<% bookings.forEach(b=>{ %>
-<tr>
-<td><%= b.name || "Caller" %></td>
-<td><%= b.phone %></td>
-<td><%= b.date %></td>
-<td><%= b.time %></td>
-</tr>
-<% }) %>
-
-</table>
-</div>
-</div>
-
-</div>
-
-<script>
-
-// SAFE DATA
-const users = JSON.parse('<%- JSON.stringify(users || []) %>');
-const bots = JSON.parse('<%- JSON.stringify(bots || []) %>');
-const bookings = JSON.parse('<%- JSON.stringify(bookings || []) %>');
-
-// PLAN CHART
-new Chart(document.getElementById("planChart"), {
-    type: "pie",
-    data: {
-        labels: ["Free","Pro","Business"],
-        datasets: [{
+    // Plan Chart (Pie)
+    if (document.getElementById('planChart')) {
+      const planCtx = document.getElementById('planChart').getContext('2d');
+      new Chart(planCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Free', 'Pro', 'Business'],
+          datasets: [{
             data: [
-                users.filter(u=>u.plan==="free").length,
-                users.filter(u=>u.plan==="pro").length,
-                users.filter(u=>u.plan==="business").length
-            ]
-        }]
+              users.filter(u => u.plan === 'free').length,
+              users.filter(u => u.plan === 'pro').length,
+              users.filter(u => u.plan === 'business').length
+            ],
+            backgroundColor: [
+              'rgba(255, 255, 255, 0.1)',
+              'rgba(255, 117, 24, 0.6)',
+              'rgba(79, 142, 247, 0.6)'
+            ],
+            borderColor: [
+              'rgba(255, 255, 255, 0.07)',
+              'rgba(255, 117, 24, 0.8)',
+              'rgba(79, 142, 247, 0.8)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            }
+          }
+        }
+      });
     }
-});
 
-// BOT GRAPH
-const botMap = {};
-bots.forEach(b=>{
-    const d = new Date(b.createdAt).toDateString();
-    botMap[d] = (botMap[d]||0)+1;
-});
+    // Bot Growth Chart (Line)
+    if (document.getElementById('botChart') && bots.length > 0) {
+      const botMap = {};
+      bots.forEach(b => {
+        const d = new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        botMap[d] = (botMap[d] || 0) + 1;
+      });
 
-new Chart(document.getElementById("botChart"), {
-    type:"line",
-    data:{
-        labels:Object.keys(botMap),
-        datasets:[{data:Object.values(botMap)}]
+      const botCtx = document.getElementById('botChart').getContext('2d');
+      new Chart(botCtx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(botMap).sort(),
+          datasets: [{
+            label: 'Bots Created',
+            data: Object.values(botMap),
+            borderColor: 'rgba(255, 117, 24, 0.8)',
+            backgroundColor: 'rgba(255, 117, 24, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
     }
-});
 
-// BOOKING GRAPH
-const bookMap = {};
-bookings.forEach(b=>{
-    bookMap[b.date] = (bookMap[b.date]||0)+1;
-});
+    // Booking Growth Chart (Line)
+    if (document.getElementById('bookingChart') && bookings.length > 0) {
+      const bookMap = {};
+      bookings.forEach(b => {
+        bookMap[b.date] = (bookMap[b.date] || 0) + 1;
+      });
 
-new Chart(document.getElementById("bookingChart"), {
-    type:"line",
-    data:{
-        labels:Object.keys(bookMap),
-        datasets:[{data:Object.values(bookMap)}]
+      const bookCtx = document.getElementById('bookingChart').getContext('2d');
+      new Chart(bookCtx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(bookMap).sort(),
+          datasets: [{
+            label: 'Bookings',
+            data: Object.values(bookMap),
+            borderColor: 'rgba(79, 142, 247, 0.8)',
+            backgroundColor: 'rgba(79, 142, 247, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
     }
-});
-
-</script>
-
+  </script>
 </body>
+
 </html>
