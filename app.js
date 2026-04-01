@@ -46,6 +46,12 @@ const ADMIN_PATH = process.env.ADMIN_PATH || "super-secret-admin-2024";
 // Make admin path available in all views
 app.locals.ADMIN_PATH = ADMIN_PATH;
 
+// ⚡ TRUST PROXY FOR RENDER/HEROKU/RAILWAY
+// This allows Express to correctly detect HTTPS when behind a proxy
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Vapi services - replacing Twilio
 const vapi = require("./services/vapi");
 const vapiWebhook = require("./services/vapiWebhook");
@@ -972,8 +978,8 @@ app.get("/auth/google/callback",
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax"
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax"
         })
 
         res.redirect("/home")
@@ -1116,8 +1122,8 @@ app.post("/verify-otp", async (req, res) => {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax"
     })
 
     req.session.signupData = null
@@ -1180,7 +1186,7 @@ app.post("/login", authLimiter, [
       res.cookie("token", token, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'strict',
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
@@ -1959,12 +1965,13 @@ async function migrateAuthorizedDomains() {
         for (const bot of botsNeedingMigration) {
             try {
                 let changes = 0;
+                const updates = {};
 
                 // Normalize category if needed
                 if (categoryMapping[bot.category]) {
                     const oldCategory = bot.category;
-                    bot.category = categoryMapping[bot.category];
-                    console.log(`  ℹ️  Bot ${bot.botId}: Normalized category "${oldCategory}" → "${bot.category}"`);
+                    updates.category = categoryMapping[bot.category];
+                    console.log(`  ℹ️  Bot ${bot.botId}: Normalized category "${oldCategory}" → "${updates.category}"`);
                     changes++;
                 }
 
@@ -1972,7 +1979,7 @@ async function migrateAuthorizedDomains() {
                 if (bot.websiteUrl && !bot.authorizedDomain) {
                     const domain = extractDomain(bot.websiteUrl);
                     if (domain) {
-                        bot.authorizedDomain = domain;
+                        updates.authorizedDomain = domain;
                         console.log(`  ℹ️  Bot ${bot.botId} (${bot.name}): Set authorizedDomain = ${domain}`);
                         changes++;
                     } else {
@@ -1981,7 +1988,8 @@ async function migrateAuthorizedDomains() {
                 }
 
                 if (changes > 0) {
-                    await bot.save();
+                    // Use findByIdAndUpdate to avoid document middleware/save hooks
+                    await Bot.findByIdAndUpdate(bot._id, updates, { new: true, runValidators: true });
                     migrated++;
                 }
             } catch (err) {
