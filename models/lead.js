@@ -122,7 +122,6 @@ const leadSchema = new mongoose.Schema({
     },
 
     callNotes: [{
-        id: false,
         date: { type: Date, default: Date.now },
         notes: String,
         duration: Number,
@@ -157,7 +156,6 @@ const leadSchema = new mongoose.Schema({
     }],
 
     notes: [{
-        id: false,
         content: { type: String, required: true },
         addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         createdAt: { type: Date, default: Date.now },

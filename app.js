@@ -14,7 +14,9 @@ const cors = require("cors")
 const session = require("express-session")
 const helmet = require("helmet")
 const rateLimit = require("express-rate-limit")
-const csrf = require("csurf")
+const csurf = require("csurf")
+const passport = require("passport")
+require("./config/passport")
 const { body, validationResult } = require("express-validator")
 const validator = require("validator")
 const Chat = require("./models/chat")
@@ -27,6 +29,8 @@ const Conversation = require("./models/conversation")
 const Booking = require("./models/booking")
 const Admin = require("./models/admin")
 const Lead = require("./models/lead")
+const { botAccess } = require("./middleware/botAccess")
+const auth = require("./middleware/auth")
 const botOwner = require("./middleware/botOwner")
 const leadsRouter = require("./routes/leads")
 const multer = require("multer")
@@ -156,7 +160,7 @@ app.use(session({
 }));
 
 // 8. CSRF Protection (for session-based routes)
-const csrfProtection = csrf({ cookie: false });
+const csrfProtection = csurf({ cookie: false });
 
 function shouldSkipCSRF(req) {
   const skipPaths = [
@@ -1243,7 +1247,6 @@ app.post("/createbot",
     body('websiteUrl')
       .optional()
       .isURL().withMessage('Invalid URL format')
-      .normalizeURL()
   ],
   async (req, res) => {
     try {
