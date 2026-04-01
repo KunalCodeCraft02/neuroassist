@@ -1811,7 +1811,7 @@ app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
             updateData,
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         console.log("UPDATED USER:", updatedUser);
@@ -1989,7 +1989,7 @@ async function migrateAuthorizedDomains() {
 
                 if (changes > 0) {
                     // Use findByIdAndUpdate to avoid document middleware/save hooks
-                    await Bot.findByIdAndUpdate(bot._id, updates, { new: true, runValidators: true });
+                    await Bot.findByIdAndUpdate(bot._id, updates, { returnDocument: 'after', runValidators: true });
                     migrated++;
                 }
             } catch (err) {
@@ -2069,17 +2069,39 @@ app.use((err, req, res, next) => {
         return next(err);
     }
 
+    // Determine if request expects JSON (API routes, fetch/XMLHttpRequest, or Accept header)
+    const isApiRequest =
+        req.path.startsWith('/api/') ||
+        req.xhr ||
+        req.headers.accept?.includes('application/json') ||
+        req.headers['content-type']?.includes('application/json');
+
     // In development, show detailed error
     if (process.env.NODE_ENV !== 'production') {
-        res.status(500).render('error', {
-            error: err,
-            message: err.message || "Internal server error"
-        });
+        if (isApiRequest) {
+            res.status(500).json({
+                success: false,
+                message: err.message || "Internal server error",
+                stack: err.stack
+            });
+        } else {
+            res.status(500).render('error', {
+                error: err,
+                message: err.message || "Internal server error"
+            });
+        }
     } else {
         // In production, show generic error
-        res.status(500).render('error', {
-            error: {},
-            message: "Something went wrong. Our team has been notified."
-        });
+        if (isApiRequest) {
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong. Please try again."
+            });
+        } else {
+            res.status(500).render('error', {
+                error: {},
+                message: "Something went wrong. Our team has been notified."
+            });
+        }
     }
 });
