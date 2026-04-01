@@ -174,7 +174,10 @@ function shouldSkipCSRF(req) {
     '/auth/google/callback',
     '/api/vapi',
     '/logout',
-    '/api/'
+    '/api/',
+    '/login',      // JWT-based auth, no session
+    '/signup',     // OTP-based, but initial form submission
+    '/verify-otp'  // OTP verification
   ];
   if (req.method === 'GET') return true;
   if (req.path.startsWith('/public/')) return true;
@@ -624,7 +627,7 @@ app.get("/leads/:leadId", auth, async (req, res) => {
 
 
 app.get('/signup', (req, res) => {
-    res.render('signup');
+    res.render('signup', { csrfToken: req.csrfToken ? req.csrfToken() : null });
 });
 
 
@@ -637,11 +640,11 @@ app.get("/login", (req, res) => {
             return res.redirect("/home");
         }
 
-        res.render("login");
+        res.render("login", { csrfToken: req.csrfToken ? req.csrfToken() : null });
 
     } catch (err) {
         res.clearCookie("token"); // 🔥 FIX LOOP
-        res.render("login");
+        res.render("login", { csrfToken: req.csrfToken ? req.csrfToken() : null });
     }
 });
 
