@@ -27,6 +27,7 @@ const Conversation = require("./models/conversation")
 const Booking = require("./models/booking")
 const Admin = require("./models/admin")
 const Lead = require("./models/lead")
+const botOwner = require("./middleware/botOwner")
 const leadsRouter = require("./routes/leads")
 const multer = require("multer")
 const sendWhatsAppLead = require("./services/whatsapp")
@@ -643,10 +644,6 @@ app.get("/login", (req, res) => {
 app.get("/createbot", auth, (req, res) => {
     res.render("createbot")
 })
-
-
-const Lead = require("./models/lead");
-const botOwner = require("./middleware/botOwner");
 
 
 app.get("/profile", auth, async (req, res) => {
