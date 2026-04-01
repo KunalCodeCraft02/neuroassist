@@ -21,3 +21,5 @@
 {"level":"info","message":"CORS allowed origins: https://neuroassist-5z1k.onrender.com, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-02 00:19:53"}
 {"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-02 00:19:54"}
 {"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-02 00:19:54"}
+{"level":"info","message":"Login attempt for: kunalbodkhe022@gmail.com","service":"neuroassist","timestamp":"2026-04-02 00:22:26"}
+{"level":"info","message":"User logged in successfully: kunalbodkhe022@gmail.com (ID: 69bcfcd3465244b46ae80511)","service":"neuroassist","timestamp":"2026-04-02 00:22:26"}
