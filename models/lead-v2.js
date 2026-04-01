@@ -34,6 +34,7 @@ const leadSchema = new mongoose.Schema({
         type: String
     },
 
+    // 🔥 LEAD SCORING
     leadScore: {
         type: Number,
         default: 0,
@@ -66,6 +67,7 @@ const leadSchema = new mongoose.Schema({
     askedPricing: { type: Boolean, default: false },
     sharedContact: { type: Boolean, default: true },
 
+    // 🏷️ TAGS & SEGMENTATION
     tags: [{
         type: String,
         trim: true
@@ -76,12 +78,14 @@ const leadSchema = new mongoose.Schema({
         default: {}
     },
 
+    // 📊 FUNNEL TRACKING
     funnelStage: {
         type: String,
         enum: ['awareness', 'consideration', 'decision', 'purchase'],
         default: 'awareness'
     },
 
+    // 💰 REVENUE TRACKING
     potentialValue: {
         type: Number,
         default: 0
@@ -92,6 +96,7 @@ const leadSchema = new mongoose.Schema({
         default: 'INR'
     },
 
+    // 👤 ASSIGNMENT
     assignedTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -103,6 +108,7 @@ const leadSchema = new mongoose.Schema({
         ref: "User"
     },
 
+    // 📞 SALES ACTIVITIES
     lastContactedAt: Date,
     nextFollowUpAt: Date,
     followUpReminder: {
@@ -111,6 +117,7 @@ const leadSchema = new mongoose.Schema({
         default: 'none'
     },
 
+    // 📧 EMAIL CAMPAIGN TRACKING
     lastEmailSentAt: Date,
     emailsOpened: {
         type: Number,
@@ -121,14 +128,16 @@ const leadSchema = new mongoose.Schema({
         default: 0
     },
 
+    // 📞 CALL LOGS (basic)
     callNotes: [{
         id: false,
         date: { type: Date, default: Date.now },
         notes: String,
-        duration: Number,
+        duration: Number, // in seconds
         outcome: { type: String, enum: ['answered', 'voicemail', 'no_answer', 'declined'] }
     }],
 
+    // 🔗 SOURCE TRACKING
     source: {
         type: String,
         enum: ['website', 'social_media', 'referral', 'email_campaign', 'paid_ads', 'organic', 'other'],
@@ -141,11 +150,13 @@ const leadSchema = new mongoose.Schema({
     utm_content: String,
     utm_term: String,
 
+    // 🤖 BOT CONVERSATION REFERENCE
     conversationPreview: {
         type: String,
         maxlength: 500
     },
 
+    // 📈 AUTOMATION
     isAutoAssigned: {
         type: Boolean,
         default: false
@@ -156,6 +167,7 @@ const leadSchema = new mongoose.Schema({
         triggeredAt: { type: Date, default: Date.now }
     }],
 
+    // 📝 NOTES & ACTIVITY LOG
     notes: [{
         id: false,
         content: { type: String, required: true },
@@ -164,6 +176,7 @@ const leadSchema = new mongoose.Schema({
         isPrivate: { type: Boolean, default: false }
     }],
 
+    // 📅 TIMestamps
     createdAt: {
         type: Date,
         default: Date.now,
@@ -175,6 +188,7 @@ const leadSchema = new mongoose.Schema({
         default: Date.now
     },
 
+    // 🎯 CONVERSION TRACKING
     convertedAt: Date,
     convertedBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -185,6 +199,7 @@ const leadSchema = new mongoose.Schema({
         default: 0
     },
 
+    // 🗑️ SOFT DELETE
     isDeleted: {
         type: Boolean,
         default: false,
@@ -206,6 +221,17 @@ leadSchema.index({ leadScore: -1 });
 // Update updatedAt on save
 leadSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
+    next();
+});
+
+// Cascade soft delete
+leadSchema.pre('remove', async function(next) {
+    if (this.isDeleted) return next();
+
+    // Instead of actual deletion, mark as deleted
+    this.isDeleted = true;
+    this.deletedAt = new Date();
+    await this.save();
     next();
 });
 

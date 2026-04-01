@@ -972,6 +972,27 @@
         }
       }
     }
+
+    /* LEAD BUTTON */
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      background: #ff8c3d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
   </style>
 </head>
 
@@ -1018,6 +1039,7 @@
           <a href="/chat">Community</a>
           <a href="/pricing">Pricing</a>
           <a href="/profile">Profile</a>
+          <a href="/leads">Leads</a>
           <a href="/bookings">Bookings</a>
           <a href="/logout">Logout</a>
         </div>
@@ -1085,11 +1107,29 @@
             <p>Today Bookings</p>
           </div>
           <div class="stat-box">
-            <h2>
-              <%= leads ? leads.length : 0 %>
-            </h2>
+            <h2><%= leadStats.total || 0 %></h2>
             <p>Total Leads</p>
           </div>
+          <div class="stat-box">
+            <h2 style="color: #10b981;"><%= leadStats.hotLeads || 0 %></h2>
+            <p>Hot Leads (≥70)</p>
+          </div>
+          <div class="stat-box">
+            <h2 style="color: #4f8ef7;"><%= leadStats.converted || 0 %></h2>
+            <p>Converted</p>
+          </div>
+          <div class="stat-box">
+            <h2><%= leadStats.avgScore || 0 %>/100</h2>
+            <p>Avg. Score</p>
+          </div>
+        </div>
+
+        <!-- QUICK ACTION -->
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="/leads" class="btn-primary">
+            <i class="ri-contacts-book-line"></i>
+            Manage All Leads
+          </a>
         </div>
 
         <!-- LEAD SCORE STATS -->
@@ -1291,6 +1331,7 @@
                       </td>
                     </tr>
                     <% }) %>
+                <% } %>
             </tbody>
           </table>
         </div>

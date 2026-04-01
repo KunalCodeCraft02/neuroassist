@@ -11,6 +11,7 @@
 		rel="stylesheet">
 
 	<title>Sign In</title>
+    <meta name="csrf-token" content="<%= csrfToken ? csrfToken() : '' %>">
 
 	<style>
 		* {
@@ -233,10 +234,13 @@
 
 			try {
 
+				// Get CSRF token
+				const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || ''
+
 				const res = await fetch("/login", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ email, password })
+					body: JSON.stringify({ email, password, _csrf: csrfToken })
 				})
 
 				const result = await res.json()

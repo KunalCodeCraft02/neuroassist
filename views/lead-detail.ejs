@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lead Details — NeuroAssist Co</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #04040a;
+      --surface: #09090f;
+      --surface2: #0e0e18;
+      --accent: #ff7518;
+      --accent-glow: rgba(255, 117, 24, 0.2);
+      --green: #10b981;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #4f8ef7;
+      --purple: #8b5cf6;
+      --text: #eeeef5;
+      --muted: #5a5a78;
+      --border: rgba(255,255,255,0.07);
+      --radius: 16px;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding-top: 80px;
+    }
+    #nav {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(4, 4, 10, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      z-index: 1000;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo img { width: 40px; height: 40px; border-radius: 50%; }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
+    .nav-links a:hover { color: var(--accent); }
+
+    .main-content { padding: 40px; max-width: 1200px; margin: 0 auto; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .info-item label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .info-value {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-new { background: rgba(79, 142, 247, 0.2); color: var(--blue); }
+    .badge-contacted { background: rgba(255, 117, 24, 0.2); color: var(--accent); }
+    .badge-qualified { background: rgba(16, 185, 129, 0.2); color: var(--green); }
+    .badge-proposal_sent { background: rgba(139, 92, 246, 0.2); color: var(--purple); }
+    .badge-negotiation { background: rgba(245, 158, 11, 0.2); color: var(--yellow); }
+    .badge-converted { background: rgba(16, 185, 129, 0.3); color: #34d399; }
+    .badge-lost { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+    .badge-cold { background: rgba(107, 114, 128, 0.2); color: var(--muted); }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .form-control, .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { background: #ff8c3d; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+
+    .message-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .notes-list, .activities-list {
+      list-style: none;
+    }
+
+    .note-item, .activity-item {
+      padding: 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .note-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .note-content {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .hidden { display: none; }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--muted);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--muted);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      margin-left: 10px;
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav id="nav">
+    <div class="logo">
+      <img src="/assets/image/Neuro Assist.png" alt="NeuroAssist">
+      <span>NeuroAssist</span>
+    </div>
+    <div class="nav-links">
+      <a href="/home">Dashboard</a>
+      <a href="/leads" class="active">Leads</a>
+      <a href="/profile">Profile</a>
+      <a href="/logout" class="btn-secondary" style="padding: 8px 16px;">Logout</a>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <a href="/leads" class="back-link">
+      <i class="ri-arrow-left-line"></i> Back to Leads
+    </a>
+
+    <div id="loadingState" class="loading">Loading lead...</div>
+    <div id="content" class="hidden">
+      <h1 class="page-title">Lead Details</h1>
+
+      <div class="grid-layout">
+        <!-- LEFT COLUMN -->
+        <div>
+          <!-- Lead Info Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Lead Information</h3>
+              <span class="badge" id="statusBadge"></span>
+            </div>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Name</label>
+                <div class="info-value" id="leadName">-</div>
+              </div>
+              <div class="info-item">
+                <label>Email</label>
+                <div class="info-value" id="leadEmail">-</div>
+              </div>
+              <div class="info-item">
+                <label>Phone</label>
+                <div class="info-value" id="leadPhone">-</div>
+              </div>
+              <div class="info-item">
+                <label>Company</label>
+                <div class="info-value" id="leadCompany">-</div>
+              </div>
+              <div class="info-item">
+                <label>Lead Score</label>
+                <div class="info-value" id="leadScore">-</div>
+              </div>
+              <div class="info-item">
+                <label>Interest Level</label>
+                <div class="info-value" id="interestLevel">-</div>
+              </div>
+              <div class="info-item">
+                <label>Bot</label>
+                <div class="info-value" id="botName">-</div>
+              </div>
+              <div class="info-item">
+                <label>Source</label>
+                <div class="info-value" id="source">-</div>
+              </div>
+              <div class="info-item">
+                <label>Created</label>
+                <div class="info-value" id="createdAt">-</div>
+              </div>
+              <div class="info-item" id="convertedAtItem" class="hidden">
+                <label>Converted</label>
+                <div class="info-value" id="convertedAt">-</div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+              <label>Message / Inquiry</label>
+              <div class="message-box" id="leadMessage"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Tags</label>
+              <div id="tagsContainer" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+            </div>
+          </div>
+
+          <!-- Update Status Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Update Lead</h3>
+            </div>
+            <form id="updateLeadForm">
+              <div class="form-group">
+                <label>Status</label>
+                <select class="form-select" id="leadStatus">
+                  <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="proposal_sent">Proposal Sent</option>
+                  <option value="negotiation">Negotiation</option>
+                  <option value="converted">Converted</option>
+                  <option value="lost">Lost</option>
+                  <option value="cold">Cold</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Interest Level</label>
+                <select class="form-select" id="interestLevel">
+                  <option value="none">None</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Assign To</label>
+                <select class="form-select" id="assignTo">
+                  <option value="">Unassigned</option>
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Potential Value (₹)</label>
+                <input type="number" class="form-control" id="potentialValue" min="0">
+              </div>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="resetLead()">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Add Note Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Add Note</h3>
+            </div>
+            <form id="addNoteForm">
+              <div class="form-group">
+                <textarea class="form-control" id="noteContent" placeholder="Add a note about this lead..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="privateNote"> Private note (only visible to you)
+                </label>
+              </div>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-primary">Add Note</button>
+            </form>
+          </div>
+
+          <!-- Notes History -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Notes & Activity</h3>
+            </div>
+            <ul class="notes-list" id="notesList">
+              <!-- Populated by JS -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN - Quick Actions -->
+        <div>
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Quick Actions</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <a href="javascript:void(0)" class="btn btn-secondary" onclick="markAsContacted()">
+                <i class="ri-phone-line"></i> Mark as Contacted
+              </a>
+              <a href="javascript:void(0)" class="btn btn-secondary" onclick="markAsQualified()">
+                <i class="ri-check-double-line"></i> Mark as Qualified
+              </a>
+              <a href="javascript:void(0)" class="btn btn-secondary" onclick="markAsConverted()">
+                <i class="ri-trophy-line"></i> Mark as Converted
+              </a>
+              <a href="javascript:void(0)" class="btn btn-secondary" onclick="markAsLost()">
+                <i class="ri-close-circle-line"></i> Mark as Lost
+              </a>
+              <a href="mailto:<%= leadEmail || '' %>" class="btn btn-secondary">
+                <i class="ri-mail-send-line"></i> Send Email
+              </a>
+              <a href="tel:<%= leadPhone || '' %>" class="btn btn-secondary">
+                <i class="ri-phone-line"></i> Call
+              </a>
+            </div>
+          </div>
+
+          <!-- Conversion Tracking -->
+          <div class="card hidden" id="conversionCard">
+            <div class="card-header">
+              <h3 class="card-title">Conversion Details</h3>
+            </div>
+            <div class="info-item">
+              <label>Converted Date</label>
+              <div class="info-value" id="convertedDate">-</div>
+            </div>
+            <div class="info-item">
+              <label>Conversion Value</label>
+              <div class="info-value" id="conversionValue">₹0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let leadData = null;
+
+    async function loadLead() {
+      const leadId = '<%= leadId %>';
+
+      try {
+        const res = await fetch(`/api/leads/${leadId}`);
+        const result = await res.json();
+
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to load lead');
+        }
+
+        leadData = result.lead;
+        renderLead();
+        loadUsers();
+
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to load lead: ' + err.message, 'error');
+      }
+    }
+
+    function renderLead() {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+
+      const lead = leadData;
+
+      // Basic info
+      document.getElementById('leadName').textContent = lead.name || 'Unknown';
+      document.getElementById('leadEmail').innerHTML = lead.email ? `<a href="mailto:${lead.email}" style="color: var(--accent);">${lead.email}</a>` : '-';
+      document.getElementById('leadPhone').innerHTML = lead.phone ? `<a href="tel:${lead.phone}" style="color: var(--accent);">${lead.phone}</a>` : '-';
+      document.getElementById('leadCompany').textContent = lead.company || '-';
+      document.getElementById('leadScore').innerHTML = `<span class="badge badge-score" style="background: ${getScoreColor(lead.leadScore)}; color: ${getScoreTextColor(lead.leadScore)}">${lead.leadScore}/100</span>`;
+      document.getElementById('interestLevel').innerHTML = `<span class="badge badge-${lead.interestLevel}">${lead.interestLevel}</span>`;
+      document.getElementById('botName').textContent = lead.botId?.name || 'Unknown Bot';
+      document.getElementById('source').textContent = lead.source || 'website';
+      document.getElementById('createdAt').textContent = new Date(lead.createdAt).toLocaleString();
+
+      // Status badge
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.className = `badge badge-${lead.leadStatus}`;
+      statusBadge.textContent = lead.leadStatus.replace('_', ' ');
+
+      // Message
+      document.getElementById('leadMessage').textContent = lead.message || lead.conversationPreview || 'No message';
+
+      // Tags
+      const tagsContainer = document.getElementById('tagsContainer');
+      tagsContainer.innerHTML = (lead.tags || []).map(tag =>
+        `<span class="badge badge-tags">${escapeHtml(tag)}</span>`
+      ).join('') || '<span style="color: var(--muted); font-size: 12px;">No tags</span>';
+
+      // Conversion info
+      if (lead.convertedAt) {
+        document.getElementById('convertedAt').textContent = new Date(lead.convertedAt).toLocaleString();
+        document.getElementById('convertedAtItem').classList.remove('hidden');
+        document.getElementById('conversionCard').classList.remove('hidden');
+        document.getElementById('conversionValue').textContent = `₹${(lead.conversionValue || 0).toLocaleString()}`;
+      }
+
+      // Populate form
+      document.getElementById('leadStatus').value = lead.leadStatus;
+      document.getElementById('interestLevel').value = lead.interestLevel || 'none';
+      document.getElementById('assignTo').value = lead.assignedTo || '';
+      document.getElementById('potentialValue').value = lead.potentialValue || 0;
+
+      // Load notes
+      loadNotes();
+
+      // Add score color logic
+      if (lead.leadScore >= 70) {
+        document.getElementById('leadScore').style.background = 'rgba(16, 185, 129, 0.2)';
+        document.getElementById('leadScore').style.color = '#10b981';
+      } else if (lead.leadScore >= 40) {
+        document.getElementById('leadScore').style.background = 'rgba(245, 158, 11, 0.2)';
+        document.getElementById('leadScore').style.color = '#f59e0b';
+      }
+    }
+
+    function getScoreColor(score) {
+      if (score >= 70) return 'rgba(16, 185, 129, 0.2)';
+      if (score >= 40) return 'rgba(245, 158, 11, 0.2)';
+      return 'rgba(107, 114, 128, 0.2)';
+    }
+
+    function getScoreTextColor(score) {
+      if (score >= 70) return '#10b981';
+      if (score >= 40) return '#f59e0b';
+      return '#6b7280';
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/leads/users');
+        const data = await res.json();
+        const select = document.getElementById('assignTo');
+
+        select.innerHTML = '<option value="">Unassigned</option>' +
+          data.users.map(u => `<option value="${u._id}">${u.name} (${u.email})</option>`).join('');
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      }
+    }
+
+    async function loadNotes() {
+      try {
+        const res = await fetch(`/api/leads/${leadData._id}/activities`);
+        const data = await res.json();
+
+        if (data.success) {
+          const notesList = document.getElementById('notesList');
+          notesList.innerHTML = data.activities.map(act => `
+            <li class="activity-item">
+              <div class="note-meta">
+                <span>${act.type === 'note' ? '📝 Note' : '📞 Call'}</span>
+                <span>${new Date(act.date).toLocaleString()}</span>
+              </div>
+              <div class="note-content">${escapeHtml(act.content)}</div>
+            </li>
+          `).join('') || '<li class="no-leads" style="text-align: center; color: var(--muted);">No activity yet</li>';
+        }
+      } catch (err) {
+        console.error('Failed to load notes:', err);
+      }
+    }
+
+    // Form submission
+    document.getElementById('updateLeadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const status = document.getElementById('leadStatus').value;
+      const interest = document.getElementById('interestLevel').value;
+      const assignTo = document.getElementById('assignTo').value;
+      const potentialValue = document.getElementById('potentialValue').value;
+
+      try {
+        const res = await fetch(`/api/leads/${leadData._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            leadStatus: status,
+            interestLevel: interest,
+            assignedTo: assignTo || null,
+            potentialValue: potentialValue || 0
+          })
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          showToast('Lead updated successfully', 'success');
+          leadData = result.lead;
+          renderLead();
+        } else {
+          showToast(result.message || 'Failed to update', 'error');
+        }
+      } catch (err) {
+        showToast('Server error', 'error');
+      }
+    });
+
+    // Add note
+    document.getElementById('addNoteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const content = document.getElementById('noteContent').value.trim();
+      const isPrivate = document.getElementById('privateNote').checked;
+
+      try {
+        const res = await fetch(`/api/leads/${leadData._id}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, isPrivate })
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          showToast('Note added', 'success');
+          document.getElementById('noteContent').value = '';
+          document.getElementById('privateNote').checked = false;
+          loadNotes();
+        } else {
+          showToast(result.message || 'Failed to add note', 'error');
+        }
+      } catch (err) {
+        showToast('Server error', 'error');
+      }
+    });
+
+    // Quick actions
+    window.markAsContacted = function() {
+      updateStatus('contacted');
+    };
+
+    window.markAsQualified = function() {
+      updateStatus('qualified');
+    };
+
+    window.markAsConverted = function() {
+      updateStatus('converted');
+    };
+
+    window.markAsLost = function() {
+      updateStatus('lost');
+    };
+
+    async function updateStatus(status) {
+      try {
+        const res = await fetch(`/api/leads/${leadData._id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ leadStatus: status })
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          showToast(`Status changed to ${status}`, 'success');
+          leadData = result.lead;
+          renderLead();
+        } else {
+          showToast(result.message || 'Failed to update status', 'error');
+        }
+      } catch (err) {
+        showToast('Server error', 'error');
+      }
+    }
+
+    function resetLead() {
+      document.getElementById('leadStatus').value = leadData.leadStatus;
+      document.getElementById('interestLevel').value = leadData.interestLevel || 'none';
+      document.getElementById('assignTo').value = leadData.assignedTo || '';
+      document.getElementById('potentialValue').value = leadData.potentialValue || 0;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 12px 20px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#4f8ef7'};
+        color: white;
+        border-radius: 8px;
+        z-index: 3000;
+        font-size: 14px;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Initialize
+    loadLead();
+  </script>
+</body>
+
+</html>

@@ -782,6 +782,7 @@
             <div class="code-container">
               <div class="code-box" id="scriptCode">
   &lt;script src="https://neuroassist-5z1k.onrender.com/js/bot.js"
+    data-token="<%= embedToken %>"
     data-bot="<%= bot.botId %>"
     data-name="<%= bot.name %>"&gt;&lt;/script&gt;
               </div>
@@ -798,6 +799,12 @@
               <div class="bot-details">
                 <div class="bot-name"><%= bot.name %></div>
                 <div class="bot-id">Bot ID: <%= bot.botId %></div>
+                <% if (bot.authorizedDomain) { %>
+                  <div class="bot-domain" style="margin-top: 6px; font-size: 12px; color: #10b981; display: flex; align-items: center; gap: 4px;">
+                    <i class="ri-checkbox-circle-fill"></i>
+                    Active only on <%= bot.authorizedDomain %>
+                  </div>
+                <% } %>
               </div>
             </div>
 
@@ -811,6 +818,18 @@
                 <li>Your chatbot will appear automatically!</li>
               </ol>
             </div>
+
+            <% if (bot.authorizedDomain) { %>
+              <div class="security-note" style="margin-top: 24px; padding: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; font-size: 14px; color: #10b981; line-height: 1.6;">
+                <i class="ri-shield-check-line" style="font-size: 18px; vertical-align: middle; margin-right: 6px;"></i>
+                <strong>Domain Lock:</strong> This bot will only work on <code style="background: rgba(4,4,10,0.3); padding: 2px 6px; border-radius: 4px;"><%= bot.authorizedDomain %></code>. It is securely restricted and cannot be used on any other website.
+              </div>
+            <% } else { %>
+              <div class="security-warning" style="margin-top: 24px; padding: 16px; background: rgba(255, 117, 24, 0.1); border: 1px solid var(--accent); border-radius: 12px; font-size: 14px; color: var(--accent); line-height: 1.6;">
+                <i class="ri-alert-line" style="font-size: 18px; vertical-align: middle; margin-right: 6px;"></i>
+                <strong>Notice:</strong> No domain restriction is set for this bot. For security, it's recommended to specify a website URL when creating the bot. Without it, the bot can be embedded on any site.
+              </div>
+            <% } %>
           </div>
         </div>
       </div>

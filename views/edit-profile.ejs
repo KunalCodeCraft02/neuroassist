@@ -9,6 +9,7 @@
         href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
         rel="stylesheet">
     <title>Edit Profile — NeuroAssist Co</title>
+    <meta name="csrf-token" content="<%= csrfToken ? csrfToken() : '' %>">
     <style>
         *,
         *::before,
@@ -741,6 +742,7 @@
             <!-- Form Card -->
             <div class="form-card">
                 <form action="/update-profile" method="POST" enctype="multipart/form-data">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken ? csrfToken() : '' %>">
                     <!-- Profile Image -->
                     <div class="profile-section">
                         <div class="profile-img-wrapper">

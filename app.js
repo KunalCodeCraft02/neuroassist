@@ -12,29 +12,34 @@ const jwt = require("jsonwebtoken")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 const session = require("express-session")
-const Chat = require("./models/chat");
+const helmet = require("helmet")
+const rateLimit = require("express-rate-limit")
+const csrf = require("csurf")
+const { body, validationResult } = require("express-validator")
+const validator = require("validator")
+const Chat = require("./models/chat")
 
+const { logger, loggerStream } = require("./utils/logger")
 
 const User = require("./models/users")
 const Bot = require("./models/bot")
 const Conversation = require("./models/conversation")
 const Booking = require("./models/booking")
-
-
-const generateReply = require("./services/gemini")
-const scrapeWebsite = require("./services/scraper")
-const buildPrompt = require("./services/promptBuilder")
-
-
-const auth = require("./middleware/auth")
-const passport = require("./config/passport")
+const Admin = require("./models/admin")
+const Lead = require("./models/lead")
+const leadsRouter = require("./routes/leads")
 const multer = require("multer")
-const sendWhatsAppLead = require("./services/whatsapp");
-const { sendEmailLead, sendDailyLeadsSummary } = require("./services/email");
-const Behavior = require("./models/behavior");
-
+const sendWhatsAppLead = require("./services/whatsapp")
+const { sendEmailLead, sendDailyLeadsSummary } = require("./services/email")
+const Behavior = require("./models/behavior")
 
 const { v4: uuidv4 } = require("uuid")
+
+// 🔐 ADMIN SECURITY: Change admin URL path to prevent discovery
+const ADMIN_PATH = process.env.ADMIN_PATH || "super-secret-admin-2024";
+
+// Make admin path available in all views
+app.locals.ADMIN_PATH = ADMIN_PATH;
 
 // Vapi services - replacing Twilio
 const vapi = require("./services/vapi");
@@ -43,29 +48,212 @@ const vapiWebhook = require("./services/vapiWebhook");
 
 
 
-app.use(cookieParser())
+// ============================================
+// 🛡️ SECURITY MIDDLEWARE SETUP
+// ============================================
+
+// 1. HTTP Security Headers (Helmet)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com", "www.googletagmanager.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdn.jsdelivr.net"],
+      fontSrc: ["'self'", "fonts.gstatic.com", "cdn.jsdelivr.net"],
+      imgSrc: ["'self'", "data:", "res.cloudinary.com"],
+      connectSrc: ["'self'", "https://neuroassist-5z1k.onrender.com", "wss://neuroassist-5z1k.onrender.com"],
+      frameSrc: ["'none'"]
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}))
+
+// 2. CORS - Allow specific origins only
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:3001']
 
 app.use(cors({
-    origin: "*"
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `Origin ${origin} not allowed by CORS`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
 }))
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+// 3. HTTP Request Logging (Morgan)
+const morgan = require("morgan")
+app.use(morgan('dev', {
+  stream: loggerStream,
+  skip: (req, res) => res.statusCode < 400 // only log 4xx and 5xx to file
+}))
 
-app.use(express.static(path.join(__dirname, "public")))
+// 4. Body parser middleware with size limits
+app.use(express.json({ limit: '10mb', strict: true }));
+app.use(express.urlencoded({
+  extended: true,
+  limit: '10mb',
+  parameterLimit: 1000 // Prevent excessive parameters
+}));
 
+// 5. Static files (SECURE - disable directory listing)
+app.use(express.static(path.join(__dirname, "public"), {
+  dotfiles: 'deny',
+  etag: true,
+  extensions: ['html', 'htm', 'css', 'js', 'json', 'png', 'jpg', 'jpeg', 'gif', 'ico', 'svg'],
+  index: false, // Disable auto-indexing
+  maxAge: 0,
+  redirect: true,
+  setHeaders: (res, filePath) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  }
+}));
+
+// 6. View engine
 app.set("view engine", "ejs")
 
+// 7. Session Configuration (SECURE)
+const isProduction = process.env.NODE_ENV === 'production';
 
+// Require strong session secret in production
+const sessionSecret = process.env.SESSION_SECRET;
+if (isProduction && (!sessionSecret || sessionSecret.length < 64)) {
+  console.error("❌ CRITICAL: SESSION_SECRET must be set to a long random string (min 64 chars) in production!");
+  process.exit(1);
+}
+
+const MongoStore = require('connect-mongo');
 
 app.use(session({
-    secret: "supersecretadminkey",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: false
+  secret: sessionSecret || "dev-secret-only-for-development-change-in-production-minimum-64-characters-here-1234567890",
+  resave: false,
+  saveUninitialized: false,
+  store: new MongoStore({
+    mongoUrl: process.env.MONGODB_URI,
+    ttl: 30 * 60, // 30 minutes (in seconds)
+    autoRemove: 'native',
+    collectionName: 'sessions'
+  }),
+  cookie: {
+    secure: isProduction, // HTTPS only in production
+    httpOnly: true,
+    sameSite: 'strict',
+    maxAge: 30 * 60 * 1000 // 30 minutes
+  },
+  name: 'neuroassist.sid' // Custom session cookie name
+}));
+
+// 8. CSRF Protection (for session-based routes)
+const csrfProtection = csrf({ cookie: false });
+
+function shouldSkipCSRF(req) {
+  const skipPaths = [
+    '/auth/google',
+    '/auth/google/callback',
+    '/api/vapi',
+    '/logout',
+    '/api/'
+  ];
+  if (req.method === 'GET') return true;
+  if (req.path.startsWith('/public/')) return true;
+  if (req.path.startsWith('/socket.io/')) return true;
+  return skipPaths.some(path => req.path.startsWith(path));
+}
+
+app.use((req, res, next) => {
+  if (shouldSkipCSRF(req)) return next();
+  return csrfProtection(req, res, next);
+});
+
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken ? () => req.csrfToken() : null;
+  next();
+});
+
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    logger.warn(`CSRF attack blocked: ${req.method} ${req.path} from IP ${req.ip}`);
+    if (req.method === 'GET' || req.headers.accept?.includes('text/html')) {
+      return res.status(403).render('error', { message: 'Invalid or missing CSRF token.' });
     }
-}))
+    return res.status(403).json({ error: 'CSRF token invalid', message: 'Security token missing' });
+  }
+  next(err);
+});
+
+// 9. Rate Limiting - General API
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { error: "Too many requests from this IP, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+// 9. Rate Limiting - Strict for auth routes
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // limit each IP to 5 requests per hour
+  message: { error: "Too many authentication attempts, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+// 10. Rate Limiting - Chat endpoints (to prevent abuse)
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // limit each IP to 30 chat requests per minute
+  message: { error: "Too many messages, please slow down." },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+// CSRF Protection: Planned for future implementation (currently using rate limiting + domain auth)
+
+// 12. Passport
+app.use(passport.initialize())
+app.use(passport.session())
+
+// ============================================
+// 🔒 ADDITIONAL SECURITY MIDDLEWARE
+// ============================================
+
+// HTTPS Enforcement in Production
+if (isProduction) {
+  app.use((req, res, next) => {
+    if (!req.secure) {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
+// Admin IP Whitelist (optional - configure in .env)
+const allowedAdminIPs = process.env.ALLOWED_ADMIN_IPS
+  ? process.env.ALLOWED_ADMIN_IPS.split(',')
+  : [];
+
+const adminIPWhitelist = allowedAdminIPs.length > 0
+  ? (req, res, next) => {
+      const clientIP = req.ip || req.connection.remoteAddress;
+      if (allowedAdminIPs.includes(clientIP)) {
+        return next();
+      }
+      logger.warn(`Admin access denied from IP: ${clientIP}`);
+      return res.status(403).render('error', { message: 'Access Denied: IP not whitelisted' });
+    }
+  : null;
 
 
 
@@ -90,7 +278,7 @@ async function analyzeUser(botId, userId) {
 
 
 
-app.get("/analyze", async (req, res) => {
+app.get("/analyze", chatLimiter, botAccess, async (req, res) => {
 
     const { botId, userId } = req.query;
 
@@ -209,10 +397,13 @@ io.on("connection", (socket) => {
             const userFromDB = await User.findById(userData.userId);
             if (!userFromDB) return;
 
+            // Sanitize message to prevent XSS
+            const sanitizedMessage = validator.escape(message.trim());
+
             const chat = await Chat.create({
                 userId: userFromDB._id,
                 user: userFromDB.name,
-                message: message.trim(),
+                message: sanitizedMessage,
                 state: userData.state,
                 district: userData.district
             });
@@ -220,7 +411,7 @@ io.on("connection", (socket) => {
             io.to(userData.room).emit("message", {
                 userId: userFromDB._id.toString(),
                 user: userFromDB.name,
-                text: message,
+                text: sanitizedMessage,
                 time: chat.createdAt
             });
 
@@ -244,8 +435,7 @@ io.on("connection", (socket) => {
 
 
 
-const ADMIN_USERNAME = "admin"
-const ADMIN_PASSWORD = "123456"
+// Admin authentication removed - using database-based admin accounts
 
 
 
@@ -260,35 +450,143 @@ app.use("/api/vapi", vapiWebhook);
 // })
 
 
-app.post("/admin/login", (req, res) => {
+// Admin login with rate limiting and IP tracking
+app.post(`/${ADMIN_PATH}/login`, authLimiter, async (req, res) => {
+    const clientIP = req.ip || req.connection.remoteAddress;
 
-    const { username, password } = req.body
-
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-
-        req.session.admin = true
-
-        res.redirect("/admin")
-
-    } else {
-
-        res.render("admin-login", { error: "Invalid admin credentials" })
-
+    // Check if IP is banned
+    const { isIPBanned, recordFailedLogin, resetFailedLogins } = require("./middleware/adminAuth");
+    if (await isIPBanned(clientIP)) {
+      return res.status(403).render("admin-login", {
+        error: "Too many failed attempts. Please try again later."
+      });
     }
 
+    const { email, password } = req.body;
+
+    try {
+      // Find admin by email
+      const admin = await Admin.findOne({ email: email.toLowerCase().trim(), isActive: true });
+
+      if (!admin) {
+        // Record failed attempt
+        recordFailedLogin(clientIP);
+        logger.warn(`Failed admin login attempt for non-existent email: ${email} from IP: ${clientIP}`);
+
+        return res.render("admin-login", {
+          error: "Invalid email or password",
+          attemptIP: clientIP
+        });
+      }
+
+      // Check if account is locked
+      if (admin.isLocked()) {
+        return res.status(403).render("admin-login", {
+          error: "Account is temporarily locked. Please try again later.",
+          attemptIP: clientIP
+        });
+      }
+
+      // Verify password
+      const validPassword = await admin.comparePassword(password);
+
+      if (!validPassword) {
+        // Record failed attempt
+        await admin.incLoginAttempts();
+        recordFailedLogin(clientIP);
+        logger.warn(`Failed admin login attempt for email: ${email} from IP: ${clientIP}`);
+
+        return res.render("admin-login", {
+          error: "Invalid email or password",
+          attemptIP: clientIP
+        });
+      }
+
+      // Successful password check - reset failed attempts
+      await admin.updateOne({ $set: { loginAttempts: 0, lockedUntil: undefined }, $currentDate: { lastLogin: true } });
+      resetFailedLogins(clientIP);
+
+      // Check if 2FA is enabled for this admin
+      if (admin.twoFactorEnabled && admin.twoFactorSecret) {
+        // Generate 2FA OTP using TOTP
+        const speakeasy = require("speakeasy");
+        const secret = admin.twoFactorSecret;
+        const otp = speakeasy.totp({
+          secret: secret,
+          encoding: "base32"
+        });
+
+        // Store OTP verification session (we'll verify against secret on validation)
+        req.session.admin2fa = {
+          adminId: admin._id,
+          email: admin.email,
+          verified: false,
+          expires: Date.now() + 5 * 60 * 1000, // 5 minutes
+          attemptIP: clientIP
+        };
+
+        // Send OTP email
+        try {
+          const { sendOtp } = require("./services/sendOtp");
+          await sendOtp(admin.email, otp);
+          logger.info(`2FA OTP sent to admin email: ${admin.email} from IP: ${clientIP}`);
+
+          // Redirect to 2FA verification page
+          res.redirect(`/${ADMIN_PATH}/verify-2fa`);
+        } catch (err) {
+          logger.error("Failed to send 2FA OTP:", err);
+          res.render("admin-login", {
+            error: "Failed to send verification code. Please try again."
+          });
+        }
+      } else {
+        // No 2FA required - log admin in directly
+        req.session.admin = admin._id.toString();
+        req.session.adminEmail = admin.email;
+        req.session.adminRole = admin.role;
+        logger.info(`Admin logged in (no 2FA): ${admin.email} from IP: ${clientIP}`);
+        res.redirect(`/${ADMIN_PATH}`);
+      }
+
+    } catch (err) {
+      logger.error("Admin login error:", err);
+      res.status(500).render("admin-login", {
+        error: "An error occurred. Please try again."
+      });
+    }
 })
 
 
 function protectAdmin(req, res, next) {
+    // Check IP whitelist if configured
+    if (allowedAdminIPs.length > 0) {
+      const clientIP = req.ip || req.connection.remoteAddress;
+      if (!allowedAdminIPs.includes(clientIP)) {
+        logger.warn(`Admin access denied from non-whitelisted IP: ${clientIP}`);
+        return res.status(403).render('error', {
+          message: 'Access Denied: Your IP is not authorized for admin access.'
+        });
+      }
+    }
 
+    // Check admin session (stored as admin ID)
     if (req.session.admin) {
-
-        next()
-
+      // Verify admin still exists and is active in DB
+      Admin.findById(req.session.admin).then(admin => {
+        if (admin && admin.isActive) {
+          req.currentAdmin = admin; // Attach admin to request
+          next();
+        } else {
+          req.session.destroy();
+          return res.redirect(`/${ADMIN_PATH}/login`);
+        }
+      }).catch(err => {
+        logger.error("Admin verification error:", err);
+        req.session.destroy();
+        return res.redirect(`/${ADMIN_PATH}/login`);
+      });
     } else {
-
-        res.redirect("/admin/login")
-
+        res.redirect(`/${ADMIN_PATH}/login`)
     }
 
 }
@@ -304,6 +602,18 @@ app.get("/home", auth, async (req, res) => {
     res.render("home", { bots })
 
 })
+
+// CRM: Leads Management Pages
+app.get("/leads", auth, async (req, res) => {
+  const bots = await Bot.find({ userId: req.user.id });
+  res.render("leads", { bots, csrfToken: req.csrfToken ? req.csrfToken() : null });
+});
+
+app.get("/leads/:leadId", auth, async (req, res) => {
+  const { leadId } = req.params;
+  const bots = await Bot.find({ userId: req.user.id });
+  res.render("lead-detail", { leadId, bots, csrfToken: req.csrfToken ? req.csrfToken() : null });
+});
 
 
 
@@ -336,6 +646,7 @@ app.get("/createbot", auth, (req, res) => {
 
 
 const Lead = require("./models/lead");
+const botOwner = require("./middleware/botOwner");
 
 
 app.get("/profile", auth, async (req, res) => {
@@ -365,6 +676,36 @@ app.get("/profile", auth, async (req, res) => {
             lead.botName = botMap[lead.botId] || 'Unknown Bot';
         });
 
+        // Calculate lead statistics
+        const leadStats = {
+          total: leads.length,
+          hotLeads: leads.filter(l => l.leadScore >= 70).length,
+          converted: leads.filter(l => l.leadStatus === 'converted').length,
+          avgScore: leads.length > 0
+            ? Math.round(leads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / leads.length)
+            : 0,
+          byStatus: {},
+          byBot: {}
+        };
+
+        // Group by status
+        leads.forEach(lead => {
+          leadStats.byStatus[lead.leadStatus] = (leadStats.byStatus[lead.leadStatus] || 0) + 1;
+        });
+
+        // Group by bot
+        bots.forEach(bot => {
+          const botLeads = leads.filter(l => l.botId === bot.botId);
+          leadStats.byBot[bot.botId] = {
+            name: bot.name,
+            total: botLeads.length,
+            converted: botLeads.filter(l => l.leadStatus === 'converted').length,
+            avgScore: botLeads.length > 0
+              ? Math.round(botLeads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / botLeads.length)
+              : 0
+          };
+        });
+
         // existing bookings
         const bookings = await Booking.find({
             botId: { $in: botIds }
@@ -374,7 +715,8 @@ app.get("/profile", auth, async (req, res) => {
             user,
             bots,
             bookings,
-            leads   // ✅ IMPORTANT
+            leads,
+            leadStats
         });
 
     } catch (err) {
@@ -384,14 +726,17 @@ app.get("/profile", auth, async (req, res) => {
 
 });
 
-app.get("/conversations/:botId", async (req, res) => {
+// ============================================
+// 📊 CRM LEADS ROUTES
+// ============================================
+app.use("/api/leads", leadsRouter);
 
+app.get("/conversations/:botId", auth, botOwner, async (req, res) => {
     const conversations = await Conversation.find({
         botId: req.params.botId
     })
 
     res.render("conversations", { conversations })
-
 })
 
 app.get("/edit-profile", auth, async (req, res) => {
@@ -407,7 +752,7 @@ app.get("/edit-profile", auth, async (req, res) => {
     }
 });
 
-app.get("/admin", protectAdmin, async (req, res) => {
+app.get(`/${ADMIN_PATH}`, protectAdmin, async (req, res) => {
 
     const users = await User.find()
     const bots = await Bot.find()
@@ -443,11 +788,11 @@ app.get("/admin", protectAdmin, async (req, res) => {
 
 })
 
-app.get("/admin/login", (req, res) => {
+app.get(`/${ADMIN_PATH}/login`, (req, res) => {
 
     if (req.session.admin) {
 
-        return res.redirect("/admin")
+        return res.redirect(`/${ADMIN_PATH}`)
 
     }
 
@@ -455,14 +800,100 @@ app.get("/admin/login", (req, res) => {
 
 })
 
-app.get("/admin/logout", (req, res) => {
+app.get(`/${ADMIN_PATH}/logout`, (req, res) => {
 
     req.session.destroy()
 
-    res.redirect("/admin/login")
+    res.redirect(`/${ADMIN_PATH}/login`)
 
 })
 
+
+// ============================================
+// 🔐 ADMIN 2FA ROUTES
+// ============================================
+
+app.get(`/${ADMIN_PATH}/verify-2fa`, (req, res) => {
+  if (req.session.admin) return res.redirect(`/${ADMIN_PATH}`);
+  if (!req.session.admin2fa) return res.redirect(`/${ADMIN_PATH}/login`);
+  res.render("admin-verify-2fa", { error: null, success: null });
+});
+
+app.post(`/${ADMIN_PATH}/verify-2fa`, authLimiter, async (req, res) => {
+  const { otp } = req.body;
+  const admin2fa = req.session.admin2fa;
+  if (!admin2fa) return res.redirect(`/${ADMIN_PATH}/login`);
+  if (Date.now() > admin2fa.expires) {
+    req.session.admin2fa = null;
+    return res.render("admin-verify-2fa", { error: "Verification code expired. Please log in again." });
+  }
+
+  try {
+    // Get admin from DB
+    const admin = await Admin.findById(admin2fa.adminId);
+    if (!admin) {
+      req.session.admin2fa = null;
+      return res.render("admin-verify-2fa", { error: "Admin account not found." });
+    }
+
+    // Verify TOTP against stored secret
+    const speakeasy = require("speakeasy");
+    const verified = speakeasy.totp.verify({
+      secret: admin.twoFactorSecret,
+      encoding: "base32",
+      token: otp,
+      window: 2 // Allow 2 time steps (30 sec each) for clock drift
+    });
+
+    if (verified) {
+      // Successful 2FA verification
+      req.session.admin = admin._id.toString();
+      req.session.adminEmail = admin.email;
+      req.session.adminRole = admin.role;
+      req.session.admin2fa = null;
+      logger.info(`Admin 2FA success from IP: ${admin2fa.attemptIP}, email: ${admin.email}`);
+      res.redirect(`/${ADMIN_PATH}`);
+    } else {
+      logger.warn(`Invalid admin 2FA OTP from IP: ${admin2fa.attemptIP}, email: ${admin.email}`);
+      res.render("admin-verify-2fa", { error: "Invalid verification code." });
+    }
+  } catch (err) {
+    logger.error("2FA verification error:", err);
+    res.render("admin-verify-2fa", { error: "Verification failed. Please try again." });
+  }
+});
+
+app.post(`/${ADMIN_PATH}/resend-2fa`, authLimiter, async (req, res) => {
+  if (!req.session.admin2fa) return res.json({ success: false, message: "No pending verification" });
+
+  try {
+    // Get admin from DB to use their secret and email
+    const admin = await Admin.findById(req.session.admin2fa.adminId);
+    if (!admin) {
+      req.session.admin2fa = null;
+      return res.json({ success: false, message: "Admin account not found" });
+    }
+
+    // Generate new TOTP
+    const speakeasy = require("speakeasy");
+    const newOtp = speakeasy.totp({
+      secret: admin.twoFactorSecret,
+      encoding: "base32"
+    });
+
+    // Update session expiry (5 minutes)
+    req.session.admin2fa.expires = Date.now() + 5 * 60 * 1000;
+
+    // Send new OTP
+    const { sendOtp } = require("./services/sendOtp");
+    await sendOtp(admin.email, newOtp);
+    logger.info(`2FA OTP resent to admin: ${admin.email}`);
+    res.json({ success: true });
+  } catch (err) {
+    logger.error("2FA resend error:", err);
+    res.json({ success: false, message: "Failed to send email" });
+  }
+});
 
 app.get("/pricing", auth, (req, res) => {
     res.render("pricing")
@@ -541,47 +972,52 @@ app.get("/auth/google/callback",
 
 const sendOtp = require("./services/sendOtp")
 
-app.post("/signup", async (req, res) => {
+app.post("/signup", authLimiter, [
+    body('name')
+      .trim()
+      .isLength({ min: 3 }).withMessage('Name must be at least 3 characters')
+      .escape(),
+    body('email')
+      .isEmail().withMessage('Enter a valid email')
+      .normalizeEmail(),
+    body('password')
+      .isStrongPassword({
+        minLength: 12,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1
+      }).withMessage('Password must be at least 12 characters with uppercase, lowercase, number, and symbol'),
+    body('state', 'State is required').notEmpty(),
+    body('district', 'District is required').notEmpty(),
+    body('companyname', 'Company name is required').notEmpty().escape()
+  ], async (req, res) => {
+    try {
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: errors.array()[0].msg,
+          errors: errors.array()
+        });
+      }
 
-    const { name, email, password, state,
-        district, companyname } = req.body
+      const { name, email, password, state, district, companyname } = req.body;
 
-    if (!name || name.length < 3) {
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        // Generic message to prevent email enumeration
         return res.json({
-            success: false,
-            message: "Name must be at least 3 characters"
-        })
-    }
+          success: false,
+          message: "If this email is not registered, you will receive an OTP. Otherwise, please login."
+        });
+      }
 
-    if (!email.includes("@")) {
-        return res.json({
-            success: false,
-            message: "Enter a valid email"
-        })
-    }
+      const otp = Math.floor(100000 + Math.random() * 900000);
 
-    if (password.length < 6) {
-        return res.json({
-            success: false,
-            message: "Password must be at least 6 characters"
-        })
-    }
-
-    const existingUser = await User.findOne({ email })
-
-    if (existingUser) {
-        return res.json({
-            success: false,
-            message: "Email already registered"
-        })
-    }
-
-
-
-    const otp = Math.floor(100000 + Math.random() * 900000)
-
-
-    req.session.signupData = {
+      req.session.signupData = {
         name,
         email,
         password,
@@ -590,18 +1026,26 @@ app.post("/signup", async (req, res) => {
         district,
         otp,
         expires: Date.now() + 300000
-    }
+      };
 
+      await sendOtp(email, otp);
 
-    await sendOtp(email, otp)
+      logger.info(`OTP sent to ${email} for signup`);
 
-    res.json({
+      res.json({
         success: true,
         message: "OTP sent to your email",
         redirect: "/verify-otp"
-    })
+      });
 
-})
+    } catch (err) {
+      logger.error("Signup error:", err);
+      res.status(500).json({
+        success: false,
+        message: "Server error during signup"
+      });
+    }
+  })
 
 app.post("/verify-otp", async (req, res) => {
 
@@ -669,104 +1113,198 @@ app.post("/verify-otp", async (req, res) => {
 
 
 
-app.post("/login", async (req, res) => {
+app.post("/login", authLimiter, [
+    body('email')
+      .isEmail().withMessage('Enter a valid email')
+      .normalizeEmail(),
+    body('password')
+      .notEmpty().withMessage('Password is required')
+  ], async (req, res) => {
+    try {
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: errors.array()[0].msg
+        });
+      }
 
-    const { email, password } = req.body
+      const { email, password } = req.body;
 
-    const user = await User.findOne({ email })
+      const user = await User.findOne({ email });
 
-    if (!user) {
-        return res.json({ success: false, message: "User not found" })
-    }
+      if (!user) {
+        // Mitigate timing attack: perform dummy bcrypt comparison
+        try {
+          await bcrypt.compare('dummy', '$2a$10$dummyhashtomatch32chars123456789012');
+        } catch (e) {}
+        logger.warn(`Login attempt for non-existent user: ${email}`);
+        return res.json({ success: false, message: "Invalid email or password" });
+      }
 
-    const valid = await bcrypt.compare(password, user.password)
+      const valid = await bcrypt.compare(password, user.password);
 
-    if (!valid) {
-        return res.json({ success: false, message: "Incorrect password" })
-    }
+      if (!valid) {
+        logger.warn(`Failed login attempt for user: ${email}`);
+        return res.json({ success: false, message: "Invalid email or password" });
+      }
 
-    const token = jwt.sign(
+      const token = jwt.sign(
         { id: user._id, email: user.email },
         process.env.JWT_SECRET,
         { expiresIn: "7d" }
-    )
+      );
 
-    res.cookie("token", token, {
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax"
-    })
+        secure: isProduction,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
 
-    res.json({
+      logger.info(`User logged in: ${email}`);
+
+      res.json({
         success: true,
         message: "Login successful",
         redirect: "/home"
-    })
+      });
 
-})
-
-
-
-app.post("/createbot", auth, async (req, res) => {
-
-    const { name, category, color, welcomeMessage, knowledge, websiteUrl } = req.body
-
-    const botId = uuidv4()
-
-    const bots = await Bot.find({ userId: req.user.id })
-
-    const user = await User.findById(req.user.id)
-
-    if (bots.length >= user.botsLimit) {
-
-        res.send(`<script>
-      alert("Bot limit reached. Please upgrade to plan.");
-      window.location="/pricing";
-    </script>`);
-
+    } catch (err) {
+      logger.error("Login error:", err);
+      res.status(500).json({
+        success: false,
+        message: "Server error during login"
+      });
     }
+  })
 
-    let websiteContent = ""
 
-    if (websiteUrl && websiteUrl.trim() !== "") {
-        websiteContent = await scrapeWebsite(websiteUrl)
-    }
 
-    const bot = await Bot.create({
-
-        userId: req.user.id,
-
-        botId,
-
-        name,
-
-        category,
-
-        color,
-
-        welcomeMessage,
-
-        knowledge: knowledge.split("\n"),
-
-        websiteUrl,
-
-        websiteContent
-
-    })
-
-    res.render("embed", { bot })
-
-})
-
-app.post("/chat", async (req, res) => {
-    try {
-        const { botId, message } = req.body;
-
-        const bot = await Bot.findOne({ botId });
-
-        if (!bot) {
-            return res.json({ reply: "Bot not found" });
+app.post("/createbot",
+  generalLimiter,
+  auth,
+  [
+    body('name')
+      .trim()
+      .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters')
+      .escape()
+      .trim(),
+    body('category')
+      .optional()
+      .isIn(['support', 'sales', 'general', 'booking', 'custom'])
+      .withMessage('Invalid category')
+      .escape(),
+    body('color')
+      .optional()
+      .matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format (use #RRGGBB)')
+      .escape(),
+    body('welcomeMessage')
+      .optional()
+      .trim()
+      .isLength({ max: 500 }).withMessage('Welcome message too long (max 500 chars)')
+      .escape(),
+    body('knowledge')
+      .optional()
+      .isArray().withMessage('Knowledge must be an array')
+      .custom((value) => {
+        if (value && Array.isArray(value)) {
+          value.forEach((item, index) => {
+            if (typeof item !== 'string') {
+              throw new Error(`Knowledge item ${index} must be a string`);
+            }
+            if (item.length > 10000) {
+              throw new Error(`Knowledge item ${index} is too long (max 10000 chars)`);
+            }
+            // Sanitize each knowledge item
+            value[index] = validator.escape(item.trim());
+          });
         }
+        return true;
+      }),
+    body('websiteUrl')
+      .optional()
+      .isURL().withMessage('Invalid URL format')
+      .normalizeURL()
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          errors: errors.array()
+        });
+      }
+
+      const { name, category, color, welcomeMessage, knowledge, websiteUrl } = req.body;
+
+      const botId = uuidv4();
+
+      const bots = await Bot.find({ userId: req.user.id });
+      const user = await User.findById(req.user.id);
+
+      if (bots.length >= user.botsLimit) {
+        res.send(`<script>
+          alert("Bot limit reached. Please upgrade to plan.");
+          window.location="/pricing";
+        </script>`);
+      }
+
+      let websiteContent = "";
+      let authorizedDomain = null;
+
+      if (websiteUrl && websiteUrl.trim() !== "") {
+        websiteContent = await scrapeWebsite(websiteUrl);
+
+        // Extract domain from websiteUrl for authorization
+        const { extractDomain } = require("./middleware/domainAuth");
+        authorizedDomain = extractDomain(websiteUrl);
+
+        if (!authorizedDomain) {
+          console.warn(`Could not extract domain from websiteUrl: ${websiteUrl}`);
+        }
+      }
+
+      const bot = await Bot.create({
+        userId: req.user.id,
+        botId,
+        name,
+        category: category || 'general',
+        color: color || '#ff7518',
+        welcomeMessage: welcomeMessage || 'Hello! How can I help you today?',
+        knowledge: Array.isArray(knowledge) ? knowledge : (knowledge ? knowledge.split('\n') : []),
+        websiteUrl: websiteUrl || '',
+        authorizedDomain,
+        websiteContent
+      });
+
+      // Generate signed embed token
+      const embedToken = jwt.sign(
+        { botId: bot.botId },
+        process.env.EMBED_SECRET || process.env.JWT_SECRET,
+        { expiresIn: '1y' }
+      );
+
+      res.render("embed", { bot, embedToken });
+    } catch (err) {
+      logger.error("Create bot error:", err);
+      res.status(500).json({
+        success: false,
+        message: "Failed to create bot"
+      });
+    }
+  }
+);
+
+app.post("/chat", chatLimiter, botAccess, async (req, res) => {
+    try {
+        const bot = req.bot;  // Already fetched by domainAuth middleware
+        const botId = req.botId;
+        const { message } = req.body;
 
         const msg = message.toLowerCase();
 
@@ -821,10 +1359,9 @@ app.post("/chat", async (req, res) => {
 
             try {
 
-                // Get bot and user info for email notification
-                const bot = await Bot.findOne({ botId });
-                const user = bot ? await User.findById(bot.userId) : null;
-                const botName = bot ? bot.name : 'Unknown Bot';
+                // Get user info for email notification (bot already available from middleware)
+                const user = await User.findById(bot.userId);
+                const botName = bot.name;
 
                 // 🔥 LEAD SCORING ENGINE
                 let leadScore = 0;
@@ -973,11 +1510,15 @@ app.post("/chat", async (req, res) => {
 
         const reply = await generateReply(bot, message);
 
+        // Sanitize messages to prevent XSS
+        const userMessage = validator.escape(message);
+        const botReply = validator.escape(reply);
+
         await Conversation.create({
             botId,
             messages: [
-                { role: "user", text: message },
-                { role: "bot", text: reply }
+                { role: "user", text: userMessage },
+                { role: "bot", text: botReply }
             ]
         });
 
@@ -991,13 +1532,10 @@ app.post("/chat", async (req, res) => {
         });
     }
 });
-app.get("/bot/:id", async (req, res) => {
+app.get("/bot/:id", generalLimiter, botAccess, async (req, res) => {
 
-    const bot = await Bot.findOne({ botId: req.params.id })
-
-    if (!bot) {
-        return res.json({ error: "Bot not found" })
-    }
+    // Bot already fetched by domainAuth middleware
+    const bot = req.bot;
 
     res.json({
         name: bot.name,
@@ -1006,24 +1544,15 @@ app.get("/bot/:id", async (req, res) => {
 
 })
 
-app.delete("/deletebot/:botId", async (req, res) => {
-
+app.delete("/deletebot/:botId", generalLimiter, auth, botOwner, async (req, res) => {
     try {
-
-        const { botId } = req.params
-
-        await Bot.deleteOne({ botId })
-
-        res.json({ success: true })
-
+        // botOwner middleware already verified ownership and attached bot
+        await Bot.deleteOne({ botId: req.params.botId });
+        res.json({ success: true });
     } catch (err) {
-
-        console.log(err)
-
-        res.json({ success: false })
-
+        console.log(err);
+        res.json({ success: false });
     }
-
 })
 
 
@@ -1201,7 +1730,7 @@ app.post("/create-booking-agent", auth, async (req, res) => {
 
 
 
-app.get("/bookings/:botId", auth, async (req, res) => {
+app.get("/bookings/:botId", auth, botOwner, async (req, res) => {
     const bookings = await Booking.find({
         botId: req.params.botId
     }).sort({ createdAt: -1 });
@@ -1233,13 +1762,13 @@ app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
 
         const { bio, skills, github, linkedin, role } = req.body;
 
-        let updateData = {
-            bio,
-            skills,
-            github,
-            linkedin,
-            role
-        };
+        // Sanitize inputs to prevent XSS
+        let updateData = {};
+        if (bio !== undefined) updateData.bio = validator.escape(bio).trim();
+        if (skills !== undefined) updateData.skills = validator.escape(skills).trim();
+        if (github !== undefined) updateData.github = validator.escape(github).trim();
+        if (linkedin !== undefined) updateData.linkedin = validator.escape(linkedin).trim();
+        if (role !== undefined) updateData.role = validator.escape(role).trim();
 
         // ✅ SAVE PHOTO
         if (req.file) {
@@ -1263,7 +1792,7 @@ app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
 });
 
 
-app.post("/track", async (req, res) => {
+app.post("/track", chatLimiter, botAccess, async (req, res) => {
     await Behavior.create(req.body);
     res.sendStatus(200);
 });
@@ -1369,10 +1898,127 @@ cron.schedule('0 9 * * *', async () => {
 //     }
 // }, 5000);
 
+// Migration: Populate authorizedDomain for existing bots
+async function migrateAuthorizedDomains() {
+    try {
+        const { extractDomain } = require("./middleware/domainAuth");
+
+        // Find bots that have websiteUrl but no authorizedDomain
+        const botsNeedingMigration = await Bot.find({
+            websiteUrl: { $exists: true, $ne: null, $ne: "" },
+            authorizedDomain: { $exists: false }
+        });
+
+        if (botsNeedingMigration.length === 0) {
+            console.log("✅ No bots need domain migration");
+            return;
+        }
+
+        console.log(`🔄 Migrating ${botsNeedingMigration.length} bots to set authorizedDomain...`);
+
+        let migrated = 0;
+        let failed = 0;
+
+        for (const bot of botsNeedingMigration) {
+            try {
+                const domain = extractDomain(bot.websiteUrl);
+                if (domain) {
+                    bot.authorizedDomain = domain;
+                    await bot.save();
+                    migrated++;
+                    console.log(`  ✓ Bot ${bot.botId} (${bot.name}): ${domain}`);
+                } else {
+                    failed++;
+                    console.log(`  ✗ Bot ${bot.botId}: Could not extract domain from "${bot.websiteUrl}"`);
+                }
+            } catch (err) {
+                failed++;
+                console.error(`  ✗ Bot ${bot.botId}: Error - ${err.message}`);
+            }
+        }
+
+        console.log(`✅ Migration complete: ${migrated} migrated, ${failed} failed`);
+
+    } catch (err) {
+        console.error("❌ Migration error:", err);
+    }
+}
 
 const PORT = process.env.PORT || 3000;
 
+// Validate critical secrets in production before starting server
+if (isProduction) {
+  const jwtSecret = process.env.JWT_SECRET;
+  const embedSecret = process.env.EMBED_SECRET || process.env.JWT_SECRET;
+
+  if (!jwtSecret || jwtSecret.length < 32) {
+    console.error("❌ CRITICAL: JWT_SECRET must be set to a long random string (min 32 chars) in production!");
+    process.exit(1);
+  }
+
+  if (!embedSecret || embedSecret.length < 32) {
+    console.error("❌ CRITICAL: EMBED_SECRET must be set to a long random string (min 32 chars) in production!");
+    process.exit(1);
+  }
+
+  if (!process.env.RAZORPAY_KEY_SECRET) {
+    console.error("❌ CRITICAL: RAZORPAY_KEY_SECRET is required in production for payment verification!");
+    process.exit(1);
+  }
+
+  // Check email service configuration
+  if (!process.env.SENDGRID_API_KEY && !process.env.SMTP_USER && !process.env.RESEND_API_KEY) {
+    console.error("❌ CRITICAL: At least one email service (SENDGRID_API_KEY, SMTP_USER, RESEND_API_KEY) must be configured in production!");
+    process.exit(1);
+  }
+}
+
 server.listen(PORT, () => {
-    console.log("🚀 Server running on port " + PORT);
-    console.log("📧 Daily lead summaries will be sent at 9:00 AM every day");
+    logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    logger.info("📧 Daily lead summaries will be sent at 9:00 AM every day");
+
+    // Run migration on startup
+    migrateAuthorizedDomains();
+});
+
+// ============================================
+// ❌ ERROR HANDLING & 404
+// ============================================
+
+// 404 handler (must be after all routes)
+app.use((req, res) => {
+    logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
+    res.status(404).render('404', {
+        url: req.originalUrl,
+        message: "Page not found"
+    });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    logger.error("Unhandled error:", {
+        message: err.message,
+        stack: err.stack,
+        url: req.originalUrl,
+        method: req.method,
+        ip: req.ip
+    });
+
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    // In development, show detailed error
+    if (process.env.NODE_ENV !== 'production') {
+        res.status(500).render('error', {
+            error: err,
+            message: err.message || "Internal server error"
+        });
+    } else {
+        // In production, show generic error
+        res.status(500).render('error', {
+            error: {},
+            message: "Something went wrong. Our team has been notified."
+        });
+    }
 });

@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <title>Verify OTP</title>
+    <meta name="csrf-token" content="<%= csrfToken ? csrfToken() : '' %>">
 
     <style>
         * {
@@ -105,12 +106,13 @@
 
             const otp = this.otp.value
 
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || ''
             const res = await fetch("/verify-otp", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ otp })
+                body: JSON.stringify({ otp, _csrf: csrfToken })
             })
 
             const data = await res.json()
