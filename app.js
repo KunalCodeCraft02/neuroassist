@@ -653,7 +653,7 @@ app.get("/profile", auth, async (req, res) => {
 
     try {
 
-        const user = await User.findById(req.user.id);
+        const user = await User.findById(req.user.id).select("name email apiKey apiKeyCreatedAt apiKeyLastUsed apiKeyRateLimit");
 
         const bots = await Bot.find({ userId: req.user.id });
 
@@ -716,7 +716,17 @@ app.get("/profile", auth, async (req, res) => {
             bots,
             bookings,
             leads,
-            leadStats
+            leadStats,
+            apiKeyInfo: {
+                hasKey: !!user.apiKey,
+                createdAt: user.apiKeyCreatedAt,
+                lastUsed: user.apiKeyLastUsed,
+                rateLimit: user.apiKeyRateLimit,
+                // Mask the key for display (first 6 + ... + last 4)
+                maskedKey: user.apiKey
+                  ? user.apiKey.substring(0, 6) + '...' + user.apiKey.slice(-4)
+                  : null
+            }
         });
 
     } catch (err) {
@@ -730,6 +740,10 @@ app.get("/profile", auth, async (req, res) => {
 // 📊 CRM LEADS ROUTES
 // ============================================
 app.use("/api/leads", leadsRouter);
+
+// 🔑 API KEY MANAGEMENT ROUTES
+const apiKeyRouter = require("./routes/apikey");
+app.use("/api/key", apiKeyRouter);
 
 app.get("/conversations/:botId", auth, botOwner, async (req, res) => {
     const conversations = await Conversation.find({
@@ -1087,7 +1101,11 @@ app.post("/verify-otp", async (req, res) => {
         district: sessionData.district
     })
 
+    // Generate API key for new user
+    const apiKey = user.generateApiKey();
+    await user.save();
 
+    console.log(`👤 New user registered: ${user.email} with API key: ${apiKey.substring(0, 12)}...`);
 
     const token = jwt.sign(
         { id: user._id, email: user.email },
@@ -1248,10 +1266,19 @@ app.post("/createbot",
       const user = await User.findById(req.user.id);
 
       if (bots.length >= user.botsLimit) {
-        res.send(`<script>
+        return res.send(`<script>
           alert("Bot limit reached. Please upgrade to plan.");
           window.location="/pricing";
         </script>`);
+      }
+
+      let newlyGeneratedApiKey = null;
+
+      // Generate API key if user doesn't have one
+      if (!user.apiKey) {
+        newlyGeneratedApiKey = user.generateApiKey();
+        await user.save();
+        console.log(`🔑 API key auto-generated for user: ${user.email} during bot creation`);
       }
 
       let websiteContent = "";
@@ -1289,7 +1316,7 @@ app.post("/createbot",
         { expiresIn: '1y' }
       );
 
-      res.render("embed", { bot, embedToken });
+      res.render("embed", { bot, embedToken, newlyGeneratedApiKey });
     } catch (err) {
       logger.error("Create bot error:", err);
       res.status(500).json({
