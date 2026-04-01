@@ -119,7 +119,10 @@ app.use(morgan('dev', {
   skip: (req, res) => res.statusCode < 400 // only log 4xx and 5xx to file
 }))
 
-// 4. Body parser middleware with size limits
+// 4. Cookie parser (required for reading cookies in auth middleware)
+app.use(cookieParser());
+
+// 5. Body parser middleware with size limits
 app.use(express.json({ limit: '10mb', strict: true }));
 app.use(express.urlencoded({
   extended: true,
@@ -127,7 +130,7 @@ app.use(express.urlencoded({
   parameterLimit: 1000 // Prevent excessive parameters
 }));
 
-// 5. Static files (SECURE - disable directory listing)
+// 6. Static files (SECURE - disable directory listing)
 app.use(express.static(path.join(__dirname, "public"), {
   dotfiles: 'deny',
   etag: true,
@@ -140,10 +143,10 @@ app.use(express.static(path.join(__dirname, "public"), {
   }
 }));
 
-// 6. View engine
+// 7. View engine
 app.set("view engine", "ejs")
 
-// 7. Session Configuration (SECURE)
+// 8. Session Configuration (SECURE)
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Require strong session secret in production
@@ -224,7 +227,7 @@ const generalLimiter = rateLimit({
   legacyHeaders: false
 })
 
-// 9. Rate Limiting - Strict for auth routes
+// 10. Rate Limiting - Strict for auth routes
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // limit each IP to 5 requests per hour
@@ -233,7 +236,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 })
 
-// 10. Rate Limiting - Chat endpoints (to prevent abuse)
+// 11. Rate Limiting - Chat endpoints (to prevent abuse)
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 30, // limit each IP to 30 chat requests per minute
