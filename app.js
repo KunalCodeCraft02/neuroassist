@@ -159,7 +159,7 @@ app.use(session({
   cookie: {
     secure: isProduction, // HTTPS only in production
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 30 * 60 * 1000 // 30 minutes
   },
   name: 'neuroassist.sid' // Custom session cookie name
@@ -266,11 +266,6 @@ const adminIPWhitelist = allowedAdminIPs.length > 0
     }
   : null;
 
-
-
-
-app.use(passport.initialize())
-app.use(passport.session())
 
 
 
@@ -2069,9 +2064,13 @@ app.use((err, req, res, next) => {
         return next(err);
     }
 
-    // Determine if request expects JSON (API routes, fetch/XMLHttpRequest, or Accept header)
+    // Determine if request expects JSON:
+    // - API routes (/api/*, /auth/*, /login, /signup, etc.)
+    // - AJAX/Fetch requests (X-Requested-With header)
+    // - Requests with JSON content-type or accept header
+    const jsonPaths = ['/login', '/signup', '/verify-otp', '/createbot', '/update-profile', '/logout', '/api/', '/auth/'];
     const isApiRequest =
-        req.path.startsWith('/api/') ||
+        jsonPaths.some(path => req.path.startsWith(path)) ||
         req.xhr ||
         req.headers.accept?.includes('application/json') ||
         req.headers['content-type']?.includes('application/json');
