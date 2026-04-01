@@ -85,23 +85,32 @@ app.use(helmet({
 
 // 2. CORS - Allow specific origins only
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:3001']
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
+// Log allowed origins on startup
+logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (like mobile apps, curl requests, Postman)
+    if (!origin) {
+      logger.debug(`CORS: No origin header, allowing request`);
+      return callback(null, true);
+    }
 
     if (allowedOrigins.indexOf(origin) === -1) {
+      logger.warn(`CORS: Origin ${origin} not in allowed list: ${allowedOrigins.join(', ')}`);
       const msg = `Origin ${origin} not allowed by CORS`;
       return callback(new Error(msg), false);
     }
+
+    logger.debug(`CORS: Origin ${origin} allowed`);
     return callback(null, true);
   },
   credentials: true,
   optionsSuccessStatus: 200
-}))
+}));
 
 // 3. HTTP Request Logging (Morgan)
 const morgan = require("morgan")
@@ -627,7 +636,8 @@ app.get("/leads/:leadId", auth, async (req, res) => {
 
 
 app.get('/signup', (req, res) => {
-    res.render('signup', { csrfToken: req.csrfToken ? req.csrfToken() : null });
+    // csrfToken is automatically available in templates via middleware (res.locals.csrfToken)
+    res.render('signup');
 });
 
 
@@ -640,11 +650,12 @@ app.get("/login", (req, res) => {
             return res.redirect("/home");
         }
 
-        res.render("login", { csrfToken: req.csrfToken ? req.csrfToken() : null });
+        // csrfToken is automatically available in templates via middleware (res.locals.csrfToken)
+        res.render("login");
 
     } catch (err) {
         res.clearCookie("token"); // 🔥 FIX LOOP
-        res.render("login", { csrfToken: req.csrfToken ? req.csrfToken() : null });
+        res.render("login");
     }
 });
 
@@ -1144,9 +1155,12 @@ app.post("/login", authLimiter, [
       .notEmpty().withMessage('Password is required')
   ], async (req, res) => {
     try {
+      logger.info(`Login attempt for: ${req.body.email}`);
+
       // Validate input
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        logger.warn(`Login validation failed: ${JSON.stringify(errors.array())}`);
         return res.status(400).json({
           success: false,
           message: errors.array()[0].msg
@@ -1154,6 +1168,15 @@ app.post("/login", authLimiter, [
       }
 
       const { email, password } = req.body;
+
+      // Check JWT_SECRET
+      if (!process.env.JWT_SECRET) {
+        logger.error("JWT_SECRET not configured!");
+        return res.status(500).json({
+          success: false,
+          message: "Server configuration error"
+        });
+      }
 
       const user = await User.findOne({ email });
 
@@ -1188,7 +1211,7 @@ app.post("/login", authLimiter, [
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
-      logger.info(`User logged in: ${email}`);
+      logger.info(`User logged in successfully: ${email} (ID: ${user._id})`);
 
       res.json({
         success: true,
@@ -1198,9 +1221,11 @@ app.post("/login", authLimiter, [
 
     } catch (err) {
       logger.error("Login error:", err);
+      console.error("Login error stack:", err.stack);
       res.status(500).json({
         success: false,
-        message: "Server error during login"
+        message: "Server error during login",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
       });
     }
   })

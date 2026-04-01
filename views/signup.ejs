@@ -231,9 +231,17 @@
             const name = document.getElementById("name").value.trim()
             const email = document.getElementById("email").value.trim()
             const password = document.getElementById("password").value.trim()
+            const companyname = document.getElementById("company").value.trim()
+            const state = document.getElementById("state").value.trim()
+            const district = document.getElementById("district").value.trim()
 
-            if (!name || !email || !password) {
-                showToast("Please fill all fields", "error")
+            if (!name || !email || !password || !companyname) {
+                showToast("Please fill all required fields (name, email, password, company)", "error")
+                return
+            }
+
+            if (!state || !district) {
+                showToast("Please get your location first (required)", "error")
                 return
             }
 
@@ -245,7 +253,7 @@
                 const res = await fetch("/signup", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, email, password, _csrf: csrfToken })
+                    body: JSON.stringify({ name, email, password, companyname, state, district, _csrf: csrfToken })
                 })
 
                 const result = await res.json()
@@ -266,7 +274,8 @@
 
             } catch (err) {
 
-                showToast("Server error", "error")
+                console.error("Signup error:", err)
+                showToast("Server error - please try again", "error")
 
             }
 
@@ -291,22 +300,52 @@
         }
 
         function getLocation() {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
+            if (!navigator.geolocation) {
+                showToast("Geolocation is not supported by your browser", "error");
+                return;
+            }
 
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
+            showToast("Getting location...", "success");
 
-                // 🔥 Reverse geocoding (free API)
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-                const data = await res.json();
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    try {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
 
-                const state = data.address.state || "";
-                const district = data.address.county || data.address.city || "";
+                        // 🔥 Reverse geocoding (free API)
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`);
+                        const data = await res.json();
 
-                document.getElementById("state").value = state;
-                document.getElementById("district").value = district;
+                        const state = data.address.state || data.address.province || "";
+                        const district = data.address.county || data.address.city || data.address.town || data.address.village || "";
 
-            });
+                        if (state && district) {
+                            document.getElementById("state").value = state;
+                            document.getElementById("district").value = district;
+                            showToast("Location captured successfully!", "success");
+                        } else {
+                            showToast("Could not determine state and district from location", "error");
+                        }
+                    } catch (err) {
+                        console.error("Geocoding error:", err);
+                        showToast("Failed to get location details. Please enter manually.", "error");
+                    }
+                },
+                (err) => {
+                    console.error("Geolocation error:", err);
+                    let msg = "Failed to get location";
+                    if (err.code === 1) {
+                        msg = "Location access denied. Please enable location permission or enter manually.";
+                    }
+                    showToast(msg, "error");
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
         }
 
     </script>
