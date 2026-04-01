@@ -45,7 +45,7 @@ const adminSchema = new mongoose.Schema({
 });
 
 // Index for login queries
-adminSchema.index({ email: 1 });
+// Note: email already has unique index from the schema definition
 adminSchema.index({ "role": 1, "isActive": 1 });
 
 // Pre-save middleware to hash password

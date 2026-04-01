@@ -23,7 +23,17 @@ const botSchema = new mongoose.Schema({
 
     category: {
         type: String,
-        enum: ['support', 'sales', 'general', 'booking', 'custom'],
+        enum: [
+          'support',
+          'sales',
+          'general',
+          'booking',
+          'custom',
+          'Customer Support',
+          'E-commerce Assistant',
+          'customer support',
+          'e-commerce assistant'
+        ],
         default: 'general'
     },
 

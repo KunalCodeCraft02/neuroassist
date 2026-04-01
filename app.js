@@ -1925,38 +1925,64 @@ cron.schedule('0 9 * * *', async () => {
 //     }
 // }, 5000);
 
-// Migration: Populate authorizedDomain for existing bots
+// Migration: Populate authorizedDomain for existing bots AND normalize categories
 async function migrateAuthorizedDomains() {
     try {
         const { extractDomain } = require("./middleware/domainAuth");
 
-        // Find bots that have websiteUrl but no authorizedDomain
+        // Find all bots that need migration (either missing authorizedDomain OR have old category names)
         const botsNeedingMigration = await Bot.find({
-            websiteUrl: { $exists: true, $ne: null, $ne: "" },
-            authorizedDomain: { $exists: false }
+            $or: [
+                { websiteUrl: { $exists: true, $ne: null, $ne: "" }, authorizedDomain: { $exists: false } },
+                { category: { $in: ['Customer Support', 'E-commerce Assistant', 'customer support', 'e-commerce assistant'] } }
+            ]
         });
 
         if (botsNeedingMigration.length === 0) {
-            console.log("✅ No bots need domain migration");
+            console.log("✅ No bots need migration");
             return;
         }
 
-        console.log(`🔄 Migrating ${botsNeedingMigration.length} bots to set authorizedDomain...`);
+        console.log(`🔄 Migrating ${botsNeedingMigration.length} bots...`);
 
         let migrated = 0;
         let failed = 0;
 
+        // Category normalization mapping
+        const categoryMapping = {
+            'Customer Support': 'support',
+            'customer support': 'support',
+            'E-commerce Assistant': 'sales',
+            'e-commerce assistant': 'sales'
+        };
+
         for (const bot of botsNeedingMigration) {
             try {
-                const domain = extractDomain(bot.websiteUrl);
-                if (domain) {
-                    bot.authorizedDomain = domain;
+                let changes = 0;
+
+                // Normalize category if needed
+                if (categoryMapping[bot.category]) {
+                    const oldCategory = bot.category;
+                    bot.category = categoryMapping[bot.category];
+                    console.log(`  ℹ️  Bot ${bot.botId}: Normalized category "${oldCategory}" → "${bot.category}"`);
+                    changes++;
+                }
+
+                // Set authorizedDomain if missing
+                if (bot.websiteUrl && !bot.authorizedDomain) {
+                    const domain = extractDomain(bot.websiteUrl);
+                    if (domain) {
+                        bot.authorizedDomain = domain;
+                        console.log(`  ℹ️  Bot ${bot.botId} (${bot.name}): Set authorizedDomain = ${domain}`);
+                        changes++;
+                    } else {
+                        console.log(`  ⚠️  Bot ${bot.botId}: Could not extract domain from "${bot.websiteUrl}"`);
+                    }
+                }
+
+                if (changes > 0) {
                     await bot.save();
                     migrated++;
-                    console.log(`  ✓ Bot ${bot.botId} (${bot.name}): ${domain}`);
-                } else {
-                    failed++;
-                    console.log(`  ✗ Bot ${bot.botId}: Could not extract domain from "${bot.websiteUrl}"`);
                 }
             } catch (err) {
                 failed++;
@@ -1964,7 +1990,7 @@ async function migrateAuthorizedDomains() {
             }
         }
 
-        console.log(`✅ Migration complete: ${migrated} migrated, ${failed} failed`);
+        console.log(`✅ Migration complete: ${migrated} updated, ${failed} failed`);
 
     } catch (err) {
         console.error("❌ Migration error:", err);
