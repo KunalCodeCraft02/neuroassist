@@ -2,10 +2,10 @@
  * Multi-Provider OTP Email Service
  *
  * Supports (in priority order):
- * 1. SendGrid (SENDGRID_API_KEY) - Recommended for Render
- * 2. Resend (RESEND_API_KEY) - Modern, simple
+ * 1. Resend (RESEND_API_KEY) - RECOMMENDED - No domain verification needed!
+ * 2. SendGrid (SENDGRID_API_KEY) - Also good but needs domain verification
  * 3. Brevo (BREVO_API_KEY) - Backup option
- * 4. SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS) - Fallback
+ * 4. SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS) - Last resort
  */
 
 const logger = require('../utils/logger');
@@ -366,14 +366,14 @@ async function sendViaSMTP(toEmail, otp) {
 async function sendOtp(email, otp) {
     logger.info(`📧 Sending OTP to ${email}...`);
 
-    // Determine available providers (in priority order)
+    // Determine available providers (in priority order - Resend first!)
     const providers = [];
 
-    if (process.env.SENDGRID_API_KEY) {
-        providers.push({ name: 'SendGrid', fn: sendViaSendGrid });
-    }
     if (process.env.RESEND_API_KEY) {
         providers.push({ name: 'Resend', fn: sendViaResend });
+    }
+    if (process.env.SENDGRID_API_KEY) {
+        providers.push({ name: 'SendGrid', fn: sendViaSendGrid });
     }
     if (process.env.BREVO_API_KEY || process.env.BREVO_API) {
         providers.push({ name: 'Brevo', fn: sendViaBrevo });

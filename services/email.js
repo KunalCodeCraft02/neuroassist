@@ -616,11 +616,12 @@ function buildSummaryEmailHTML(stats, userEmail) {
 function getAvailableProviders() {
     const providers = [];
 
-    if (process.env.SENDGRID_API_KEY) {
-        providers.push({ name: 'SendGrid', fn: sendViaSendGrid });
-    }
+    // Priority order: Resend first (recommended), then SendGrid, then Brevo, then SMTP
     if (process.env.RESEND_API_KEY) {
         providers.push({ name: 'Resend', fn: sendViaResend });
+    }
+    if (process.env.SENDGRID_API_KEY) {
+        providers.push({ name: 'SendGrid', fn: sendViaSendGrid });
     }
     if (process.env.BREVO_API_KEY || process.env.BREVO_API) {
         providers.push({ name: 'Brevo', fn: sendViaBrevo });
