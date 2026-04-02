@@ -223,6 +223,38 @@
     <script>
 
         const form = document.getElementById("signupForm")
+        const locationBtn = document.querySelector('button[onclick="getLocation()"]')
+        const stateInput = document.getElementById("state")
+        const districtInput = document.getElementById("district")
+
+        // Add visual feedback to location button
+        if (locationBtn) {
+            // Replace inline onclick with event listener for better control
+            locationBtn.removeAttribute('onclick');
+            locationBtn.type = 'button'; // Ensure it's a button, not submit
+
+            locationBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                console.log("📍 Get Location button clicked");
+
+                // Add loading state
+                const originalText = this.innerText;
+                this.innerText = "Getting location...";
+                this.disabled = true;
+                this.style.opacity = "0.7";
+                this.style.cursor = "not-allowed";
+
+                try {
+                    await getLocation();
+                } finally {
+                    // Restore button state
+                    this.innerText = originalText;
+                    this.disabled = false;
+                    this.style.opacity = "1";
+                    this.style.cursor = "pointer";
+                }
+            });
+        }
 
         form.addEventListener("submit", async function (e) {
 
@@ -283,7 +315,13 @@
 
         function showToast(message, type) {
 
+            console.log(`🍞 Toast: [${type}] ${message}`);
+
             const toastContainer = document.getElementById("toast")
+
+            // Remove existing toasts to prevent buildup
+            const existingToasts = toastContainer.querySelectorAll('.toast');
+            existingToasts.forEach(t => t.remove());
 
             const toast = document.createElement("div")
 
@@ -299,54 +337,118 @@
 
         }
 
-        function getLocation() {
+        async function getLocation() {
+            console.log("=== getLocation() called ===");
+
             if (!navigator.geolocation) {
-                showToast("Geolocation is not supported by your browser", "error");
+                console.error("❌ Geolocation not supported");
+                showToast("Geolocation is not supported by your browser. Please enter location manually.", "error");
                 return;
             }
 
-            showToast("Getting location...", "success");
+            showToast("Requesting location permission...", "success");
+            console.log("📍 Requesting geolocation...");
 
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    try {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-
-                        // 🔥 Reverse geocoding (free API)
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`);
-                        const data = await res.json();
-
-                        const state = data.address.state || data.address.province || "";
-                        const district = data.address.county || data.address.city || data.address.town || data.address.village || "";
-
-                        if (state && district) {
-                            document.getElementById("state").value = state;
-                            document.getElementById("district").value = district;
-                            showToast("Location captured successfully!", "success");
-                        } else {
-                            showToast("Could not determine state and district from location", "error");
+            try {
+                // Use Promise wrapper for better error handling
+                const pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        resolve,
+                        reject,
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 15000, // 15 seconds
+                            maximumAge: 0
                         }
-                    } catch (err) {
-                        console.error("Geocoding error:", err);
-                        showToast("Failed to get location details. Please enter manually.", "error");
+                    );
+                });
+
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                console.log(`✅ Got coordinates: ${lat}, ${lon}`);
+
+                showToast("Location obtained! Fetching address...", "success");
+                console.log("🔍 Fetching address from OpenStreetMap...");
+
+                // Add User-Agent header as required by OSM
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
+                    {
+                        headers: {
+                            'User-Agent': 'NeuroAssist-App/1.0 (contact@neuroassist.com)',
+                            'Accept-Language': 'en'
+                        }
                     }
-                },
-                (err) => {
-                    console.error("Geolocation error:", err);
-                    let msg = "Failed to get location";
-                    if (err.code === 1) {
-                        msg = "Location access denied. Please enable location permission or enter manually.";
-                    }
-                    showToast(msg, "error");
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
+                );
+
+                if (!res.ok) {
+                    throw new Error(`OpenStreetMap API responded with status ${res.status}: ${res.statusText}`);
                 }
-            );
+
+                const data = await res.json();
+                console.log("✅ OpenStreetMap response:", data);
+
+                const state = data.address.state || data.address.province || "";
+                const district = data.address.county || data.address.city || data.address.town || data.address.village || "";
+
+                if (state && district) {
+                    console.log(`✅ Extracted: State="${state}", District="${district}"`);
+                    stateInput.value = state;
+                    districtInput.value = district;
+                    showToast(`Location captured: ${district}, ${state}`, "success");
+                } else {
+                    console.warn("⚠️ Could not extract state/district from response. Full address:", data.address);
+
+                    // Try to extract any location info
+                    const locationParts = [];
+                    if (data.address.state || data.address.province) {
+                        locationParts.push(data.address.state || data.address.province);
+                        stateInput.value = data.address.state || data.address.province;
+                    }
+                    if (data.address.county || data.address.city || data.address.town || data.address.village) {
+                        locationParts.push(
+                            data.address.county ||
+                            data.address.city ||
+                            data.address.town ||
+                            data.address.village
+                        );
+                        districtInput.value =
+                            data.address.county ||
+                            data.address.city ||
+                            data.address.town ||
+                            data.address.village || "";
+                    }
+
+                    if (stateInput.value && districtInput.value) {
+                        showToast("Location partially filled. Please verify and complete if needed.", "success");
+                    } else {
+                        showToast("Could not determine complete location. Please enter state and district manually.", "error");
+                    }
+                }
+
+            } catch (err) {
+                console.error("❌ Location error:", err);
+
+                let errorMessage = "Failed to get location details. Please enter manually.";
+
+                if (err.code === 1) {
+                    errorMessage = "Location access denied. Please enable location permission in browser settings and try again.";
+                } else if (err.code === 2) {
+                    errorMessage = "Location unavailable. Please check your GPS/network connection and try again.";
+                } else if (err.code === 3) {
+                    errorMessage = "Location request timed out. Please try again or enter manually.";
+                } else if (err.message.includes('OpenStreetMap') || err.message.includes('Failed to fetch')) {
+                    errorMessage = "Location service temporarily unavailable. Please enter state and district manually.";
+                }
+
+                showToast(errorMessage, "error");
+            }
         }
+
+        // Debug: Check if geolocation is available on page load
+        console.log("🌍 Geolocation available:", !!navigator.geolocation);
+        console.log("🔒 Page protocol:", window.location.protocol);
+        console.log("📍 Location button found:", !!locationBtn);
 
     </script>
 
