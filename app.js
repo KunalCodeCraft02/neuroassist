@@ -72,7 +72,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdn.jsdelivr.net"],
       fontSrc: ["'self'", "fonts.gstatic.com", "cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "res.cloudinary.com"],
-      connectSrc: ["'self'", "https://neuroassist-5z1k.onrender.com", "wss://neuroassist-5z1k.onrender.com"],
+      connectSrc: ["'self'", "https://nominatim.openstreetmap.org", "wss://", "https://neuroassist-5z1k.onrender.com", "wss://neuroassist-5z1k.onrender.com"],
       frameSrc: ["'none'"]
     }
   },
@@ -2037,9 +2037,21 @@ const PORT = process.env.PORT || 3000;
 if (isProduction) {
   const jwtSecret = process.env.JWT_SECRET;
   const embedSecret = process.env.EMBED_SECRET || process.env.JWT_SECRET;
+  const mongoUri = process.env.MONGODB_URI;
+  const sessionSecret = process.env.SESSION_SECRET;
+
+  if (!mongoUri) {
+    console.error("❌ CRITICAL: MONGODB_URI is not set in production environment!");
+    process.exit(1);
+  }
 
   if (!jwtSecret || jwtSecret.length < 32) {
     console.error("❌ CRITICAL: JWT_SECRET must be set to a long random string (min 32 chars) in production!");
+    process.exit(1);
+  }
+
+  if (!sessionSecret || sessionSecret.length < 64) {
+    console.error("❌ CRITICAL: SESSION_SECRET must be set to a long random string (min 64 chars) in production!");
     process.exit(1);
   }
 
@@ -2058,6 +2070,13 @@ if (isProduction) {
     console.error("❌ CRITICAL: At least one email service (SENDGRID_API_KEY, SMTP_USER, RESEND_API_KEY) must be configured in production!");
     process.exit(1);
   }
+
+  // Log configuration summary
+  console.log("✅ Production configuration validated:");
+  console.log("   - MongoDB URI: Set");
+  console.log("   - JWT_SECRET: Set (length: " + jwtSecret.length + " chars)");
+  console.log("   - SESSION_SECRET: Set (length: " + sessionSecret.length + " chars)");
+  console.log("   - CORS allowed origins: " + (process.env.ALLOWED_ORIGINS || 'Not set (will use defaults)'));
 }
 
 server.listen(PORT, () => {
