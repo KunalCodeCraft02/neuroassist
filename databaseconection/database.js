@@ -7,11 +7,8 @@ async function connectDB() {
 
   while (retryCount < maxRetries) {
     try {
-      await mongoose.connect(process.env.MONGODB_URI, {
-        bufferCommands: false,
-        bufferMaxEntries: 0,
-        maintainAvailable: true,
-      });
+      // Use minimal options - Mongoose 7+ has better defaults
+      await mongoose.connect(process.env.MONGODB_URI);
 
       console.log("✅ MongoDB Connected Successfully");
       return mongoose;
@@ -36,6 +33,4 @@ async function connectDB() {
   }
 }
 
-connectDB();
-
-module.exports = mongoose;
+module.exports = connectDB;

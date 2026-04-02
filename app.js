@@ -4,7 +4,7 @@ const express = require("express")
 const app = express()
 const path = require("path")
 const mongoose = require("mongoose")
-const dbconnection = require("./databaseconection/database")
+const connectDB = require("./databaseconection/database")
 const cron = require("node-cron")
 
 const bcrypt = require("bcrypt")
@@ -2079,13 +2079,31 @@ if (isProduction) {
   console.log("   - CORS allowed origins: " + (process.env.ALLOWED_ORIGINS || 'Not set (will use defaults)'));
 }
 
-server.listen(PORT, () => {
-    logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    logger.info("📧 Daily lead summaries will be sent at 9:00 AM every day");
+// Start server after DB is connected
+async function startServer() {
+  try {
+    // Wait for MongoDB connection
+    await connectDB();
 
-    // Run migration on startup
-    migrateAuthorizedDomains();
-});
+    // Small delay to ensure Mongoose is fully ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Run migration on startup (after DB connected)
+    console.log("🔄 Running database migrations...");
+    await migrateAuthorizedDomains();
+
+    // Start server
+    server.listen(PORT, () => {
+      logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      logger.info("📧 Daily lead summaries will be sent at 9:00 AM every day");
+    });
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // ============================================
 // ❌ ERROR HANDLING & 404
