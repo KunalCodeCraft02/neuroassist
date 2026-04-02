@@ -2,7 +2,18 @@ const SibApiV3Sdk = require("sib-api-v3-sdk");
 
 const client = SibApiV3Sdk.ApiClient.instance;
 const apiKey = client.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API;
+
+// Support both variable names for flexibility
+const brevoApiKey = process.env.BREVO_API_KEY || process.env.BREVO_API;
+
+if (!brevoApiKey) {
+    console.error("❌ CRITICAL: Brevo API key not configured!");
+    console.error("   Set either BREVO_API_KEY or BREVO_API in environment variables");
+} else {
+    console.log("✅ Brevo API configured (length: " + brevoApiKey.length + ")");
+}
+
+apiKey.apiKey = brevoApiKey;
 
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
