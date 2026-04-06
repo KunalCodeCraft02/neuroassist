@@ -4,6 +4,11 @@
     const botId = script.getAttribute("data-bot")
     const botName = script.getAttribute("data-name") || "Assistant"
 
+    // Get the API base URL from the script's src attribute
+    // e.g., "https://bemybot.in/js/bot.js" → "https://bemybot.in"
+    const scriptSrc = script.getAttribute('src') || '';
+    const API = scriptSrc.split('/js/')[0] || scriptSrc.split('/bot.js')[0] || '';
+
     /* FONT */
 
     const font = document.createElement("link")
@@ -139,7 +144,7 @@ Send
     localStorage.setItem("uid", userId);
 
     // TRACK VIEW
-    fetch("https://neuroassist-5z1k.onrender.com/track", {
+    fetch(`${API}/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -152,7 +157,7 @@ Send
 
     // TRACK CLICK
     document.addEventListener("click", () => {
-        fetch("https://neuroassist-5z1k.onrender.com/track", {
+        fetch(`${API}/track`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -168,9 +173,6 @@ Send
     setTimeout(async () => {
 
         try {
-
-            const API = "https://neuroassist-5z1k.onrender.com";
-
             const res = await fetch(`${API}/analyze?botId=${botId}&userId=${userId}`);
             const data = await res.json();
 
@@ -282,9 +284,6 @@ Send
             messages.scrollTop = messages.scrollHeight
 
             try {
-
-                const API = "https://neuroassist-5z1k.onrender.com"
-
                 const res = await fetch(`${API}/chat`, {
 
                     method: "POST",

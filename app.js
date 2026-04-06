@@ -86,7 +86,7 @@ app.use(helmet({
 // 2. CORS - Allow specific origins only
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:3000', 'http://localhost:3001'];
+  : ['https://bemybot.in', 'http://localhost:3000', 'http://localhost:3001'];
 
 // Log allowed origins on startup
 logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
@@ -1375,7 +1375,12 @@ app.post("/createbot",
         { expiresIn: '1y' }
       );
 
-      res.render("embed", { bot, embedToken, newlyGeneratedApiKey });
+      res.render("embed", {
+        bot,
+        embedToken,
+        newlyGeneratedApiKey,
+        appUrl: process.env.APP_URL || (isProduction ? undefined : 'http://localhost:3000')
+      });
     } catch (err) {
       logger.error("Create bot error:", err);
       res.status(500).json({

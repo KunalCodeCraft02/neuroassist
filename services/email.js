@@ -424,7 +424,7 @@ function buildLeadEmailHTML(lead, botName, leadScore) {
                     </div>
 
                     <div style="text-align: center;">
-                        <a href="${process.env.APP_URL || 'http://localhost:3000'}/profile" class="cta-button">
+                        <a href="${process.env.APP_URL || 'https://bemybot.in'}/profile" class="cta-button">
                             View All Leads →
                         </a>
                     </div>
@@ -444,7 +444,7 @@ function buildLeadEmailHTML(lead, botName, leadScore) {
 }
 
 function buildSummaryEmailHTML(stats, userEmail) {
-    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    const appUrl = process.env.APP_URL || 'https://bemybot.in';
 
     const botRows = stats.topBots && stats.topBots.length > 0
         ? stats.topBots.map(bot => `
@@ -684,7 +684,7 @@ async function sendEmailLead(lead, ownerEmail = null, botName = 'Unknown Bot') {
 
     const subject = `🔥 New ${leadScore >= 70 ? 'HOT' : leadScore >= 40 ? 'Qualified' : 'Cold'} Lead from ${botName}`;
     const html = buildLeadEmailHTML(lead, botName, leadScore);
-    const text = `New lead captured from ${botName}\n\nScore: ${leadScore}/100\nName: ${lead.name || 'N/A'}\nEmail: ${lead.email || 'N/A'}\nPhone: ${lead.phone || 'N/A'}\nMessage: ${lead.message || 'N/A'}\n\nView: ${process.env.APP_URL || 'http://localhost:3000'}/profile`;
+    const text = `New lead captured from ${botName}\n\nScore: ${leadScore}/100\nName: ${lead.name || 'N/A'}\nEmail: ${lead.email || 'N/A'}\nPhone: ${lead.phone || 'N/A'}\nMessage: ${lead.message || 'N/A'}\n\nView: ${process.env.APP_URL || 'https://bemybot.in'}/profile`;
 
     return await sendWithFallback(recipientEmail, subject, html, text);
 }
@@ -692,7 +692,7 @@ async function sendEmailLead(lead, ownerEmail = null, botName = 'Unknown Bot') {
 async function sendDailyLeadsSummary(userEmail, leadStats) {
     const subject = "📊 Your Daily Lead Summary - NeuroAssist";
     const html = buildSummaryEmailHTML(leadStats, userEmail);
-    const text = `📊 Daily Lead Summary\n\nTotal: ${leadStats.totalLeads}\nHot: ${leadStats.hotLeads}\nEst. Value: ₹${leadStats.potentialRevenue || 0}\n\nTop bots: ${leadStats.topBots?.map(b => b.name + ':' + b.leads).join(', ') || 'None'}\n\nView full report: ${process.env.APP_URL || 'http://localhost:3000'}/profile`;
+    const text = `📊 Daily Lead Summary\n\nTotal: ${leadStats.totalLeads}\nHot: ${leadStats.hotLeads}\nEst. Value: ₹${leadStats.potentialRevenue || 0}\n\nTop bots: ${leadStats.topBots?.map(b => b.name + ':' + b.leads).join(', ') || 'None'}\n\nView full report: ${process.env.APP_URL || 'https://bemybot.in'}/profile`;
 
     return await sendWithFallback(userEmail, subject, html, text);
 }
