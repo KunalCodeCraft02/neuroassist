@@ -351,18 +351,22 @@ io.on("connection", (socket) => {
     // JOIN LOCATION
     socket.on("joinLocation", async ({ state, district, userId }) => {
         try {
+            console.log("🔍 joinLocation event received:", { state, district, userId, socketId: socket.id });
+
             if (!state || !district || !userId) {
-                console.log("❌ Missing join data");
+                console.log("❌ Missing join data:", { state, district, userId });
                 return;
             }
 
             const room = `${state.trim().toLowerCase()}-${district.trim().toLowerCase()}`;
+            console.log(`🏠 Joining room: ${room}`);
+
             socket.join(room);
 
             // FETCH USER
             const userFromDB = await User.findById(userId);
             if (!userFromDB) {
-                console.log("❌ User not found in DB");
+                console.log("❌ User not found in DB:", userId);
                 return;
             }
 
@@ -385,38 +389,52 @@ io.on("connection", (socket) => {
                 .limit(50)
                 .lean();
 
+            console.log(`📚 Found ${oldMessages.length} old messages for ${state}/${district}`);
+
             socket.emit("loadMessages", oldMessages.reverse());
 
             // ONLINE USERS
             const roomUsers = Object.values(users).filter(u => u.room === room);
             io.to(room).emit("onlineUsers", roomUsers);
+            console.log(`👥 Online users in ${room}:`, roomUsers.map(u => u.user));
 
         } catch (err) {
-            console.log("❌ JOIN ERROR:", err);
+            console.error("❌ JOIN ERROR:", err);
         }
     });
 
     // SEND MESSAGE
-    socket.on("sendMessage", async ({ message }) => {
+    socket.on("sendMessage", async ({ message }, callback) => {
         try {
-            console.log("📩 Incoming message:", message);
+            console.log("📩 Incoming message from socket", socket.id, ":", message);
 
             const userData = users[socket.id];
             if (!userData) {
-                console.log("❌ User not joined");
+                console.log("❌ User not joined. users[socket.id] is undefined. Available users:", Object.keys(users));
+                if (callback) callback({ error: "Not joined to any room" });
                 return;
             }
 
-            if (!message || message.trim() === "") return;
+            if (!message || message.trim() === "") {
+                console.log("❌ Empty message, ignoring");
+                if (callback) callback({ error: "Empty message" });
+                return;
+            }
 
             const now = Date.now();
             if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 500) {
+                console.log("⏱️  Rate limit: message too soon");
+                if (callback) callback({ error: "Too fast, wait a moment" });
                 return;
             }
             lastMessageTime[socket.id] = now;
 
             const userFromDB = await User.findById(userData.userId);
-            if (!userFromDB) return;
+            if (!userFromDB) {
+                console.log("❌ User not found in DB:", userData.userId);
+                if (callback) callback({ error: "User not found" });
+                return;
+            }
 
             // Sanitize message to prevent XSS
             const sanitizedMessage = validator.escape(message.trim());
@@ -429,6 +447,10 @@ io.on("connection", (socket) => {
                 district: userData.district
             });
 
+            console.log("✅ Message saved to DB with ID:", chat._id);
+            console.log("✅ Broadcasting to room:", userData.room);
+            console.log("   Room members:", Object.values(users).filter(u => u.room === userData.room).map(u => u.user));
+
             io.to(userData.room).emit("message", {
                 userId: userFromDB._id.toString(),
                 user: userFromDB.name,
@@ -436,8 +458,13 @@ io.on("connection", (socket) => {
                 time: chat.createdAt
             });
 
+            console.log("📢 Message broadcasted to room:", userData.room);
+
+            // Send success acknowledgment
+            if (callback) callback({ success: true, messageId: chat._id });
         } catch (err) {
-            console.log("❌ SEND ERROR:", err);
+            console.error("❌ SEND ERROR:", err);
+            if (callback) callback({ error: "Server error: " + err.message });
         }
     });
 

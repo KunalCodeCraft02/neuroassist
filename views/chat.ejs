@@ -926,14 +926,14 @@
           <div class="filter">
             <select id="state">
               <option value="">Select State</option>
-              <option>Maharashtra</option>
-              <option>Karnataka</option>
-              <option>Delhi</option>
-              <option>Gujarat</option>
-              <option>Tamil Nadu</option>
+              <option value="Maharashtra" <%= user.state === 'Maharashtra' ? 'selected' : '' %>>Maharashtra</option>
+              <option value="Karnataka" <%= user.state === 'Karnataka' ? 'selected' : '' %>>Karnataka</option>
+              <option value="Delhi" <%= user.state === 'Delhi' ? 'selected' : '' %>>Delhi</option>
+              <option value="Gujarat" <%= user.state === 'Gujarat' ? 'selected' : '' %>>Gujarat</option>
+              <option value="Tamil Nadu" <%= user.state === 'Tamil Nadu' ? 'selected' : '' %>>Tamil Nadu</option>
             </select>
-            <input id="district" type="text" placeholder="Enter District" autocomplete="off">
-            <button onclick="joinLocation()">
+            <input id="district" type="text" placeholder="Enter District" autocomplete="off" value="<%= user.district || '' %>">
+            <button id="joinBtn" onclick="joinLocation()">
               <i class="ri-login-circle-line"></i> Join Chat
             </button>
           </div>
@@ -941,9 +941,9 @@
 
         <div class="chat">
           <div class="chat-header">
-            <span>🌍 Community Chat</span>
-            <span>
-              <%= user.name %>
+            <span id="room-display">🌍 Community Chat</span>
+            <span id="connection-status" style="font-size: 12px; color: var(--muted);">
+              <i class="ri-r-loader-2-line ri-spin"></i> Connecting...
             </span>
           </div>
 
@@ -951,8 +951,8 @@
           <div id="typing"></div>
 
           <div class="input-box">
-            <input id="msg" type="text" placeholder="Type message..." autocomplete="off" autofocus>
-            <button id="sendBtn" onclick="sendMessage()">
+            <input id="msg" type="text" placeholder="Join a room first to chat..." autocomplete="off" disabled>
+            <button id="sendBtn" onclick="sendMessage()" disabled>
               <i class="ri-send-plane-fill"></i> Send
             </button>
           </div>
@@ -961,6 +961,15 @@
     </div>
 
     <div id="toast"></div>
+
+    <!-- Debug Panel (shows real-time status) -->
+    <div style="position: fixed; bottom: 10px; left: 10px; font-size: 11px; color: var(--muted); font-family: monospace; z-index: 99999; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; line-height: 1.6;">
+      <div style="color: #fff; margin-bottom: 5px; font-weight: bold;">🐛 DEBUG</div>
+      <div>hasJoined: <span id="debug-joined" style="color: #ff7518;">false</span></div>
+      <div>Socket: <span id="debug-socket" style="color: #ff7518;">connecting...</span></div>
+      <div>Room: <span id="debug-room" style="color: #ff7518;">none</span></div>
+      <div style="margin-top: 5px; font-size: 10px; opacity: 0.7;">Check F12 console for logs</div>
+    </div>
 
 
     <script>
@@ -973,69 +982,219 @@
       let hasJoined = false;
 
       function showToast(msg) {
-        alert(msg); // simple for now
+        // Create toast element if not exists
+        let toast = document.getElementById('toast');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.id = 'toast';
+          document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      function updateDebugPanel() {
+        const debugJoined = document.getElementById('debug-joined');
+        const debugSocket = document.getElementById('debug-socket');
+        const debugRoom = document.getElementById('debug-room');
+
+        if (debugJoined) debugJoined.textContent = hasJoined ? '✅ true' : '❌ false';
+        if (debugSocket) debugSocket.textContent = socket.connected ? '✅ connected' : '❌ disconnected';
+        if (debugRoom) debugRoom.textContent = myRoom || 'none';
       }
 
       function appendMessage(data) {
+        console.log("🧱 appendMessage called with:", data);
+
+        // Handle both formats: {text} or {message}
+        const messageText = data.text || data.message || '';
+        const userName = data.user || data.userName || 'Unknown';
+        const userIdFromData = data.userId || data.user_id || '';
+
+        if (!messageText) {
+          console.warn("⚠️  Message has no text content:", data);
+          return;
+        }
+
         const container = document.getElementById('messages');
+        if (!container) {
+          console.error("❌ Messages container not found!");
+          return;
+        }
 
-        const chatRow = document.createElement('div');
-        chatRow.className = `chat-row ${data.userId === userId ? 'right' : 'left'}`;
+        try {
+          // If this is the first message and container has placeholder, clear it
+          if (container.innerHTML.includes('No messages yet')) {
+            container.innerHTML = '';
+          }
 
-        const chatBubble = document.createElement('div');
-        chatBubble.className = `chat-bubble ${data.userId === userId ? 'me' : 'other'}`;
+          const chatRow = document.createElement('div');
+          const isMe = userIdFromData === userId;
+          chatRow.className = `chat-row ${isMe ? 'right' : 'left'}`;
 
-        const now = new Date();
-        const time = now.getHours().toString().padStart(2, '0') + ':' +
-                    now.getMinutes().toString().padStart(2, '0');
+          const chatBubble = document.createElement('div');
+          chatBubble.className = `chat-bubble ${isMe ? 'me' : 'other'}`;
 
-        chatBubble.innerHTML = `
-          <div class="name">${data.user}</div>
-          <div class="text">${data.text}</div>
-          <div class="time">${time}</div>
-        `;
+          const now = new Date();
+          const time = now.getHours().toString().padStart(2, '0') + ':' +
+                      now.getMinutes().toString().padStart(2, '0');
 
-        chatRow.appendChild(chatBubble);
-        container.appendChild(chatRow);
-        container.scrollTop = container.scrollHeight;
+          chatBubble.innerHTML = `
+            <div class="name">${ userName }</div>
+            <div class="text">${ messageText }</div>
+            <div class="time">${ time }</div>
+          `;
+
+          chatRow.appendChild(chatBubble);
+          container.appendChild(chatRow);
+          container.scrollTop = container.scrollHeight;
+
+          console.log("✅ Message appended to DOM:", { user: userName, text: messageText, isMe });
+        } catch (err) {
+          console.error("❌ Error in appendMessage:", err);
+        }
+      }
+
+      function updateOnlineUsers(users) {
+        const list = document.getElementById('online-users-list');
+        if (!list) return;
+
+        if (users.length === 0) {
+          list.innerHTML = '<em style="color: var(--muted)">No users online</em>';
+          return;
+        }
+
+        list.innerHTML = users.map(u => `
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <span style="color: #22c55e;">●</span>
+            <span style="color: var(--text);">${u.user} ${u.user === username ? '(you)' : ''}</span>
+          </div>
+        `).join('');
       }
 
       function joinLocation() {
-        const state = document.getElementById('state').value;
-        const district = document.getElementById('district').value;
+        try {
+          // Prevent joining if already joined
+          if (hasJoined) {
+            showToast("You have already joined a chat room.");
+            return;
+          }
 
-        if (!state || !district) {
-          return showToast("Enter state & district");
+          const state = document.getElementById('state').value;
+          const district = document.getElementById('district').value;
+          const btn = document.getElementById('joinBtn');
+
+          if (!state || !district) {
+            showToast("Please select state and enter district");
+            return;
+          }
+
+          if (!userId) {
+            showToast("Not logged in. Please login again.");
+            return;
+          }
+
+          // Show loading state
+          btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Joining...';
+          btn.disabled = true;
+
+          myRoom = `${state.trim()}-${district.trim()}`;
+          updateDebugPanel();
+
+          console.log("Joining room:", { state, district, userId, room: myRoom });
+
+          // Set a timeout to reset button if no response
+          const joinTimeout = setTimeout(() => {
+            if (!hasJoined) {
+              btn.innerHTML = '<i class="ri-login-circle-line"></i> Join Chat';
+              btn.disabled = false;
+              myRoom = null;
+              updateDebugPanel();
+              showToast("Join timed out. Please try again.");
+            }
+          }, 10000);
+
+          // Store timeout ID to clear it when loadMessages arrives
+          window.currentJoinTimeout = joinTimeout;
+
+          socket.emit("joinLocation", {
+            state: state.trim(),
+            district: district.trim(),
+            userId
+          });
+
+          console.log("✅ joinLocation emitted, waiting for response...");
+
+          // Will receive loadMessages or error from server
+        } catch (err) {
+          console.error("joinLocation error:", err);
+          showToast("Error joining chat: " + err.message);
+          const btn = document.getElementById('joinBtn');
+          if (btn) {
+            btn.innerHTML = '<i class="ri-login-circle-line"></i> Join Chat';
+            btn.disabled = false;
+          }
         }
-
-        if (!userId) {
-          return showToast("Login required");
-        }
-
-        myRoom = `${state}-${district}`;
-
-        console.log("Joining:", { state, district, userId });
-
-        socket.emit("joinLocation", {
-          state,
-          district,
-          userId
-        });
       }
 
       function sendMessage() {
+        console.log("=== sendMessage() called ===");
+        console.log("hasJoined:", hasJoined);
+        console.log("socket.connected:", socket.connected);
+
+        if (!hasJoined) {
+          console.log("❌ BLOCKED: hasJoined is false");
+          showToast("Please join a chat room first");
+          return;
+        }
+
+        if (!socket.connected) {
+          console.log("❌ BLOCKED: socket not connected");
+          showToast("Connection lost. Please refresh.");
+          return;
+        }
+
         const input = document.getElementById('msg');
         const message = input.value.trim();
 
-        if (!message) return;
-
-        if (!hasJoined) {
-          return showToast("Join chat first");
+        if (!message) {
+          console.log("❌ Empty message, not sending");
+          return;
         }
 
-        socket.emit("sendMessage", { message });
+        // Show sending indicator
+        const originalPlaceholder = input.placeholder;
+        input.placeholder = "Sending...";
+        input.disabled = true;
 
-        input.value = "";
+        console.log("📤 Attempting to send:", message);
+        console.log("🔢 Socket ID:", socket.id);
+        console.log("📍 Current room:", myRoom);
+
+        try {
+          socket.emit("sendMessage", { message }, (ack) => {
+            console.log("📨 Server ACK/NACK:", ack);
+
+            // Re-enable input
+            input.disabled = false;
+            input.placeholder = originalPlaceholder;
+
+            if (ack && ack.error) {
+              showToast("Failed: " + ack.error);
+              console.error("❌ Server rejected message:", ack.error);
+            } else if (ack && ack.success) {
+              console.log("✅ Server confirmed message sent");
+              input.value = "";
+            }
+          });
+          console.log("✅ socket.emit called successfully");
+        } catch (err) {
+          console.error("❌ socket.emit error:", err);
+          showToast("Error sending message: " + err.message);
+          input.disabled = false;
+          input.placeholder = originalPlaceholder;
+        }
       }
 
       document.getElementById('msg').addEventListener("keypress", (e) => {
@@ -1044,34 +1203,101 @@
         }
       });
 
+      // AUTO-JOIN on page load if state and district are pre-filled
+      document.addEventListener('DOMContentLoaded', () => {
+        const stateInput = document.getElementById('state');
+        const districtInput = document.getElementById('district');
+
+        if (stateInput && districtInput && stateInput.value && districtInput.value && !hasJoined) {
+          console.log('Auto-joining room with:', stateInput.value, districtInput.value);
+          setTimeout(() => joinLocation(), 1000); // Wait a bit for socket to be ready
+        }
+      });
+
       // SOCKET EVENTS
 
       socket.on("connect", () => {
-        console.log("✅ Connected");
+        console.log("✅ Connected to server");
+        updateDebugPanel();
+        const connStatus = document.getElementById('connection-status');
+        if (connStatus) {
+          connStatus.innerHTML = '<i class="ri-checkbox-circle-line" style="color: #22c55e;"></i> Connected';
+          connStatus.style.color = '#22c55e';
+        }
       });
 
       socket.on("loadMessages", (messages) => {
-        console.log("Loaded messages:", messages);
-
+        console.log("📥 Loaded messages:", messages.length);
         hasJoined = true;
+        updateDebugPanel();
+
+        // Clear join timeout if exists
+        if (window.currentJoinTimeout) {
+          clearTimeout(window.currentJoinTimeout);
+          window.currentJoinTimeout = null;
+        }
+
+        // Update UI to show joined state
+        const sendBtn = document.getElementById('sendBtn');
+        const msgInput = document.getElementById('msg');
+        const roomDisplay = document.getElementById('room-display');
+        const joinBtn = document.getElementById('joinBtn');
+        const connStatus = document.getElementById('connection-status');
+
+        if (sendBtn) {
+          sendBtn.disabled = false;
+        }
+        if (msgInput) {
+          msgInput.disabled = false;
+          msgInput.placeholder = `Message in ${myRoom ? myRoom.replace('-', ' / ') : 'chat'}...`;
+        }
+        if (roomDisplay) {
+          roomDisplay.textContent = `🌍 ${myRoom ? myRoom.replace('-', ' / ') : 'Community Chat'}`;
+        }
+        if (joinBtn) {
+          joinBtn.innerHTML = '<i class="ri-check-line"></i> Leave';
+          joinBtn.style.background = '#ef4444'; // Red for leave
+        }
+        if (connStatus) {
+          connStatus.innerHTML = '<i class="ri-checkbox-circle-line" style="color: #22c55e;"></i> Connected';
+          connStatus.style.color = '#22c55e';
+        }
 
         const container = document.getElementById('messages');
         container.innerHTML = "";
 
-        messages.forEach(m => appendMessage({
-          userId: m.userId,
-          user: m.user,
-          text: m.message
-        }));
+        if (messages.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: var(--muted); padding: 20px;">No messages yet. Be the first to say hello! 🎉</div>';
+        } else {
+          messages.forEach(m => appendMessage({
+            userId: m.userId,
+            user: m.user,
+            text: m.message
+          }));
+        }
+
+        showToast(`Joined ${myRoom}! You can now chat.`, 'success');
       });
 
       socket.on("message", (data) => {
-        console.log("New message:", data);
+        console.log("📨 New message:", data);
         appendMessage(data);
       });
 
       socket.on("onlineUsers", (users) => {
-        console.log("Online:", users);
+        console.log("👥 Online users:", users);
+        updateOnlineUsers(users);
+      });
+
+      // Handle connection errors
+      socket.on("connect_error", (err) => {
+        console.error("❌ Connection error:", err);
+        showToast("Connection error. Please refresh.");
+      });
+
+      socket.on("disconnect", () => {
+        console.log("🔌 Disconnected");
+        showToast("Disconnected. Reconnecting...");
       });
 
       // Custom cursor functionality

@@ -8,7 +8,7 @@
  * - SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS)
  */
 
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 // ============================================
 // PROVIDER IMPLEMENTATIONS
@@ -64,19 +64,31 @@ async function sendViaResend(toEmail, subject, html, text = null) {
 
         const resend = new Resend(apiKey);
 
-        const fromEmail = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
+        let fromEmail = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
         const fromName = process.env.SENDER_NAME || 'NeuroAssist AI';
 
+        // Auto-correct unverified domains (same logic as sendOtp.js)
+        const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'qq.com', '163.com', 'gmx.com', 'yandex.com', 'protonmail.com', 'aol.com', 'mail.com', 'icloud.com', 'zohomail.com', 'yandex.ru', 'qq.com', 'live.com', 'msn.com', 'me.com', 'mac.com', 'fastmail.com', 'tutanota.com', 'hey.com', 'pm.me', 'proton.me'];
+        const fromDomain = fromEmail.split('@')[1]?.toLowerCase();
+
+        if (fromDomain && freeEmailDomains.includes(fromDomain)) {
+            console.warn(`⚠️  WARNING: SENDER_EMAIL (${fromEmail}) uses a free email domain that Resend cannot verify.`);
+            console.warn(`   Automatically switching to Resend's default domain: onboarding@resend.dev`);
+            fromEmail = 'onboarding@resend.dev';
+        }
+
         const data = {
-            from: `${fromName} <${fromEmail}>`,
-            to: [toEmail],
+            from: fromName && fromName !== 'NeuroAssist AI' && !fromName.includes('onboarding')
+                ? `${fromName} <${fromEmail}>`
+                : fromEmail,
+            to: toEmail,
             subject: subject,
             html: html,
             text: text || html.replace(/<[^>]*>/g, '')
         };
 
         const result = await resend.emails.send(data);
-        logger.info(`✅ Email sent via Resend to: ${toEmail} (ID: ${result.data?.id})`);
+        logger.info(`✅ Email sent via Resend to: ${toEmail} (from: ${fromEmail}, ID: ${result.data?.id})`);
         return { success: true, provider: 'resend' };
 
     } catch (err) {

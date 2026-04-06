@@ -8,7 +8,7 @@
  * 4. SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS) - Last resort
  */
 
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 // Beautiful OTP email template (works with all providers)
 function createOTPEmailTemplate(email, otp, expiresInMinutes = 5) {
@@ -238,8 +238,26 @@ async function sendViaResend(toEmail, otp) {
 
         const { html, text, subject } = createOTPEmailTemplate(toEmail, otp);
 
+        // 🔧 FIX: Auto-correct unverified domains (Gmail, etc.)
+        let fromEmail = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
+        const senderName = process.env.SENDER_NAME || 'NeuroAssist AI';
+
+        // If SENDER_EMAIL is from a free email provider (Gmail, Yahoo, etc.),
+        // automatically use Resend's default domain to avoid "Domain not verified" errors
+        const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'qq.com', '163.com', 'gmx.com', 'yandex.com', 'protonmail.com', 'aol.com', 'mail.com', 'icloud.com', 'zohomail.com', 'yandex.ru', 'qq.com', 'live.com', 'msn.com', 'me.com', 'mac.com', 'fastmail.com', 'tutanota.com', 'hey.com', 'pm.me', 'proton.me'];
+        const fromDomain = fromEmail.split('@')[1]?.toLowerCase();
+
+        if (fromDomain && freeEmailDomains.includes(fromDomain)) {
+            console.warn(`⚠️  WARNING: SENDER_EMAIL (${fromEmail}) uses a free email domain that Resend cannot verify.`);
+            console.warn(`   Automatically switching to Resend's default domain: onboarding@resend.dev`);
+            console.warn(`   To use your own email, verify your domain in Resend Dashboard: https://resend.com/domains`);
+            fromEmail = 'onboarding@resend.dev';
+        }
+
         const data = {
-            from: process.env.SENDER_EMAIL || 'NeuroAssist <onboarding@resend.dev>',
+            from: senderName && senderName !== 'NeuroAssist AI' && !senderName.includes('onboarding')
+                ? `${senderName} <${fromEmail}>`
+                : fromEmail,
             to: [toEmail],
             subject: subject,
             html: html,
@@ -247,7 +265,7 @@ async function sendViaResend(toEmail, otp) {
         };
 
         await resend.emails.send(data);
-        logger.info(`✅ OTP sent via Resend to: ${toEmail}`);
+        logger.info(`✅ OTP sent via Resend to: ${toEmail} (from: ${fromEmail})`);
         return { success: true, provider: 'resend' };
 
     } catch (err) {

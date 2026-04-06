@@ -388,8 +388,8 @@
                 const data = await res.json();
                 console.log("✅ OpenStreetMap response:", data);
 
-                const state = data.address.state || data.address.province || "";
-                const district = data.address.county || data.address.city || data.address.town || data.address.village || "";
+                const state = data.address.state || data.address.province || data.address.region || "";
+                const district = data.address.district || data.address.county || data.address.city || data.address.town || data.address.village || "";
 
                 if (state && district) {
                     console.log(`✅ Extracted: State="${state}", District="${district}"`);
