@@ -103,9 +103,6 @@
       z-index: 1;
       opacity: 0.35;
     }
-    #fixediv{
-      display: none;
-    }
 
 
     /* BACKGROUND GRID */
@@ -1435,11 +1432,36 @@
         })();
       }
 
-      
-     
-      // OPEN
-    
-      // Navbar scroll effect
+      // ── Mobile menu ──
+      const mobileMenuBtn = document.getElementById('menuicon');
+      const mobileMenu = document.getElementById('fixediv');
+      const closeMobileMenuBtn = document.getElementById('closeMenu');
+
+      if (mobileMenuBtn && mobileMenu && closeMobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.add('open');
+        });
+
+        closeMobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+        });
+
+        // Close menu when clicking on links
+        document.querySelectorAll('.links-fixed a').forEach(link => {
+          link.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+          });
+        });
+
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+            mobileMenu.classList.remove('open');
+          }
+        });
+      }
+
+      // ── Navbar scroll effect ──
       const nav = document.getElementById('nav');
       const handleScroll = () => {
         if (window.scrollY > 60) {
@@ -1471,8 +1493,8 @@
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('pageshow', (event) => {
-          if (event.persisted) {
-            menuDiv.classList.remove('open');
+          if (event.persisted && mobileMenu) {
+            mobileMenu.classList.remove('open');
           }
         });
       });

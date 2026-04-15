@@ -68,12 +68,47 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "fonts.googleapis.com", "www.googletagmanager.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdn.jsdelivr.net"],
-      fontSrc: ["'self'", "fonts.gstatic.com", "cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "res.cloudinary.com"],
-      connectSrc: ["'self'", "https://nominatim.openstreetmap.org", "wss://", "https://neuroassist-5z1k.onrender.com", "wss://neuroassist-5z1k.onrender.com"],
-      frameSrc: ["'none'"]
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "cdn.jsdelivr.net",
+        "fonts.googleapis.com",
+        "www.googletagmanager.com",
+        "https://checkout.razorpay.com",
+        "cdnjs.cloudflare.com"
+      ],
+      scriptSrcAttr: [
+        "'self'",
+        "'unsafe-inline'"
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "fonts.googleapis.com",
+        "cdn.jsdelivr.net"
+      ],
+      fontSrc: [
+        "'self'",
+        "fonts.gstatic.com",
+        "cdn.jsdelivr.net"
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "res.cloudinary.com"
+      ],
+      connectSrc: [
+        "'self'",
+        "https://nominatim.openstreetmap.org",
+        "https://neuroassist-5z1k.onrender.com"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://checkout.razorpay.com",
+        "https://api.razorpay.com"
+      ],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"]
     }
   },
   hsts: {

@@ -180,3 +180,66 @@
 {"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 14.919 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-06 22:17:15"}
 {"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-06 22:19:47"}
 {"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 14.808 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-06 22:19:47"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-07 22:03:04"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-07 22:03:07"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-07 22:03:07"}
+{"level":"warn","message":"404 Not Found: GET /favicon.ico","service":"neuroassist","timestamp":"2026-04-07 22:03:08"}
+{"level":"info","message":"\u001b[0mGET /favicon.ico \u001b[33m404\u001b[0m 4.605 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:03:08"}
+{"level":"info","message":"Login attempt for: kunalbodkhe080@gmail.com","service":"neuroassist","timestamp":"2026-04-07 22:03:31"}
+{"level":"info","message":"User logged in successfully: kunalbodkhe080@gmail.com (ID: 69d3d491d90c507b73cd8978)","service":"neuroassist","timestamp":"2026-04-07 22:03:32"}
+{"level":"warn","message":"404 Not Found: GET /default.png","service":"neuroassist","timestamp":"2026-04-07 22:03:36"}
+{"level":"info","message":"\u001b[0mGET /default.png \u001b[33m404\u001b[0m 3.217 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:03:36"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-07 22:03:40"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 3.373 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:03:40"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-07 22:03:46"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 2.660 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:03:46"}
+{"level":"warn","message":"404 Not Found: GET /default.png","service":"neuroassist","timestamp":"2026-04-07 22:03:46"}
+{"level":"info","message":"\u001b[0mGET /default.png \u001b[33m404\u001b[0m 1.985 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:03:46"}
+{"level":"warn","message":"404 Not Found: GET /default.png","service":"neuroassist","timestamp":"2026-04-07 22:04:07"}
+{"level":"info","message":"\u001b[0mGET /default.png \u001b[33m404\u001b[0m 2.132 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:04:07"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-07 22:04:54"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 1.887 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-07 22:04:54"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-11 18:21:01"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-11 18:21:04"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-11 18:21:04"}
+{"level":"warn","message":"404 Not Found: GET /favicon.ico","service":"neuroassist","timestamp":"2026-04-11 18:21:53"}
+{"level":"info","message":"\u001b[0mGET /favicon.ico \u001b[33m404\u001b[0m 8.194 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-11 18:21:53"}
+{"level":"info","message":"Login attempt for: kunalbodkhe080@gmail.com","service":"neuroassist","timestamp":"2026-04-11 18:22:40"}
+{"level":"info","message":"User logged in successfully: kunalbodkhe080@gmail.com (ID: 69d3d491d90c507b73cd8978)","service":"neuroassist","timestamp":"2026-04-11 18:22:40"}
+{"level":"warn","message":"404 Not Found: GET /default.png","service":"neuroassist","timestamp":"2026-04-11 18:23:37"}
+{"level":"info","message":"\u001b[0mGET /default.png \u001b[33m404\u001b[0m 2.798 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-11 18:23:37"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-11 18:23:39"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 5.505 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-11 18:23:39"}
+{"level":"warn","message":"404 Not Found: GET /default.png","service":"neuroassist","timestamp":"2026-04-11 18:47:03"}
+{"level":"info","message":"\u001b[0mGET /default.png \u001b[33m404\u001b[0m 3.294 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-11 18:47:03"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-15 23:08:33"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-15 23:08:39"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-15 23:08:39"}
+{"level":"warn","message":"404 Not Found: GET /favicon.ico","service":"neuroassist","timestamp":"2026-04-15 23:08:41"}
+{"level":"info","message":"\u001b[0mGET /favicon.ico \u001b[33m404\u001b[0m 4.338 ms - 7965\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:08:41"}
+{"level":"info","message":"Login attempt for: kunalbodkhe080@gmail.com","service":"neuroassist","timestamp":"2026-04-15 23:08:57"}
+{"level":"info","message":"User logged in successfully: kunalbodkhe080@gmail.com (ID: 69d3d491d90c507b73cd8978)","service":"neuroassist","timestamp":"2026-04-15 23:08:57"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-15 23:15:33"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 75.522 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:15:33"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-15 23:18:55"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-15 23:18:57"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-15 23:18:57"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-15 23:19:03"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 16.709 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:19:03"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-15 23:23:18"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-15 23:23:20"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-15 23:23:20"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-15 23:23:59"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-15 23:24:06"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-15 23:24:06"}
+{"level":"warn","message":"CSRF attack blocked: POST /create-order from IP ::1","service":"neuroassist","timestamp":"2026-04-15 23:24:20"}
+{"level":"info","message":"\u001b[0mPOST /create-order \u001b[33m403\u001b[0m 195.010 ms - 65\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:24:20"}
+{"level":"warn","message":"CSRF attack blocked: POST /create-order from IP ::1","service":"neuroassist","timestamp":"2026-04-15 23:24:29"}
+{"level":"info","message":"\u001b[0mPOST /create-order \u001b[33m403\u001b[0m 132.013 ms - 65\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:24:29"}
+{"level":"warn","message":"404 Not Found: GET /.well-known/appspecific/com.chrome.devtools.json","service":"neuroassist","timestamp":"2026-04-15 23:24:36"}
+{"level":"info","message":"\u001b[0mGET /.well-known/appspecific/com.chrome.devtools.json \u001b[33m404\u001b[0m 471.238 ms - 8002\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:24:36"}
+{"level":"warn","message":"CSRF attack blocked: POST /create-order from IP ::1","service":"neuroassist","timestamp":"2026-04-15 23:24:38"}
+{"level":"info","message":"\u001b[0mPOST /create-order \u001b[33m403\u001b[0m 174.372 ms - 65\u001b[0m","service":"neuroassist","timestamp":"2026-04-15 23:24:38"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-15 23:24:54"}
+{"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-15 23:24:58"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-15 23:24:58"}
