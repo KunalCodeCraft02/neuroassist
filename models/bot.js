@@ -24,16 +24,8 @@ const botSchema = new mongoose.Schema({
     category: {
         type: String,
         enum: [
-          'support',
-          'sales',
-          'general',
-          'booking',
-          'custom',
-          'Customer Support',
-          'E-commerce Assistant',
-          'customer support',
-          'e-commerce assistant',
           'customer-support',
+          'sales',
           'faq',
           'lead-generation',
           'ecommerce',
@@ -43,7 +35,9 @@ const botSchema = new mongoose.Schema({
           'marketing',
           'hr',
           'education',
-          'healthcare'
+          'healthcare',
+          'general',
+          'custom'
         ],
         default: 'general'
     },
@@ -342,7 +336,5 @@ botSchema.pre('save', function(next) {
 botSchema.index({ userId: 1, status: 1 });
 botSchema.index({ status: 1, createdAt: -1 });
 botSchema.index({ 'leadNotificationEmail': 1 });
-
-module.exports = mongoose.model("Bot", botSchema)
 
 module.exports = mongoose.model("Bot", botSchema)

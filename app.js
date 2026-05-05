@@ -224,7 +224,8 @@ function shouldSkipCSRF(req) {
     '/api/',
     '/login',      // JWT-based auth, no session
     '/signup',     // OTP-based, but initial form submission
-    '/verify-otp'  // OTP verification
+    '/verify-otp',  // OTP verification
+    '/createbot'   // JWT-based auth, CSRF not needed
   ];
   if (req.method === 'GET') return true;
   if (req.path.startsWith('/public/')) return true;
@@ -1307,10 +1308,8 @@ app.post("/createbot",
     .escape()
     .trim(),
   body('category')
-    .optional()
     .isIn(['customer-support', 'sales', 'faq', 'lead-generation', 'ecommerce', 'technical', 'booking', 'product-advisor', 'marketing', 'hr', 'education', 'healthcare', 'general', 'custom'])
-    .withMessage('Invalid category')
-    .escape(),
+    .withMessage('Invalid category'),
   body('color')
     .optional()
     .matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format (use #RRGGBB)')
