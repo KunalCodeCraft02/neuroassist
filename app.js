@@ -1065,6 +1065,7 @@ app.get("/auth/google/callback",
 
 
 
+const scrapeWebsite = require("./services/scraper")
 const sendOtp = require("./services/sendOtp")
 
 app.post("/signup", authLimiter, [
@@ -1300,48 +1301,49 @@ app.post("/login", authLimiter, [
 app.post("/createbot",
   generalLimiter,
   auth,
-  [
-    body('name')
-      .trim()
-      .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters')
-      .escape()
-      .trim(),
-    body('category')
-      .optional()
-      .isIn(['support', 'sales', 'general', 'booking', 'custom'])
-      .withMessage('Invalid category')
-      .escape(),
-    body('color')
-      .optional()
-      .matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format (use #RRGGBB)')
-      .escape(),
-    body('welcomeMessage')
-      .optional()
-      .trim()
-      .isLength({ max: 500 }).withMessage('Welcome message too long (max 500 chars)')
-      .escape(),
-    body('knowledge')
-      .optional()
-      .isArray().withMessage('Knowledge must be an array')
-      .custom((value) => {
-        if (value && Array.isArray(value)) {
-          value.forEach((item, index) => {
-            if (typeof item !== 'string') {
-              throw new Error(`Knowledge item ${index} must be a string`);
-            }
-            if (item.length > 10000) {
-              throw new Error(`Knowledge item ${index} is too long (max 10000 chars)`);
-            }
-            // Sanitize each knowledge item
-            value[index] = validator.escape(item.trim());
-          });
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters')
+    .escape()
+    .trim(),
+  body('category')
+    .optional()
+    .isIn(['customer-support', 'sales', 'faq', 'lead-generation', 'ecommerce', 'technical', 'booking', 'product-advisor', 'marketing', 'hr', 'education', 'healthcare', 'general', 'custom'])
+    .withMessage('Invalid category')
+    .escape(),
+  body('color')
+    .optional()
+    .matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format (use #RRGGBB)')
+    .escape(),
+  body('welcomeMessage')
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage('Welcome message too long (max 500 chars)')
+    .escape(),
+  body('knowledge')
+    .optional()
+    .custom((value) => {
+      // Allow both string and array
+      if (value && Array.isArray(value)) {
+        value.forEach((item, index) => {
+          if (typeof item !== 'string') {
+            throw new Error(`Knowledge item ${index} must be a string`);
+          }
+          if (item.length > 10000) {
+            throw new Error(`Knowledge item ${index} is too long (max 10000 chars)`);
+          }
+        });
+      } else if (value && typeof value === 'string') {
+        // String is OK - will be converted to array in handler
+        if (value.length > 50000) {
+          throw new Error('Knowledge content too long (max 50000 chars)');
         }
-        return true;
-      }),
-    body('websiteUrl')
-      .optional()
-      .isURL().withMessage('Invalid URL format')
-  ],
+      }
+      return true;
+    }),
+  body('websiteUrl')
+    .optional()
+    .isURL().withMessage('Invalid URL format'),
   async (req, res) => {
     try {
       const errors = validationResult(req);

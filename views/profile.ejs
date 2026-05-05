@@ -186,11 +186,11 @@
         width: 400px;
         height: 400px;
       }
+    }
 
-      
+    /* MOBILE FULLSCREEN MENU */
     #fixediv {
       display: block;
-      /* FIXED */
       height: 100vh;
       width: 100%;
       background: #04040a;
@@ -211,7 +211,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* FIX */
       justify-content: center;
       gap: 25px;
     }
@@ -222,7 +221,6 @@
       font-weight: 700;
       color: var(--text);
       text-decoration: none;
-
       transition: all 0.4s ease;
     }
 
@@ -246,7 +244,6 @@
       border: none;
       cursor: pointer;
     }
-    }
 
     @keyframes orbA {
       0% {
@@ -268,64 +265,24 @@
       }
     }
 
-    /* MOBILE FULLSCREEN MENU */
-    #fixediv {
-      display: none;
-      height: 100vh;
-      width: 100%;
-      background: #04040a;
-      position: fixed;
-      z-index: 9999;
-      top: -110%;
-      transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      border-bottom: 1px solid var(--border);
-    }
+    @media (max-width: 768px) {
+      #fixediv {
+        display: block;
+        height: 100dvh;
+      }
 
-    #fixediv.open {
-      top: 0;
-    }
+      .links-fixed {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+      }
 
-    .links-fixed {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 8px;
-      padding-right: 40px;
-    }
-
-    .links-fixed a {
-      color: var(--text);
-      text-decoration: none;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 36px;
-      letter-spacing: -0.02em;
-      opacity: 0.5;
-      transition: opacity 0.3s, color 0.3s;
-      cursor: none;
-    }
-
-    .links-fixed a:hover {
-      opacity: 1;
-      color: var(--accent);
-    }
-
-    #fixediv .close-btn {
-      position: absolute;
-      top: 28px;
-      right: 28px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 28px;
-      cursor: none;
-      transition: color 0.3s;
-    }
-
-    #fixediv .close-btn:hover {
-      color: var(--text);
+      .links-fixed a {
+        font-size: 32px;
+      }
     }
 
     /* NAVBAR */
@@ -1054,7 +1011,7 @@
         <div class="profile-header">
           <div class="profile-left">
             <div class="profile-dp">
-              <img src="<%= user.photo ? user.photo : '/default.png' %>" alt="Profile">
+              <img src="<%= user.photo ? user.photo : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name || 'User') + '&background=ff7518&color=fff&size=256' %>" alt="Profile" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=User&background=ff7518&color=fff&size=256';">
             </div>
             <div class="profile-info">
               <h2>

@@ -32,7 +32,18 @@ const botSchema = new mongoose.Schema({
           'Customer Support',
           'E-commerce Assistant',
           'customer support',
-          'e-commerce assistant'
+          'e-commerce assistant',
+          'customer-support',
+          'faq',
+          'lead-generation',
+          'ecommerce',
+          'technical',
+          'booking',
+          'product-advisor',
+          'marketing',
+          'hr',
+          'education',
+          'healthcare'
         ],
         default: 'general'
     },

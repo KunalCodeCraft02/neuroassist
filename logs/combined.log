@@ -243,3 +243,11 @@
 {"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-04-15 23:24:54"}
 {"level":"info","message":"🚀 Server running on port 3000 in development mode","service":"neuroassist","timestamp":"2026-04-15 23:24:58"}
 {"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-04-15 23:24:58"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-05-05 17:41:23"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-05-05 17:42:58"}
+{"level":"info","message":"🚀 Server running on port 3000 in production mode","service":"neuroassist","timestamp":"2026-05-05 17:43:00"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-05-05 17:43:00"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-05-05 18:47:05"}
+{"level":"info","message":"🚀 Server running on port 3000 in production mode","service":"neuroassist","timestamp":"2026-05-05 18:47:06"}
+{"level":"info","message":"📧 Daily lead summaries will be sent at 9:00 AM every day","service":"neuroassist","timestamp":"2026-05-05 18:47:06"}
+{"level":"info","message":"CORS allowed origins: https://bemybot.in, http://localhost:3000, http://localhost:3001","service":"neuroassist","timestamp":"2026-05-05 18:50:09"}
