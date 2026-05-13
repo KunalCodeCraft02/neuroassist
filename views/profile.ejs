@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="csrf-token" content="<%= csrfToken %>">
   <title>NeuroAssist Co — Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1391,6 +1392,8 @@
       });
 
       // DELETE BOT
+
+
       async function deleteBot(id) {
 
         const ok = confirm(
@@ -1401,13 +1404,24 @@
 
         try {
 
+          const csrfToken =
+            document
+              .querySelector('meta[name="csrf-token"]')
+              .getAttribute("content");
+
           const res = await fetch(
             "/deletebot/" + id,
             {
+
               method: "DELETE",
+
               headers: {
-                "Content-Type": "application/json"
+
+                "Content-Type": "application/json",
+
+                "CSRF-Token": csrfToken
               }
+
             }
           );
 
@@ -1423,16 +1437,22 @@
 
           } else {
 
-            alert(data.message || "Delete failed");
+            alert(
+              data.message ||
+              "Delete failed"
+            );
           }
 
         } catch (err) {
 
-          console.log("DELETE ERROR:", err);
+          console.log(err);
 
-          alert("Server error while deleting bot");
+          alert(
+            "Server error while deleting bot"
+          );
         }
       }
+
 
       // Custom cursor animation (desktop only)
       if (window.matchMedia('(pointer: fine)').matches) {

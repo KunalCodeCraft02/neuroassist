@@ -899,6 +899,7 @@ app.get("/profile", auth, async (req, res) => {
       user,
       bots,
       bookings,
+       csrfToken: req.csrfToken(),
       leads,
       leadStats,
       apiKeyInfo: {
