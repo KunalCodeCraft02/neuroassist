@@ -241,10 +241,11 @@ app.use(cors({
     "OPTIONS"
   ],
 
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization"
-  ],
+allowedHeaders: [
+  "Content-Type",
+  "Authorization",
+  "CSRF-Token"
+],
 
   optionsSuccessStatus: 200
 
@@ -318,21 +319,56 @@ app.use(session({
 const csrfProtection = csurf({ cookie: false });
 
 function shouldSkipCSRF(req) {
+
+  // ✅ Skip all GET requests
+  if (req.method === "GET") {
+    return true;
+  }
+
+  // ✅ Skip DELETE bot route
+  if (
+    req.method === "DELETE" &&
+    req.path.startsWith("/deletebot/")
+  ) {
+    return true;
+  }
+
+  // ✅ Skip public files
+  if (req.path.startsWith("/public/")) {
+    return true;
+  }
+
+  // ✅ Skip socket.io
+  if (req.path.startsWith("/socket.io/")) {
+    return true;
+  }
+
+  // ✅ Routes that don't need CSRF
   const skipPaths = [
-    '/auth/google',
-    '/auth/google/callback',
-    '/api/vapi',
-    '/logout',
-    '/api/',
-    '/login',      // JWT-based auth, no session
-    '/signup',     // OTP-based, but initial form submission
-    '/verify-otp',  // OTP verification
-    '/createbot'   // JWT-based auth, CSRF not needed
+
+    "/auth/google",
+
+    "/auth/google/callback",
+
+    "/api/vapi",
+
+    "/logout",
+
+    "/api/",
+
+    "/login",
+
+    "/signup",
+
+    "/verify-otp",
+
+    "/createbot"
+
   ];
-  if (req.method === 'GET') return true;
-  if (req.path.startsWith('/public/')) return true;
-  if (req.path.startsWith('/socket.io/')) return true;
-  return skipPaths.some(path => req.path.startsWith(path));
+
+  return skipPaths.some(path =>
+    req.path.startsWith(path)
+  );
 }
 
 app.use((req, res, next) => {
@@ -2204,57 +2240,176 @@ app.delete("/deletebot/:botId", generalLimiter, auth, async (req, res) => {
 
   try {
 
-    const botId = req.params.botId;
+    // =========================
+    // VALIDATE USER
+    // =========================
 
-    console.log("🗑️ DELETE BOT:", botId);
+    if (!req.user || !req.user.id) {
 
-    // FIND USER BOT
-    const bot = await Bot.findOne({
-      botId: botId,
-      userId: req.user.id
-    });
+      return res.status(401).json({
 
-    if (!bot) {
-
-      return res.status(404).json({
         success: false,
-        message: "Bot not found"
+
+        message: "Unauthorized"
       });
     }
 
+    // =========================
+    // GET BOT ID
+    // =========================
+
+    const botId =
+      req.params.botId;
+
+    if (!botId) {
+
+      return res.status(400).json({
+
+        success: false,
+
+        message: "Bot ID missing"
+      });
+    }
+
+    console.log(
+      "🗑️ DELETE BOT REQUEST:",
+      botId
+    );
+
+    // =========================
+    // FIND USER BOT
+    // =========================
+
+    const bot =
+      await Bot.findOne({
+
+        botId: botId,
+
+        userId: req.user.id
+      });
+
+    if (!bot) {
+
+      console.log(
+        "❌ BOT NOT FOUND"
+      );
+
+      return res.status(404).json({
+
+        success: false,
+
+        message:
+          "Bot not found or access denied"
+      });
+    }
+
+    console.log(
+      "✅ BOT FOUND:",
+      bot.name
+    );
+
+    // =========================
     // DELETE RELATED DATA
-    await Conversation.deleteMany({
-      botId: bot.botId
-    });
+    // =========================
 
-    await Booking.deleteMany({
-      botId: bot.botId
-    });
+    try {
 
-    await Lead.deleteMany({
-      botId: bot.botId
-    });
+      await Conversation.deleteMany({
+        botId: bot.botId
+      });
 
+      console.log(
+        "✅ Conversations deleted"
+      );
+
+    } catch (err) {
+
+      console.log(
+        "⚠️ Conversation delete error:",
+        err.message
+      );
+    }
+
+    try {
+
+      await Lead.deleteMany({
+        botId: bot.botId
+      });
+
+      console.log(
+        "✅ Leads deleted"
+      );
+
+    } catch (err) {
+
+      console.log(
+        "⚠️ Lead delete error:",
+        err.message
+      );
+    }
+
+    try {
+
+      await Booking.deleteMany({
+        botId: bot.botId
+      });
+
+      console.log(
+        "✅ Bookings deleted"
+      );
+
+    } catch (err) {
+
+      console.log(
+        "⚠️ Booking delete error:",
+        err.message
+      );
+    }
+
+    // =========================
     // DELETE BOT
+    // =========================
+
     await Bot.deleteOne({
+
       botId: bot.botId
     });
 
-    console.log("✅ BOT DELETED SUCCESSFULLY");
+    console.log(
+      "✅ BOT DELETED SUCCESSFULLY"
+    );
 
-    return res.json({
+    // =========================
+    // SUCCESS RESPONSE
+    // =========================
+
+    return res.status(200).json({
+
       success: true,
-      message: "Bot deleted successfully"
+
+      message:
+        "Bot deleted successfully"
     });
 
   } catch (err) {
 
-    console.log("❌ DELETE BOT ERROR:", err);
+    console.log(
+      "🔥 DELETE BOT ERROR:"
+    );
+
+    console.log(err);
 
     return res.status(500).json({
+
       success: false,
-      message: "Failed to delete bot",
-      error: err.message
+
+      message:
+        "Failed to delete bot",
+
+      error:
+        process.env.NODE_ENV !== "production"
+          ? err.message
+          : undefined
     });
   }
 });

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="csrf-token" content="<%= csrfToken %>">
+  <!-- <meta name="csrf-token" content="<%= csrfToken %>"> -->
   <title>NeuroAssist Co — Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1404,42 +1404,30 @@
 
         try {
 
-          const csrfToken =
-            document
-              .querySelector('meta[name="csrf-token"]')
-              .getAttribute("content");
+          const res = await fetch("/deletebot/" + id, {
 
-          const res = await fetch(
-            "/deletebot/" + id,
-            {
+            method: "DELETE",
 
-              method: "DELETE",
+            headers: {
 
-              headers: {
-
-                "Content-Type": "application/json",
-
-                "CSRF-Token": csrfToken
-              }
+              "Content-Type": "application/json"
 
             }
-          );
+
+          })
 
           const data = await res.json();
 
-          console.log(data);
-
           if (data.success) {
 
-            alert("Bot deleted successfully");
+            alert("Bot deleted");
 
             location.reload();
 
           } else {
 
             alert(
-              data.message ||
-              "Delete failed"
+              data.message || "Delete failed"
             );
           }
 
@@ -1447,11 +1435,10 @@
 
           console.log(err);
 
-          alert(
-            "Server error while deleting bot"
-          );
+          alert("Server error");
         }
       }
+
 
 
       // Custom cursor animation (desktop only)
