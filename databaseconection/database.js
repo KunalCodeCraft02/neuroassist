@@ -10,15 +10,15 @@ async function connectDB() {
       // Use minimal options - Mongoose 7+ has better defaults
       await mongoose.connect(process.env.MONGODB_URI);
 
-      console.log("✅ MongoDB Connected Successfully");
+      console.log(" MongoDB Connected Successfully");
       return mongoose;
     } catch (err) {
       retryCount++;
-      console.error(`❌ MongoDB Connection Attempt ${retryCount}/${maxRetries} Failed:`);
+      console.error(`MongoDB Connection Attempt ${retryCount}/${maxRetries} Failed:`);
       console.error("   Error:", err.message);
 
       if (retryCount >= maxRetries) {
-        console.error("\n❌ CRITICAL: Failed to connect to MongoDB after ${maxRetries} attempts.");
+        console.error("\n CRITICAL: Failed to connect to MongoDB after ${maxRetries} attempts.");
         console.error("   Please check:");
         console.error("   1. MONGODB_URI environment variable is correct");
         console.error("   2. MongoDB Atlas cluster is running");

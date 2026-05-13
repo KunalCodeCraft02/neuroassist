@@ -308,13 +308,13 @@ const allowedAdminIPs = process.env.ALLOWED_ADMIN_IPS
 
 const adminIPWhitelist = allowedAdminIPs.length > 0
   ? (req, res, next) => {
-      const clientIP = req.ip || req.connection.remoteAddress;
-      if (allowedAdminIPs.includes(clientIP)) {
-        return next();
-      }
-      logger.warn(`Admin access denied from IP: ${clientIP}`);
-      return res.status(403).render('error', { message: 'Access Denied: IP not whitelisted' });
+    const clientIP = req.ip || req.connection.remoteAddress;
+    if (allowedAdminIPs.includes(clientIP)) {
+      return next();
     }
+    logger.warn(`Admin access denied from IP: ${clientIP}`);
+    return res.status(403).render('error', { message: 'Access Denied: IP not whitelisted' });
+  }
   : null;
 
 
@@ -322,14 +322,14 @@ const adminIPWhitelist = allowedAdminIPs.length > 0
 
 async function analyzeUser(botId, userId) {
 
-    const actions = await Behavior.find({ botId, userId });
+  const actions = await Behavior.find({ botId, userId });
 
-    const clicks = actions.filter(a => a.action === "click").length;
+  const clicks = actions.filter(a => a.action === "click").length;
 
-    if (clicks > 5) return "HOT";
-    if (clicks > 2) return "WARM";
+  if (clicks > 5) return "HOT";
+  if (clicks > 2) return "WARM";
 
-    return "COLD";
+  return "COLD";
 }
 
 
@@ -337,15 +337,15 @@ async function analyzeUser(botId, userId) {
 
 app.get("/analyze", chatLimiter, botAccess, async (req, res) => {
 
-    const { botId, userId } = req.query;
+  const { botId, userId } = req.query;
 
-    if (!botId || !userId) {
-        return res.json({ status: "UNKNOWN" });
-    }
+  if (!botId || !userId) {
+    return res.json({ status: "UNKNOWN" });
+  }
 
-    const status = await analyzeUser(botId, userId);
+  const status = await analyzeUser(botId, userId);
 
-    res.json({ status });
+  res.json({ status });
 });
 
 
@@ -356,17 +356,17 @@ const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: "profiles",
-        allowed_formats: ["jpg", "png", "jpeg"]
-    }
+  cloudinary: cloudinary,
+  params: {
+    folder: "profiles",
+    allowed_formats: ["jpg", "png", "jpeg"]
+  }
 });
 
 
@@ -374,7 +374,7 @@ const storage = new CloudinaryStorage({
 
 
 const upload = multer({ storage });
- const http = require("http");
+const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server);
 
@@ -382,139 +382,139 @@ let users = {};
 let lastMessageTime = {};
 
 io.on("connection", (socket) => {
-    console.log("✅ User connected:", socket.id);
+  console.log("✅ User connected:", socket.id);
 
-    // JOIN LOCATION
-    socket.on("joinLocation", async ({ state, district, userId }) => {
-        try {
-            console.log("🔍 joinLocation event received:", { state, district, userId, socketId: socket.id });
+  // JOIN LOCATION
+  socket.on("joinLocation", async ({ state, district, userId }) => {
+    try {
+      console.log("🔍 joinLocation event received:", { state, district, userId, socketId: socket.id });
 
-            if (!state || !district || !userId) {
-                console.log("❌ Missing join data:", { state, district, userId });
-                return;
-            }
+      if (!state || !district || !userId) {
+        console.log("❌ Missing join data:", { state, district, userId });
+        return;
+      }
 
-            const room = `${state.trim().toLowerCase()}-${district.trim().toLowerCase()}`;
-            console.log(`🏠 Joining room: ${room}`);
+      const room = `${state.trim().toLowerCase()}-${district.trim().toLowerCase()}`;
+      console.log(`🏠 Joining room: ${room}`);
 
-            socket.join(room);
+      socket.join(room);
 
-            // FETCH USER
-            const userFromDB = await User.findById(userId);
-            if (!userFromDB) {
-                console.log("❌ User not found in DB:", userId);
-                return;
-            }
+      // FETCH USER
+      const userFromDB = await User.findById(userId);
+      if (!userFromDB) {
+        console.log("❌ User not found in DB:", userId);
+        return;
+      }
 
-            users[socket.id] = {
-                room,
-                user: userFromDB.name,
-                userId: userFromDB._id.toString(),
-                state: state.toLowerCase(),
-                district: district.toLowerCase()
-            };
+      users[socket.id] = {
+        room,
+        user: userFromDB.name,
+        userId: userFromDB._id.toString(),
+        state: state.toLowerCase(),
+        district: district.toLowerCase()
+      };
 
-            console.log("✅ JOINED:", users[socket.id]);
+      console.log("✅ JOINED:", users[socket.id]);
 
-            // LOAD OLD MESSAGES
-            const oldMessages = await Chat.find({
-                state: state.toLowerCase(),
-                district: district.toLowerCase()
-            })
-                .sort({ createdAt: -1 })
-                .limit(50)
-                .lean();
+      // LOAD OLD MESSAGES
+      const oldMessages = await Chat.find({
+        state: state.toLowerCase(),
+        district: district.toLowerCase()
+      })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
 
-            console.log(`📚 Found ${oldMessages.length} old messages for ${state}/${district}`);
+      console.log(`📚 Found ${oldMessages.length} old messages for ${state}/${district}`);
 
-            socket.emit("loadMessages", oldMessages.reverse());
+      socket.emit("loadMessages", oldMessages.reverse());
 
-            // ONLINE USERS
-            const roomUsers = Object.values(users).filter(u => u.room === room);
-            io.to(room).emit("onlineUsers", roomUsers);
-            console.log(`👥 Online users in ${room}:`, roomUsers.map(u => u.user));
+      // ONLINE USERS
+      const roomUsers = Object.values(users).filter(u => u.room === room);
+      io.to(room).emit("onlineUsers", roomUsers);
+      console.log(`👥 Online users in ${room}:`, roomUsers.map(u => u.user));
 
-        } catch (err) {
-            console.error("❌ JOIN ERROR:", err);
-        }
-    });
+    } catch (err) {
+      console.error("❌ JOIN ERROR:", err);
+    }
+  });
 
-    // SEND MESSAGE
-    socket.on("sendMessage", async ({ message }, callback) => {
-        try {
-            console.log("📩 Incoming message from socket", socket.id, ":", message);
+  // SEND MESSAGE
+  socket.on("sendMessage", async ({ message }, callback) => {
+    try {
+      console.log("📩 Incoming message from socket", socket.id, ":", message);
 
-            const userData = users[socket.id];
-            if (!userData) {
-                console.log("❌ User not joined. users[socket.id] is undefined. Available users:", Object.keys(users));
-                if (callback) callback({ error: "Not joined to any room" });
-                return;
-            }
+      const userData = users[socket.id];
+      if (!userData) {
+        console.log("❌ User not joined. users[socket.id] is undefined. Available users:", Object.keys(users));
+        if (callback) callback({ error: "Not joined to any room" });
+        return;
+      }
 
-            if (!message || message.trim() === "") {
-                console.log("❌ Empty message, ignoring");
-                if (callback) callback({ error: "Empty message" });
-                return;
-            }
+      if (!message || message.trim() === "") {
+        console.log("❌ Empty message, ignoring");
+        if (callback) callback({ error: "Empty message" });
+        return;
+      }
 
-            const now = Date.now();
-            if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 500) {
-                console.log("⏱️  Rate limit: message too soon");
-                if (callback) callback({ error: "Too fast, wait a moment" });
-                return;
-            }
-            lastMessageTime[socket.id] = now;
+      const now = Date.now();
+      if (lastMessageTime[socket.id] && now - lastMessageTime[socket.id] < 500) {
+        console.log("⏱️  Rate limit: message too soon");
+        if (callback) callback({ error: "Too fast, wait a moment" });
+        return;
+      }
+      lastMessageTime[socket.id] = now;
 
-            const userFromDB = await User.findById(userData.userId);
-            if (!userFromDB) {
-                console.log("❌ User not found in DB:", userData.userId);
-                if (callback) callback({ error: "User not found" });
-                return;
-            }
+      const userFromDB = await User.findById(userData.userId);
+      if (!userFromDB) {
+        console.log("❌ User not found in DB:", userData.userId);
+        if (callback) callback({ error: "User not found" });
+        return;
+      }
 
-            // Sanitize message to prevent XSS
-            const sanitizedMessage = validator.escape(message.trim());
+      // Sanitize message to prevent XSS
+      const sanitizedMessage = validator.escape(message.trim());
 
-            const chat = await Chat.create({
-                userId: userFromDB._id,
-                user: userFromDB.name,
-                message: sanitizedMessage,
-                state: userData.state,
-                district: userData.district
-            });
+      const chat = await Chat.create({
+        userId: userFromDB._id,
+        user: userFromDB.name,
+        message: sanitizedMessage,
+        state: userData.state,
+        district: userData.district
+      });
 
-            console.log("✅ Message saved to DB with ID:", chat._id);
-            console.log("✅ Broadcasting to room:", userData.room);
-            console.log("   Room members:", Object.values(users).filter(u => u.room === userData.room).map(u => u.user));
+      console.log("✅ Message saved to DB with ID:", chat._id);
+      console.log("✅ Broadcasting to room:", userData.room);
+      console.log("   Room members:", Object.values(users).filter(u => u.room === userData.room).map(u => u.user));
 
-            io.to(userData.room).emit("message", {
-                userId: userFromDB._id.toString(),
-                user: userFromDB.name,
-                text: sanitizedMessage,
-                time: chat.createdAt
-            });
+      io.to(userData.room).emit("message", {
+        userId: userFromDB._id.toString(),
+        user: userFromDB.name,
+        text: sanitizedMessage,
+        time: chat.createdAt
+      });
 
-            console.log("📢 Message broadcasted to room:", userData.room);
+      console.log("📢 Message broadcasted to room:", userData.room);
 
-            // Send success acknowledgment
-            if (callback) callback({ success: true, messageId: chat._id });
-        } catch (err) {
-            console.error("❌ SEND ERROR:", err);
-            if (callback) callback({ error: "Server error: " + err.message });
-        }
-    });
+      // Send success acknowledgment
+      if (callback) callback({ success: true, messageId: chat._id });
+    } catch (err) {
+      console.error("❌ SEND ERROR:", err);
+      if (callback) callback({ error: "Server error: " + err.message });
+    }
+  });
 
-    // DISCONNECT
-    socket.on("disconnect", () => {
-        const userData = users[socket.id];
-        if (userData) {
-            const room = userData.room;
-            delete users[socket.id];
+  // DISCONNECT
+  socket.on("disconnect", () => {
+    const userData = users[socket.id];
+    if (userData) {
+      const room = userData.room;
+      delete users[socket.id];
 
-            const roomUsers = Object.values(users).filter(u => u.room === room);
-            io.to(room).emit("onlineUsers", roomUsers);
-        }
-    });
+      const roomUsers = Object.values(users).filter(u => u.room === room);
+      io.to(room).emit("onlineUsers", roomUsers);
+    }
+  });
 });
 
 
@@ -536,154 +536,154 @@ app.use("/api/vapi", vapiWebhook);
 
 // Admin login with rate limiting and IP tracking
 app.post(`/${ADMIN_PATH}/login`, authLimiter, async (req, res) => {
-    const clientIP = req.ip || req.connection.remoteAddress;
+  const clientIP = req.ip || req.connection.remoteAddress;
 
-    // Check if IP is banned
-    const { isIPBanned, recordFailedLogin, resetFailedLogins } = require("./middleware/adminAuth");
-    if (await isIPBanned(clientIP)) {
+  // Check if IP is banned
+  const { isIPBanned, recordFailedLogin, resetFailedLogins } = require("./middleware/adminAuth");
+  if (await isIPBanned(clientIP)) {
+    return res.status(403).render("admin-login", {
+      error: "Too many failed attempts. Please try again later."
+    });
+  }
+
+  const { email, password } = req.body;
+
+  try {
+    // Find admin by email
+    const admin = await Admin.findOne({ email: email.toLowerCase().trim(), isActive: true });
+
+    if (!admin) {
+      // Record failed attempt
+      recordFailedLogin(clientIP);
+      logger.warn(`Failed admin login attempt for non-existent email: ${email} from IP: ${clientIP}`);
+
+      return res.render("admin-login", {
+        error: "Invalid email or password",
+        attemptIP: clientIP
+      });
+    }
+
+    // Check if account is locked
+    if (admin.isLocked()) {
       return res.status(403).render("admin-login", {
-        error: "Too many failed attempts. Please try again later."
+        error: "Account is temporarily locked. Please try again later.",
+        attemptIP: clientIP
       });
     }
 
-    const { email, password } = req.body;
+    // Verify password
+    const validPassword = await admin.comparePassword(password);
 
-    try {
-      // Find admin by email
-      const admin = await Admin.findOne({ email: email.toLowerCase().trim(), isActive: true });
+    if (!validPassword) {
+      // Record failed attempt
+      await admin.incLoginAttempts();
+      recordFailedLogin(clientIP);
+      logger.warn(`Failed admin login attempt for email: ${email} from IP: ${clientIP}`);
 
-      if (!admin) {
-        // Record failed attempt
-        recordFailedLogin(clientIP);
-        logger.warn(`Failed admin login attempt for non-existent email: ${email} from IP: ${clientIP}`);
-
-        return res.render("admin-login", {
-          error: "Invalid email or password",
-          attemptIP: clientIP
-        });
-      }
-
-      // Check if account is locked
-      if (admin.isLocked()) {
-        return res.status(403).render("admin-login", {
-          error: "Account is temporarily locked. Please try again later.",
-          attemptIP: clientIP
-        });
-      }
-
-      // Verify password
-      const validPassword = await admin.comparePassword(password);
-
-      if (!validPassword) {
-        // Record failed attempt
-        await admin.incLoginAttempts();
-        recordFailedLogin(clientIP);
-        logger.warn(`Failed admin login attempt for email: ${email} from IP: ${clientIP}`);
-
-        return res.render("admin-login", {
-          error: "Invalid email or password",
-          attemptIP: clientIP
-        });
-      }
-
-      // Successful password check - reset failed attempts
-      await admin.updateOne({ $set: { loginAttempts: 0, lockedUntil: undefined }, $currentDate: { lastLogin: true } });
-      resetFailedLogins(clientIP);
-
-      // Check if 2FA is enabled for this admin
-      if (admin.twoFactorEnabled && admin.twoFactorSecret) {
-        // Generate 2FA OTP using TOTP
-        const speakeasy = require("speakeasy");
-        const secret = admin.twoFactorSecret;
-        const otp = speakeasy.totp({
-          secret: secret,
-          encoding: "base32"
-        });
-
-        // Store OTP verification session (we'll verify against secret on validation)
-        req.session.admin2fa = {
-          adminId: admin._id,
-          email: admin.email,
-          verified: false,
-          expires: Date.now() + 5 * 60 * 1000, // 5 minutes
-          attemptIP: clientIP
-        };
-
-        // Send OTP email
-        try {
-          const { sendOtp } = require("./services/sendOtp");
-          await sendOtp(admin.email, otp);
-          logger.info(`2FA OTP sent to admin email: ${admin.email} from IP: ${clientIP}`);
-
-          // Redirect to 2FA verification page
-          res.redirect(`/${ADMIN_PATH}/verify-2fa`);
-        } catch (err) {
-          logger.error("Failed to send 2FA OTP:", err);
-          res.render("admin-login", {
-            error: "Failed to send verification code. Please try again."
-          });
-        }
-      } else {
-        // No 2FA required - log admin in directly
-        req.session.admin = admin._id.toString();
-        req.session.adminEmail = admin.email;
-        req.session.adminRole = admin.role;
-        logger.info(`Admin logged in (no 2FA): ${admin.email} from IP: ${clientIP}`);
-        res.redirect(`/${ADMIN_PATH}`);
-      }
-
-    } catch (err) {
-      logger.error("Admin login error:", err);
-      res.status(500).render("admin-login", {
-        error: "An error occurred. Please try again."
+      return res.render("admin-login", {
+        error: "Invalid email or password",
+        attemptIP: clientIP
       });
     }
+
+    // Successful password check - reset failed attempts
+    await admin.updateOne({ $set: { loginAttempts: 0, lockedUntil: undefined }, $currentDate: { lastLogin: true } });
+    resetFailedLogins(clientIP);
+
+    // Check if 2FA is enabled for this admin
+    if (admin.twoFactorEnabled && admin.twoFactorSecret) {
+      // Generate 2FA OTP using TOTP
+      const speakeasy = require("speakeasy");
+      const secret = admin.twoFactorSecret;
+      const otp = speakeasy.totp({
+        secret: secret,
+        encoding: "base32"
+      });
+
+      // Store OTP verification session (we'll verify against secret on validation)
+      req.session.admin2fa = {
+        adminId: admin._id,
+        email: admin.email,
+        verified: false,
+        expires: Date.now() + 5 * 60 * 1000, // 5 minutes
+        attemptIP: clientIP
+      };
+
+      // Send OTP email
+      try {
+        const { sendOtp } = require("./services/sendOtp");
+        await sendOtp(admin.email, otp);
+        logger.info(`2FA OTP sent to admin email: ${admin.email} from IP: ${clientIP}`);
+
+        // Redirect to 2FA verification page
+        res.redirect(`/${ADMIN_PATH}/verify-2fa`);
+      } catch (err) {
+        logger.error("Failed to send 2FA OTP:", err);
+        res.render("admin-login", {
+          error: "Failed to send verification code. Please try again."
+        });
+      }
+    } else {
+      // No 2FA required - log admin in directly
+      req.session.admin = admin._id.toString();
+      req.session.adminEmail = admin.email;
+      req.session.adminRole = admin.role;
+      logger.info(`Admin logged in (no 2FA): ${admin.email} from IP: ${clientIP}`);
+      res.redirect(`/${ADMIN_PATH}`);
+    }
+
+  } catch (err) {
+    logger.error("Admin login error:", err);
+    res.status(500).render("admin-login", {
+      error: "An error occurred. Please try again."
+    });
+  }
 })
 
 
 function protectAdmin(req, res, next) {
-    // Check IP whitelist if configured
-    if (allowedAdminIPs.length > 0) {
-      const clientIP = req.ip || req.connection.remoteAddress;
-      if (!allowedAdminIPs.includes(clientIP)) {
-        logger.warn(`Admin access denied from non-whitelisted IP: ${clientIP}`);
-        return res.status(403).render('error', {
-          message: 'Access Denied: Your IP is not authorized for admin access.'
-        });
-      }
+  // Check IP whitelist if configured
+  if (allowedAdminIPs.length > 0) {
+    const clientIP = req.ip || req.connection.remoteAddress;
+    if (!allowedAdminIPs.includes(clientIP)) {
+      logger.warn(`Admin access denied from non-whitelisted IP: ${clientIP}`);
+      return res.status(403).render('error', {
+        message: 'Access Denied: Your IP is not authorized for admin access.'
+      });
     }
+  }
 
-    // Check admin session (stored as admin ID)
-    if (req.session.admin) {
-      // Verify admin still exists and is active in DB
-      Admin.findById(req.session.admin).then(admin => {
-        if (admin && admin.isActive) {
-          req.currentAdmin = admin; // Attach admin to request
-          next();
-        } else {
-          req.session.destroy();
-          return res.redirect(`/${ADMIN_PATH}/login`);
-        }
-      }).catch(err => {
-        logger.error("Admin verification error:", err);
+  // Check admin session (stored as admin ID)
+  if (req.session.admin) {
+    // Verify admin still exists and is active in DB
+    Admin.findById(req.session.admin).then(admin => {
+      if (admin && admin.isActive) {
+        req.currentAdmin = admin; // Attach admin to request
+        next();
+      } else {
         req.session.destroy();
         return res.redirect(`/${ADMIN_PATH}/login`);
-      });
-    } else {
-        res.redirect(`/${ADMIN_PATH}/login`)
-    }
+      }
+    }).catch(err => {
+      logger.error("Admin verification error:", err);
+      req.session.destroy();
+      return res.redirect(`/${ADMIN_PATH}/login`);
+    });
+  } else {
+    res.redirect(`/${ADMIN_PATH}/login`)
+  }
 
 }
 
 app.get('/', (req, res) => {
-    res.render('index');
+  res.render('index');
 });
 
 app.get("/home", auth, async (req, res) => {
 
-    const bots = await Bot.find({ userId: req.user.id })
+  const bots = await Bot.find({ userId: req.user.id })
 
-    res.render("home", { bots })
+  res.render("home", { bots })
 
 })
 
@@ -702,119 +702,119 @@ app.get("/leads/:leadId", auth, async (req, res) => {
 
 
 app.get('/signup', (req, res) => {
-    // csrfToken is automatically available in templates via middleware (res.locals.csrfToken)
-    res.render('signup');
+  // csrfToken is automatically available in templates via middleware (res.locals.csrfToken)
+  res.render('signup');
 });
 
 
 app.get("/login", (req, res) => {
-    try {
-        const token = req.cookies.token;
+  try {
+    const token = req.cookies.token;
 
-        if (token) {
-            jwt.verify(token, process.env.JWT_SECRET);
-            return res.redirect("/home");
-        }
-
-        // csrfToken is automatically available in templates via middleware (res.locals.csrfToken)
-        res.render("login");
-
-    } catch (err) {
-        res.clearCookie("token"); // 🔥 FIX LOOP
-        res.render("login");
+    if (token) {
+      jwt.verify(token, process.env.JWT_SECRET);
+      return res.redirect("/home");
     }
+
+    // csrfToken is automatically available in templates via middleware (res.locals.csrfToken)
+    res.render("login");
+
+  } catch (err) {
+    res.clearCookie("token"); // 🔥 FIX LOOP
+    res.render("login");
+  }
 });
 
 
 app.get("/createbot", auth, (req, res) => {
-    res.render("createbot")
+  res.render("createbot")
 })
 
 
 app.get("/profile", auth, async (req, res) => {
 
-    try {
+  try {
 
-        const user = await User.findById(req.user.id).select("name email apiKey apiKeyCreatedAt apiKeyLastUsed apiKeyRateLimit");
+    const user = await User.findById(req.user.id).select("name email apiKey apiKeyCreatedAt apiKeyLastUsed apiKeyRateLimit");
 
-        const bots = await Bot.find({ userId: req.user.id });
+    const bots = await Bot.find({ userId: req.user.id });
 
-        const botIds = bots.map(b => b.botId);
+    const botIds = bots.map(b => b.botId);
 
-        // 🔥 FETCH LEADS with bot details
-        const leads = await Lead.find({
-            botId: { $in: botIds }
-        })
-        .sort({ createdAt: -1 })
-        .lean();
+    // 🔥 FETCH LEADS with bot details
+    const leads = await Lead.find({
+      botId: { $in: botIds }
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
-        // Add bot names to leads
-        const botMap = {};
-        bots.forEach(bot => {
-            botMap[bot.botId] = bot.name;
-        });
+    // Add bot names to leads
+    const botMap = {};
+    bots.forEach(bot => {
+      botMap[bot.botId] = bot.name;
+    });
 
-        leads.forEach(lead => {
-            lead.botName = botMap[lead.botId] || 'Unknown Bot';
-        });
+    leads.forEach(lead => {
+      lead.botName = botMap[lead.botId] || 'Unknown Bot';
+    });
 
-        // Calculate lead statistics
-        const leadStats = {
-          total: leads.length,
-          hotLeads: leads.filter(l => l.leadScore >= 70).length,
-          converted: leads.filter(l => l.leadStatus === 'converted').length,
-          avgScore: leads.length > 0
-            ? Math.round(leads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / leads.length)
-            : 0,
-          byStatus: {},
-          byBot: {}
-        };
+    // Calculate lead statistics
+    const leadStats = {
+      total: leads.length,
+      hotLeads: leads.filter(l => l.leadScore >= 70).length,
+      converted: leads.filter(l => l.leadStatus === 'converted').length,
+      avgScore: leads.length > 0
+        ? Math.round(leads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / leads.length)
+        : 0,
+      byStatus: {},
+      byBot: {}
+    };
 
-        // Group by status
-        leads.forEach(lead => {
-          leadStats.byStatus[lead.leadStatus] = (leadStats.byStatus[lead.leadStatus] || 0) + 1;
-        });
+    // Group by status
+    leads.forEach(lead => {
+      leadStats.byStatus[lead.leadStatus] = (leadStats.byStatus[lead.leadStatus] || 0) + 1;
+    });
 
-        // Group by bot
-        bots.forEach(bot => {
-          const botLeads = leads.filter(l => l.botId === bot.botId);
-          leadStats.byBot[bot.botId] = {
-            name: bot.name,
-            total: botLeads.length,
-            converted: botLeads.filter(l => l.leadStatus === 'converted').length,
-            avgScore: botLeads.length > 0
-              ? Math.round(botLeads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / botLeads.length)
-              : 0
-          };
-        });
+    // Group by bot
+    bots.forEach(bot => {
+      const botLeads = leads.filter(l => l.botId === bot.botId);
+      leadStats.byBot[bot.botId] = {
+        name: bot.name,
+        total: botLeads.length,
+        converted: botLeads.filter(l => l.leadStatus === 'converted').length,
+        avgScore: botLeads.length > 0
+          ? Math.round(botLeads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / botLeads.length)
+          : 0
+      };
+    });
 
-        // existing bookings
-        const bookings = await Booking.find({
-            botId: { $in: botIds }
-        });
+    // existing bookings
+    const bookings = await Booking.find({
+      botId: { $in: botIds }
+    });
 
-        res.render("profile", {
-            user,
-            bots,
-            bookings,
-            leads,
-            leadStats,
-            apiKeyInfo: {
-                hasKey: !!user.apiKey,
-                createdAt: user.apiKeyCreatedAt,
-                lastUsed: user.apiKeyLastUsed,
-                rateLimit: user.apiKeyRateLimit,
-                // Mask the key for display (first 6 + ... + last 4)
-                maskedKey: user.apiKey
-                  ? user.apiKey.substring(0, 6) + '...' + user.apiKey.slice(-4)
-                  : null
-            }
-        });
+    res.render("profile", {
+      user,
+      bots,
+      bookings,
+      leads,
+      leadStats,
+      apiKeyInfo: {
+        hasKey: !!user.apiKey,
+        createdAt: user.apiKeyCreatedAt,
+        lastUsed: user.apiKeyLastUsed,
+        rateLimit: user.apiKeyRateLimit,
+        // Mask the key for display (first 6 + ... + last 4)
+        maskedKey: user.apiKey
+          ? user.apiKey.substring(0, 6) + '...' + user.apiKey.slice(-4)
+          : null
+      }
+    });
 
-    } catch (err) {
-        console.log("PROFILE ERROR:", err);
-        res.send("Error loading profile");
-    }
+  } catch (err) {
+    console.log("PROFILE ERROR:", err);
+    res.send("Error loading profile");
+  }
 
 });
 
@@ -828,79 +828,79 @@ const apiKeyRouter = require("./routes/apikey");
 app.use("/api/key", apiKeyRouter);
 
 app.get("/conversations/:botId", auth, botOwner, async (req, res) => {
-    const conversations = await Conversation.find({
-        botId: req.params.botId
-    })
+  const conversations = await Conversation.find({
+    botId: req.params.botId
+  })
 
-    res.render("conversations", { conversations })
+  res.render("conversations", { conversations })
 })
 
 app.get("/edit-profile", auth, async (req, res) => {
-    try {
+  try {
 
-        const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id);
 
-        res.render("edit-profile", { user });
+    res.render("edit-profile", { user });
 
-    } catch (err) {
-        console.log("EDIT PROFILE ERROR:", err);
-        res.send("Error loading page");
-    }
+  } catch (err) {
+    console.log("EDIT PROFILE ERROR:", err);
+    res.send("Error loading page");
+  }
 });
 
 app.get(`/${ADMIN_PATH}`, protectAdmin, async (req, res) => {
 
-    const users = await User.find()
-    const bots = await Bot.find()
-    const conversations = await Conversation.find()
-    const bookings = await Booking.find();
+  const users = await User.find()
+  const bots = await Bot.find()
+  const conversations = await Conversation.find()
+  const bookings = await Booking.find();
 
-    const freeUsers = users.filter(u => u.plan === "free").length
-    const proUsers = users.filter(u => u.plan === "pro").length
-    const businessUsers = users.filter(u => u.plan === "business").length
+  const freeUsers = users.filter(u => u.plan === "free").length
+  const proUsers = users.filter(u => u.plan === "pro").length
+  const businessUsers = users.filter(u => u.plan === "business").length
 
-    const totalRevenue = users.reduce((sum, u) => sum + (u.planPrice || 0), 0)
+  const totalRevenue = users.reduce((sum, u) => sum + (u.planPrice || 0), 0)
 
-    let mostPopularPlan = "free"
+  let mostPopularPlan = "free"
 
-    if (proUsers > freeUsers && proUsers > businessUsers) {
-        mostPopularPlan = "Pro"
-    }
-    else if (businessUsers > proUsers) {
-        mostPopularPlan = "Business"
-    }
+  if (proUsers > freeUsers && proUsers > businessUsers) {
+    mostPopularPlan = "Pro"
+  }
+  else if (businessUsers > proUsers) {
+    mostPopularPlan = "Business"
+  }
 
-    res.render("admin", {
-        users,
-        bots,
-        conversations,
-        totalRevenue,
-        freeUsers,
-        bookings,
-        proUsers,
-        businessUsers,
-        mostPopularPlan
-    })
+  res.render("admin", {
+    users,
+    bots,
+    conversations,
+    totalRevenue,
+    freeUsers,
+    bookings,
+    proUsers,
+    businessUsers,
+    mostPopularPlan
+  })
 
 })
 
 app.get(`/${ADMIN_PATH}/login`, (req, res) => {
 
-    if (req.session.admin) {
+  if (req.session.admin) {
 
-        return res.redirect(`/${ADMIN_PATH}`)
+    return res.redirect(`/${ADMIN_PATH}`)
 
-    }
+  }
 
-    res.render("admin-login", { error: null })
+  res.render("admin-login", { error: null })
 
 })
 
 app.get(`/${ADMIN_PATH}/logout`, (req, res) => {
 
-    req.session.destroy()
+  req.session.destroy()
 
-    res.redirect(`/${ADMIN_PATH}/login`)
+  res.redirect(`/${ADMIN_PATH}/login`)
 
 })
 
@@ -992,74 +992,74 @@ app.post(`/${ADMIN_PATH}/resend-2fa`, authLimiter, async (req, res) => {
 });
 
 app.get("/pricing", auth, (req, res) => {
-    res.render("pricing")
+  res.render("pricing")
 })
 
 
 
 app.get("/verify-otp", (req, res) => {
 
-    if (!req.session.signupData) {
-        return res.redirect("/signup")
-    }
+  if (!req.session.signupData) {
+    return res.redirect("/signup")
+  }
 
-    res.render("verify-otp")
+  res.render("verify-otp")
 
 })
 
 app.get("/booking", (req, res) => {
-    res.render("booking");
+  res.render("booking");
 });
 
 
 app.get("/create-booking-bot", auth, (req, res) => {
-    res.render("create-booking-bot");
+  res.render("create-booking-bot");
 });
 
 
 app.get("/bookings", auth, async (req, res) => {
-    const bots = await Bot.find({ userId: req.user.id });
+  const bots = await Bot.find({ userId: req.user.id });
 
-    if (!bots.length) {
-        return res.send("No bots found");
-    }
+  if (!bots.length) {
+    return res.send("No bots found");
+  }
 
-    res.render("bookings", { botId: bots[0].botId });
+  res.render("bookings", { botId: bots[0].botId });
 });
 
 
 app.get("/chat", auth, (req, res) => {
 
-    res.render("chat", { user: req.user });
-    console.log("REQ.USER:", req.user); // 👈 ADD THIS
+  res.render("chat", { user: req.user });
+  console.log("REQ.USER:", req.user); // 👈 ADD THIS
 });
 
 
 // Step 1: Redirect to Google
 app.get("/auth/google",
-    passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] })
 )
 
 // Step 2: Callback
 app.get("/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/login" }),
-    (req, res) => {
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
 
-        const token = jwt.sign(
-            { id: req.user._id, email: req.user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        )
+    const token = jwt.sign(
+      { id: req.user._id, email: req.user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    )
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "lax"
-        })
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax"
+    })
 
-        res.redirect("/home")
+    res.redirect("/home")
 
-    }
+  }
 )
 
 // post methods 
@@ -1070,144 +1070,144 @@ const scrapeWebsite = require("./services/scraper")
 const sendOtp = require("./services/sendOtp")
 
 app.post("/signup", authLimiter, [
-    body('name')
-      .trim()
-      .isLength({ min: 3 }).withMessage('Name must be at least 3 characters')
-      .escape(),
-    body('email')
-      .isEmail().withMessage('Enter a valid email')
-      .normalizeEmail(),
-    body('password')
-      .isStrongPassword({
-        minLength: 12,
-        minLowercase: 1,
-        minUppercase: 1,
-        minNumbers: 1,
-        minSymbols: 1
-      }).withMessage('Password must be at least 12 characters with uppercase, lowercase, number, and symbol'),
-    body('state', 'State is required').notEmpty(),
-    body('district', 'District is required').notEmpty(),
-    body('companyname', 'Company name is required').notEmpty().escape()
-  ], async (req, res) => {
-    try {
-      // Validate input
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: errors.array()[0].msg,
-          errors: errors.array()
-        });
-      }
-
-      const { name, email, password, state, district, companyname } = req.body;
-
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        // Generic message to prevent email enumeration
-        return res.json({
-          success: false,
-          message: "If this email is not registered, you will receive an OTP. Otherwise, please login."
-        });
-      }
-
-      const otp = Math.floor(100000 + Math.random() * 900000);
-
-      req.session.signupData = {
-        name,
-        email,
-        password,
-        companyname,
-        state,
-        district,
-        otp,
-        expires: Date.now() + 300000
-      };
-
-      await sendOtp(email, otp);
-
-      logger.info(`OTP sent to ${email} for signup`);
-
-      res.json({
-        success: true,
-        message: "OTP sent to your email",
-        redirect: "/verify-otp"
-      });
-
-    } catch (err) {
-      logger.error("Signup error:", err);
-      res.status(500).json({
+  body('name')
+    .trim()
+    .isLength({ min: 3 }).withMessage('Name must be at least 3 characters')
+    .escape(),
+  body('email')
+    .isEmail().withMessage('Enter a valid email')
+    .normalizeEmail(),
+  body('password')
+    .isStrongPassword({
+      minLength: 12,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    }).withMessage('Password must be at least 12 characters with uppercase, lowercase, number, and symbol'),
+  body('state', 'State is required').notEmpty(),
+  body('district', 'District is required').notEmpty(),
+  body('companyname', 'Company name is required').notEmpty().escape()
+], async (req, res) => {
+  try {
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
         success: false,
-        message: "Server error during signup"
+        message: errors.array()[0].msg,
+        errors: errors.array()
       });
     }
-  })
+
+    const { name, email, password, state, district, companyname } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      // Generic message to prevent email enumeration
+      return res.json({
+        success: false,
+        message: "If this email is not registered, you will receive an OTP. Otherwise, please login."
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    req.session.signupData = {
+      name,
+      email,
+      password,
+      companyname,
+      state,
+      district,
+      otp,
+      expires: Date.now() + 300000
+    };
+
+    await sendOtp(email, otp);
+
+    logger.info(`OTP sent to ${email} for signup`);
+
+    res.json({
+      success: true,
+      message: "OTP sent to your email",
+      redirect: "/verify-otp"
+    });
+
+  } catch (err) {
+    logger.error("Signup error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error during signup"
+    });
+  }
+})
 
 app.post("/verify-otp", async (req, res) => {
 
-    const { otp } = req.body
+  const { otp } = req.body
 
-    const sessionData = req.session.signupData
+  const sessionData = req.session.signupData
 
-    if (!sessionData) {
-        return res.json({
-            success: false,
-            message: "Session expired"
-        })
-    }
-
-    if (Date.now() > sessionData.expires) {
-        return res.json({
-            success: false,
-            message: "OTP expired"
-        })
-    }
-
-    if (parseInt(otp) !== sessionData.otp) {
-        return res.json({
-            success: false,
-            message: "Invalid OTP"
-        })
-    }
-
-
-
-    const hashedPassword = await bcrypt.hash(sessionData.password, 10)
-
-    const user = await User.create({
-        name: sessionData.name,
-        email: sessionData.email,
-        companyname: sessionData.companyname,
-        password: hashedPassword,
-        state: sessionData.state,
-        district: sessionData.district
+  if (!sessionData) {
+    return res.json({
+      success: false,
+      message: "Session expired"
     })
+  }
 
-    // Generate API key for new user
-    const apiKey = user.generateApiKey();
-    await user.save();
-
-    console.log(`👤 New user registered: ${user.email} with API key: ${apiKey.substring(0, 12)}...`);
-
-    const token = jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: "7d" }
-    )
-
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax"
+  if (Date.now() > sessionData.expires) {
+    return res.json({
+      success: false,
+      message: "OTP expired"
     })
+  }
 
-    req.session.signupData = null
-
-    res.json({
-        success: true,
-        redirect: "/home"
+  if (parseInt(otp) !== sessionData.otp) {
+    return res.json({
+      success: false,
+      message: "Invalid OTP"
     })
+  }
+
+
+
+  const hashedPassword = await bcrypt.hash(sessionData.password, 10)
+
+  const user = await User.create({
+    name: sessionData.name,
+    email: sessionData.email,
+    companyname: sessionData.companyname,
+    password: hashedPassword,
+    state: sessionData.state,
+    district: sessionData.district
+  })
+
+  // Generate API key for new user
+  const apiKey = user.generateApiKey();
+  await user.save();
+
+  console.log(`👤 New user registered: ${user.email} with API key: ${apiKey.substring(0, 12)}...`);
+
+  const token = jwt.sign(
+    { id: user._id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  )
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax"
+  })
+
+  req.session.signupData = null
+
+  res.json({
+    success: true,
+    redirect: "/home"
+  })
 
 })
 
@@ -1215,471 +1215,667 @@ app.post("/verify-otp", async (req, res) => {
 
 
 app.post("/login", authLimiter, [
-    body('email')
-      .isEmail().withMessage('Enter a valid email')
-      .normalizeEmail(),
-    body('password')
-      .notEmpty().withMessage('Password is required')
-  ], async (req, res) => {
-    try {
-      logger.info(`Login attempt for: ${req.body.email}`);
+  body('email')
+    .isEmail().withMessage('Enter a valid email')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty().withMessage('Password is required')
+], async (req, res) => {
+  try {
+    logger.info(`Login attempt for: ${req.body.email}`);
 
-      // Validate input
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        logger.warn(`Login validation failed: ${JSON.stringify(errors.array())}`);
-        return res.status(400).json({
-          success: false,
-          message: errors.array()[0].msg
-        });
-      }
-
-      const { email, password } = req.body;
-
-      // Check JWT_SECRET
-      if (!process.env.JWT_SECRET) {
-        logger.error("JWT_SECRET not configured!");
-        return res.status(500).json({
-          success: false,
-          message: "Server configuration error"
-        });
-      }
-
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        // Mitigate timing attack: perform dummy bcrypt comparison
-        try {
-          await bcrypt.compare('dummy', '$2a$10$dummyhashtomatch32chars123456789012');
-        } catch (e) {}
-        logger.warn(`Login attempt for non-existent user: ${email}`);
-        return res.json({ success: false, message: "Invalid email or password" });
-      }
-
-      const valid = await bcrypt.compare(password, user.password);
-
-      if (!valid) {
-        logger.warn(`Failed login attempt for user: ${email}`);
-        return res.json({ success: false, message: "Invalid email or password" });
-      }
-
-      const token = jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: "7d" }
-      );
-
-      const isProduction = process.env.NODE_ENV === 'production';
-
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
-
-      logger.info(`User logged in successfully: ${email} (ID: ${user._id})`);
-
-      res.json({
-        success: true,
-        message: "Login successful",
-        redirect: "/home"
-      });
-
-    } catch (err) {
-      logger.error("Login error:", err);
-      console.error("Login error stack:", err.stack);
-      res.status(500).json({
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      logger.warn(`Login validation failed: ${JSON.stringify(errors.array())}`);
+      return res.status(400).json({
         success: false,
-        message: "Server error during login",
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        message: errors.array()[0].msg
       });
     }
-  })
+
+    const { email, password } = req.body;
+
+    // Check JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      logger.error("JWT_SECRET not configured!");
+      return res.status(500).json({
+        success: false,
+        message: "Server configuration error"
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // Mitigate timing attack: perform dummy bcrypt comparison
+      try {
+        await bcrypt.compare('dummy', '$2a$10$dummyhashtomatch32chars123456789012');
+      } catch (e) { }
+      logger.warn(`Login attempt for non-existent user: ${email}`);
+      return res.json({ success: false, message: "Invalid email or password" });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+
+    if (!valid) {
+      logger.warn(`Failed login attempt for user: ${email}`);
+      return res.json({ success: false, message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    logger.info(`User logged in successfully: ${email} (ID: ${user._id})`);
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      redirect: "/home"
+    });
+
+  } catch (err) {
+    logger.error("Login error:", err);
+    console.error("Login error stack:", err.stack);
+    res.status(500).json({
+      success: false,
+      message: "Server error during login",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+})
 
 
 
-app.post("/createbot",
+const isProduction = process.env.NODE_ENV === "production";
+
+app.post(
+  "/createbot",
   generalLimiter,
   auth,
-  body('name')
+
+  body("name")
     .trim()
-    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters')
-    .escape()
-    .trim(),
-  body('category')
-    .isIn(['customer-support', 'sales', 'faq', 'lead-generation', 'ecommerce', 'technical', 'booking', 'product-advisor', 'marketing', 'hr', 'education', 'healthcare', 'general', 'custom'])
-    .withMessage('Invalid category'),
-  body('color')
-    .optional()
-    .matches(/^#[0-9A-F]{6}$/i).withMessage('Invalid color format (use #RRGGBB)')
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Name must be between 2 and 100 characters")
     .escape(),
-  body('welcomeMessage')
+
+  body("category")
+    .optional()
+    .isIn([
+      "customer-support",
+      "sales",
+      "faq",
+      "lead-generation",
+      "ecommerce",
+      "technical",
+      "booking",
+      "product-advisor",
+      "marketing",
+      "hr",
+      "education",
+      "healthcare",
+      "general",
+      "custom"
+    ])
+    .withMessage("Invalid category"),
+
+  body("color")
+    .optional()
+    .matches(/^#[0-9A-F]{6}$/i)
+    .withMessage("Invalid color format (use #RRGGBB)"),
+
+  body("welcomeMessage")
     .optional()
     .trim()
-    .isLength({ max: 500 }).withMessage('Welcome message too long (max 500 chars)')
+    .isLength({ max: 500 })
+    .withMessage("Welcome message too long (max 500 chars)")
     .escape(),
-  body('knowledge')
+
+  body("knowledge")
     .optional()
     .custom((value) => {
-      // Allow both string and array
-      if (value && Array.isArray(value)) {
+
+      if (Array.isArray(value)) {
+
         value.forEach((item, index) => {
-          if (typeof item !== 'string') {
-            throw new Error(`Knowledge item ${index} must be a string`);
+
+          if (typeof item !== "string") {
+            throw new Error(
+              `Knowledge item ${index} must be a string`
+            );
           }
+
           if (item.length > 10000) {
-            throw new Error(`Knowledge item ${index} is too long (max 10000 chars)`);
+            throw new Error(
+              `Knowledge item ${index} too long`
+            );
           }
         });
-      } else if (value && typeof value === 'string') {
-        // String is OK - will be converted to array in handler
+
+      } else if (
+        value &&
+        typeof value === "string"
+      ) {
+
         if (value.length > 50000) {
-          throw new Error('Knowledge content too long (max 50000 chars)');
+          throw new Error(
+            "Knowledge content too long"
+          );
         }
+
+      } else if (
+        value &&
+        typeof value !== "string"
+      ) {
+
+        throw new Error(
+          "Knowledge must be string or array"
+        );
       }
+
       return true;
     }),
-  body('websiteUrl')
-    .optional()
-    .isURL().withMessage('Invalid URL format'),
+
+  body("websiteUrl")
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage("Invalid URL format"),
+
   async (req, res) => {
+
     try {
+
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
+
         return res.status(400).json({
           success: false,
           errors: errors.array()
         });
+
       }
 
-      const { name, category, color, welcomeMessage, knowledge, websiteUrl } = req.body;
+      const {
+        name,
+        category,
+        color,
+        welcomeMessage,
+        knowledge,
+        websiteUrl
+      } = req.body;
 
       const botId = uuidv4();
 
-      const bots = await Bot.find({ userId: req.user.id });
+      // Fetch user
       const user = await User.findById(req.user.id);
 
-      if (bots.length >= user.botsLimit) {
-        return res.send(`<script>
-          alert("Bot limit reached. Please upgrade to plan.");
-          window.location="/pricing";
-        </script>`);
+      if (!user) {
+
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+
+      }
+
+      // Count bots
+      const botsCount = await Bot.countDocuments({
+        userId: req.user.id
+      });
+
+      // Check limit
+      if (botsCount >= user.botsLimit) {
+
+        return res.status(403).json({
+          success: false,
+          message: "Bot limit reached. Upgrade your plan."
+        });
+
       }
 
       let newlyGeneratedApiKey = null;
 
-      // Generate API key if user doesn't have one
+      // Generate API key
       if (!user.apiKey) {
+
         newlyGeneratedApiKey = user.generateApiKey();
+
         await user.save();
-        console.log(`🔑 API key auto-generated for user: ${user.email} during bot creation`);
+
+        console.log(
+          `🔑 API key generated for ${user.email}`
+        );
       }
 
+      // Website processing
       let websiteContent = "";
       let authorizedDomain = null;
 
-      if (websiteUrl && websiteUrl.trim() !== "") {
-        websiteContent = await scrapeWebsite(websiteUrl);
+      if (
+        websiteUrl &&
+        websiteUrl.trim() !== ""
+      ) {
 
-        // Extract domain from websiteUrl for authorization
-        const { extractDomain } = require("./middleware/domainAuth");
-        authorizedDomain = extractDomain(websiteUrl);
+        try {
 
-        if (!authorizedDomain) {
-          console.warn(`Could not extract domain from websiteUrl: ${websiteUrl}`);
+          // scrape website safely
+          websiteContent = await scrapeWebsite(
+            websiteUrl
+          );
+
+        } catch (scrapeErr) {
+
+          console.error(
+            "Website scraping failed:",
+            scrapeErr.message
+          );
+
+          websiteContent = "";
+        }
+
+        try {
+
+          const {
+            extractDomain
+          } = require("./middleware/domainAuth");
+
+          authorizedDomain =
+            extractDomain(websiteUrl);
+
+          if (!authorizedDomain) {
+
+            console.warn(
+              `Could not extract domain from ${websiteUrl}`
+            );
+          }
+
+        } catch (domainErr) {
+
+          console.error(
+            "Domain extraction failed:",
+            domainErr.message
+          );
         }
       }
 
+      // Parse knowledge safely
+      let parsedKnowledge = [];
+
+      if (Array.isArray(knowledge)) {
+
+        parsedKnowledge = knowledge;
+
+      } else if (
+        typeof knowledge === "string"
+      ) {
+
+        parsedKnowledge = knowledge
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      // Create bot
       const bot = await Bot.create({
+
         userId: req.user.id,
+
         botId,
+
         name,
-        category: category || 'general',
-        color: color || '#ff7518',
-        welcomeMessage: welcomeMessage || 'Hello! How can I help you today?',
-        knowledge: Array.isArray(knowledge) ? knowledge : (knowledge ? knowledge.split('\n') : []),
-        websiteUrl: websiteUrl || '',
+
+        category: category || "general",
+
+        color: color || "#ff7518",
+
+        welcomeMessage:
+          welcomeMessage ||
+          "Hello! How can I help you today?",
+
+        knowledge: parsedKnowledge,
+
+        websiteUrl: websiteUrl || "",
+
         authorizedDomain,
+
         websiteContent
       });
 
-      // Generate signed embed token
+      // JWT Secret validation
+      const jwtSecret =
+        process.env.EMBED_SECRET ||
+        process.env.JWT_SECRET;
+
+      if (!jwtSecret) {
+
+        console.error(
+          "JWT secret missing"
+        );
+
+        return res.status(500).json({
+          success: false,
+          message:
+            "Server configuration error"
+        });
+
+      }
+
+      // Generate token
       const embedToken = jwt.sign(
-        { botId: bot.botId },
-        process.env.EMBED_SECRET || process.env.JWT_SECRET,
-        { expiresIn: '1y' }
+        {
+          botId: bot.botId
+        },
+        jwtSecret,
+        {
+          expiresIn: "1y"
+        }
       );
 
-      res.render("embed", {
+      // Render page
+      return res.render("embed", {
+
         bot,
+
         embedToken,
+
         newlyGeneratedApiKey,
-        appUrl: process.env.APP_URL || (isProduction ? undefined : 'http://localhost:3000')
+
+        appUrl:
+          process.env.APP_URL ||
+          (!isProduction
+            ? "http://localhost:3000"
+            : "")
       });
+
     } catch (err) {
-      logger.error("Create bot error:", err);
-      res.status(500).json({
+
+      console.error(
+        "🔥 CREATE BOT ERROR:",
+        err
+      );
+
+      return res.status(500).json({
+
         success: false,
-        message: "Failed to create bot"
+
+        message: "Failed to create bot",
+
+        error:
+          process.env.NODE_ENV !== "production"
+            ? err.message
+            : undefined
       });
     }
   }
 );
 
 app.post("/chat", chatLimiter, botAccess, async (req, res) => {
-    try {
-        const bot = req.bot;  // Already fetched by domainAuth middleware
-        const botId = req.botId;
-        const { message } = req.body;
+  try {
+    const bot = req.bot;  // Already fetched by domainAuth middleware
+    const botId = req.botId;
+    const { message } = req.body;
 
-        const msg = message.toLowerCase();
+    const msg = message.toLowerCase();
 
-        // ===============================
-        // 🔥 BOOKING LOGIC (UNCHANGED)
-        // ===============================
+    // ===============================
+    // 🔥 BOOKING LOGIC (UNCHANGED)
+    // ===============================
 
-        if (msg.includes("book") || msg.includes("appointment")) {
-            return res.json({
-                reply: "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
-            });
-        }
-
-        const dateTimeMatch = message.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/);
-
-        if (dateTimeMatch) {
-            const date = dateTimeMatch[1];
-            const time = dateTimeMatch[2];
-
-            const Booking = require("./models/booking");
-
-            const existing = await Booking.findOne({ botId, date, time });
-
-            if (existing) {
-                return res.json({
-                    reply: `This slot (${time}) is already booked. Try another time.`
-                });
-            }
-
-            await Booking.create({
-                botId,
-                name: "Guest User",
-                phone: "N/A",
-                date,
-                time
-            });
-
-            return res.json({
-                reply: `Your appointment is confirmed for ${date} at ${time}`
-            });
-        }
-
-        // ===============================
-        // 🔥 LEAD DETECTION (NEW LOGIC)
-        // ===============================
-
-        const emailMatch = message.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
-        const phoneMatch = message.match(/\b\d{10}\b/);
-        const nameMatch = message.match(/name\s*is\s*([a-zA-Z ]+)/i);
-
-        if (emailMatch || phoneMatch) {
-
-            try {
-
-                // Get user info for email notification (bot already available from middleware)
-                const user = await User.findById(bot.userId);
-                const botName = bot.name;
-
-                // 🔥 LEAD SCORING ENGINE
-                let leadScore = 0;
-                const keywordsDetected = [];
-                const lowerMsg = message.toLowerCase();
-
-                // Contact Information (Max: 30 points)
-                if (emailMatch) {
-                    leadScore += 15;
-                    keywordsDetected.push('email_provided');
-                }
-                if (phoneMatch) {
-                    leadScore += 15;
-                    keywordsDetected.push('phone_provided');
-                }
-                if (nameMatch) {
-                    leadScore += 10;
-                    keywordsDetected.push('name_provided');
-                }
-
-                // Buying Intent Keywords (Max: 40 points)
-                const intentKeywords = {
-                    'price': 10,
-                    'cost': 10,
-                    'pricing': 10,
-                    'how much': 10,
-                    'demo': 10,
-                    'trial': 10,
-                    'consultation': 10,
-                    'consultation call': 10,
-                    'meeting': 8,
-                    'call me': 8,
-                    'contact me': 8,
-                    'buy': 15,
-                    'purchase': 15,
-                    'order': 10,
-                    'subscribe': 10,
-                    'get started': 10,
-                    'interested': 12
-                };
-
-                for (const [keyword, points] of Object.entries(intentKeywords)) {
-                    if (lowerMsg.includes(keyword)) {
-                        leadScore += points;
-                        keywordsDetected.push(keyword);
-                    }
-                }
-
-                // Message Length & Quality (Max: 20 points)
-                if (message.length > 20) leadScore += 5;
-                if (message.length > 50) leadScore += 5;
-                if (message.length > 100) leadScore += 5;
-                if (lowerMsg.includes('?')) leadScore += 5; // Asking questions shows engagement
-
-                // Urgency Indicators (Max: 10 points)
-                const urgencyWords = ['asap', 'urgent', 'immediately', 'today', 'tomorrow', 'this week'];
-                if (urgencyWords.some(word => lowerMsg.includes(word))) {
-                    leadScore += 10;
-                    keywordsDetected.push('urgent');
-                }
-
-                // Cap at 100
-                leadScore = Math.min(100, leadScore);
-
-                // Determine interest level and status
-                let interestLevel = 'low';
-                let leadStatus = 'new';
-
-                if (leadScore >= 70) {
-                    interestLevel = 'high';
-                    leadStatus = 'qualified';
-                } else if (leadScore >= 40) {
-                    interestLevel = 'medium';
-                } else if (leadScore < 20 && leadScore > 0) {
-                    leadStatus = 'cold';
-                }
-
-                const newLead = await Lead.create({
-                    botId,
-                    name: nameMatch ? nameMatch[1] : "Unknown",
-                    email: emailMatch ? emailMatch[0] : "",
-                    phone: phoneMatch ? phoneMatch[0] : "",
-                    message,
-                    leadScore,
-                    interestLevel,
-                    leadStatus,
-                    keywordsDetected,
-                    wantsDemo: lowerMsg.includes('demo') || lowerMsg.includes('trial'),
-                    askedPricing: intentKeywords.some(k => lowerMsg.includes(k))
-                });
-
-                console.log("🔥 Lead Saved with score:", leadScore, newLead);
-
-                // Send notifications
-                try {
-                    await sendWhatsAppLead(newLead);
-                } catch (err) {
-                    console.log("WhatsApp Error:", err.message);
-                }
-
-                try {
-                    await sendEmailLead(newLead, user ? user.email : null, botName);
-                } catch (err) {
-                    console.log("Email Error:", err.message);
-                }
-
-                // Custom response based on lead score
-                let reply = "🔥 Thanks! Our team will contact you soon.";
-                if (leadScore >= 70) {
-                    reply = "🎯 Excellent! We'll reach out to you within 24 hours. Our team is excited to help!";
-                } else if (leadScore >= 40) {
-                    reply = "👍 Thanks for your interest! Someone from our team will get back to you soon.";
-                }
-
-                return res.json({ reply });
-
-            } catch (err) {
-                console.log("LEAD SAVE ERROR:", err);
-
-                return res.json({
-                    reply: "Something went wrong while saving your details"
-                });
-            }
-        }
-
-        // ===============================
-        // 🔥 INTEREST DETECTION
-        // ===============================
-
-        const isInterested =
-            msg.includes("buy") ||
-            msg.includes("price") ||
-            msg.includes("interested") ||
-            msg.includes("demo") ||
-            msg.includes("purchase");
-
-        if (isInterested) {
-            return res.json({
-                reply: "Great! Please share your Name, Email and Phone number 😊"
-            });
-        }
-
-        // ===============================
-        // 🤖 NORMAL AI RESPONSE
-        // ===============================
-
-        const reply = await generateReply(bot, message);
-
-        // Sanitize messages to prevent XSS
-        const userMessage = validator.escape(message);
-        const botReply = validator.escape(reply);
-
-        await Conversation.create({
-            botId,
-            messages: [
-                { role: "user", text: userMessage },
-                { role: "bot", text: botReply }
-            ]
-        });
-
-        res.json({ reply });
-
-    } catch (err) {
-        console.log("CHAT ERROR:", err);
-
-        res.json({
-            reply: "Server error"
-        });
+    if (msg.includes("book") || msg.includes("appointment")) {
+      return res.json({
+        reply: "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
+      });
     }
+
+    const dateTimeMatch = message.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/);
+
+    if (dateTimeMatch) {
+      const date = dateTimeMatch[1];
+      const time = dateTimeMatch[2];
+
+      const Booking = require("./models/booking");
+
+      const existing = await Booking.findOne({ botId, date, time });
+
+      if (existing) {
+        return res.json({
+          reply: `This slot (${time}) is already booked. Try another time.`
+        });
+      }
+
+      await Booking.create({
+        botId,
+        name: "Guest User",
+        phone: "N/A",
+        date,
+        time
+      });
+
+      return res.json({
+        reply: `Your appointment is confirmed for ${date} at ${time}`
+      });
+    }
+
+    // ===============================
+    // 🔥 LEAD DETECTION (NEW LOGIC)
+    // ===============================
+
+    const emailMatch = message.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
+    const phoneMatch = message.match(/\b\d{10}\b/);
+    const nameMatch = message.match(/name\s*is\s*([a-zA-Z ]+)/i);
+
+    if (emailMatch || phoneMatch) {
+
+      try {
+
+        // Get user info for email notification (bot already available from middleware)
+        const user = await User.findById(bot.userId);
+        const botName = bot.name;
+
+        // 🔥 LEAD SCORING ENGINE
+        let leadScore = 0;
+        const keywordsDetected = [];
+        const lowerMsg = message.toLowerCase();
+
+        // Contact Information (Max: 30 points)
+        if (emailMatch) {
+          leadScore += 15;
+          keywordsDetected.push('email_provided');
+        }
+        if (phoneMatch) {
+          leadScore += 15;
+          keywordsDetected.push('phone_provided');
+        }
+        if (nameMatch) {
+          leadScore += 10;
+          keywordsDetected.push('name_provided');
+        }
+
+        // Buying Intent Keywords (Max: 40 points)
+        const intentKeywords = {
+          'price': 10,
+          'cost': 10,
+          'pricing': 10,
+          'how much': 10,
+          'demo': 10,
+          'trial': 10,
+          'consultation': 10,
+          'consultation call': 10,
+          'meeting': 8,
+          'call me': 8,
+          'contact me': 8,
+          'buy': 15,
+          'purchase': 15,
+          'order': 10,
+          'subscribe': 10,
+          'get started': 10,
+          'interested': 12
+        };
+
+        for (const [keyword, points] of Object.entries(intentKeywords)) {
+          if (lowerMsg.includes(keyword)) {
+            leadScore += points;
+            keywordsDetected.push(keyword);
+          }
+        }
+
+        // Message Length & Quality (Max: 20 points)
+        if (message.length > 20) leadScore += 5;
+        if (message.length > 50) leadScore += 5;
+        if (message.length > 100) leadScore += 5;
+        if (lowerMsg.includes('?')) leadScore += 5; // Asking questions shows engagement
+
+        // Urgency Indicators (Max: 10 points)
+        const urgencyWords = ['asap', 'urgent', 'immediately', 'today', 'tomorrow', 'this week'];
+        if (urgencyWords.some(word => lowerMsg.includes(word))) {
+          leadScore += 10;
+          keywordsDetected.push('urgent');
+        }
+
+        // Cap at 100
+        leadScore = Math.min(100, leadScore);
+
+        // Determine interest level and status
+        let interestLevel = 'low';
+        let leadStatus = 'new';
+
+        if (leadScore >= 70) {
+          interestLevel = 'high';
+          leadStatus = 'qualified';
+        } else if (leadScore >= 40) {
+          interestLevel = 'medium';
+        } else if (leadScore < 20 && leadScore > 0) {
+          leadStatus = 'cold';
+        }
+
+        const newLead = await Lead.create({
+          botId,
+          name: nameMatch ? nameMatch[1] : "Unknown",
+          email: emailMatch ? emailMatch[0] : "",
+          phone: phoneMatch ? phoneMatch[0] : "",
+          message,
+          leadScore,
+          interestLevel,
+          leadStatus,
+          keywordsDetected,
+          wantsDemo: lowerMsg.includes('demo') || lowerMsg.includes('trial'),
+          askedPricing: intentKeywords.some(k => lowerMsg.includes(k))
+        });
+
+        console.log("🔥 Lead Saved with score:", leadScore, newLead);
+
+        // Send notifications
+        try {
+          await sendWhatsAppLead(newLead);
+        } catch (err) {
+          console.log("WhatsApp Error:", err.message);
+        }
+
+        try {
+          await sendEmailLead(newLead, user ? user.email : null, botName);
+        } catch (err) {
+          console.log("Email Error:", err.message);
+        }
+
+        // Custom response based on lead score
+        let reply = "🔥 Thanks! Our team will contact you soon.";
+        if (leadScore >= 70) {
+          reply = "🎯 Excellent! We'll reach out to you within 24 hours. Our team is excited to help!";
+        } else if (leadScore >= 40) {
+          reply = "👍 Thanks for your interest! Someone from our team will get back to you soon.";
+        }
+
+        return res.json({ reply });
+
+      } catch (err) {
+        console.log("LEAD SAVE ERROR:", err);
+
+        return res.json({
+          reply: "Something went wrong while saving your details"
+        });
+      }
+    }
+
+    // ===============================
+    // 🔥 INTEREST DETECTION
+    // ===============================
+
+    const isInterested =
+      msg.includes("buy") ||
+      msg.includes("price") ||
+      msg.includes("interested") ||
+      msg.includes("demo") ||
+      msg.includes("purchase");
+
+    if (isInterested) {
+      return res.json({
+        reply: "Great! Please share your Name, Email and Phone number 😊"
+      });
+    }
+
+    // ===============================
+    // 🤖 NORMAL AI RESPONSE
+    // ===============================
+
+    const reply = await generateReply(bot, message);
+
+    // Sanitize messages to prevent XSS
+    const userMessage = validator.escape(message);
+    const botReply = validator.escape(reply);
+
+    await Conversation.create({
+      botId,
+      messages: [
+        { role: "user", text: userMessage },
+        { role: "bot", text: botReply }
+      ]
+    });
+
+    res.json({ reply });
+
+  } catch (err) {
+    console.log("CHAT ERROR:", err);
+
+    res.json({
+      reply: "Server error"
+    });
+  }
 });
 app.get("/bot/:id", generalLimiter, botAccess, async (req, res) => {
 
-    // Bot already fetched by domainAuth middleware
-    const bot = req.bot;
+  // Bot already fetched by domainAuth middleware
+  const bot = req.bot;
 
-    res.json({
-        name: bot.name,
-        color: bot.color
-    })
+  res.json({
+    name: bot.name,
+    color: bot.color
+  })
 
 })
 
 app.delete("/deletebot/:botId", generalLimiter, auth, botOwner, async (req, res) => {
-    try {
-        // botOwner middleware already verified ownership and attached bot
-        await Bot.deleteOne({ botId: req.params.botId });
-        res.json({ success: true });
-    } catch (err) {
-        console.log(err);
-        res.json({ success: false });
-    }
+  try {
+    // botOwner middleware already verified ownership and attached bot
+    await Bot.deleteOne({ botId: req.params.botId });
+    res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false });
+  }
 })
 
 
@@ -1691,24 +1887,24 @@ const razorpay = require("./services/razorpay")
 
 app.post("/create-order", async (req, res) => {
 
-    try {
+  try {
 
-        const { amount } = req.body
+    const { amount } = req.body
 
-        const order = await razorpay.orders.create({
-            amount: amount * 100,
-            currency: "INR",
-            receipt: "order_" + Date.now()
-        })
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+      receipt: "order_" + Date.now()
+    })
 
-        res.json(order)
+    res.json(order)
 
-    } catch (err) {
+  } catch (err) {
 
-        console.log(err)
-        res.status(500).json({ error: "order failed" })
+    console.log(err)
+    res.status(500).json({ error: "order failed" })
 
-    }
+  }
 
 })
 
@@ -1716,42 +1912,42 @@ const crypto = require("crypto")
 
 app.post("/verify-payment", async (req, res) => {
 
-    const {
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-        planType
-    } = req.body
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    planType
+  } = req.body
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id
+  const body = razorpay_order_id + "|" + razorpay_payment_id
 
-    const expected = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(body.toString())
-        .digest("hex")
+  const expected = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest("hex")
 
-    if (expected === razorpay_signature) {
+  if (expected === razorpay_signature) {
 
-        let plan = "pro";
-        let botsLimit = 10;
+    let plan = "pro";
+    let botsLimit = 10;
 
-        if (planType === "business") {
-            plan = "business";
-            botsLimit = 999; // effectively unlimited
-        }
-
-        await User.findByIdAndUpdate(req.user.id, {
-            plan: plan,
-            botsLimit: botsLimit
-        })
-
-        res.json({ success: true })
-
-    } else {
-
-        res.json({ success: false })
-
+    if (planType === "business") {
+      plan = "business";
+      botsLimit = 999; // effectively unlimited
     }
+
+    await User.findByIdAndUpdate(req.user.id, {
+      plan: plan,
+      botsLimit: botsLimit
+    })
+
+    res.json({ success: true })
+
+  } else {
+
+    res.json({ success: false })
+
+  }
 
 })
 
@@ -1760,94 +1956,94 @@ app.post("/verify-payment", async (req, res) => {
 const BookingAgent = require("./models/bookingAgent")
 
 app.post("/create-booking-agent", auth, async (req, res) => {
-    try {
-        // Check VAPI_WEBHOOK_BASE_URL
-        if (!process.env.VAPI_WEBHOOK_BASE_URL) {
-            throw new Error('VAPI_WEBHOOK_BASE_URL is not configured. Please set it in your .env file to your public URL (e.g., https://yourapp.com).');
-        }
+  try {
+    // Check VAPI_WEBHOOK_BASE_URL
+    if (!process.env.VAPI_WEBHOOK_BASE_URL) {
+      throw new Error('VAPI_WEBHOOK_BASE_URL is not configured. Please set it in your .env file to your public URL (e.g., https://yourapp.com).');
+    }
 
-        const {
-            category,
-            businessName,
-            workingDays,
-            startTime,
-            endTime,
-            slotDuration,
-            customerNumber
-        } = req.body;
+    const {
+      category,
+      businessName,
+      workingDays,
+      startTime,
+      endTime,
+      slotDuration,
+      customerNumber
+    } = req.body;
 
-        if (!customerNumber) {
-            throw new Error('Phone number is required. Please enter your Vapi phone number.');
-        }
+    if (!customerNumber) {
+      throw new Error('Phone number is required. Please enter your Vapi phone number.');
+    }
 
-        const botId = uuidv4();
+    const botId = uuidv4();
 
-        // Build workingDays array
-        let workingDaysArray = workingDays;
-        if (typeof workingDays === 'string') {
-            workingDaysArray = workingDays.split(',').map(d => d.trim());
-        } else if (!Array.isArray(workingDays)) {
-            workingDaysArray = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        }
+    // Build workingDays array
+    let workingDaysArray = workingDays;
+    if (typeof workingDays === 'string') {
+      workingDaysArray = workingDays.split(',').map(d => d.trim());
+    } else if (!Array.isArray(workingDays)) {
+      workingDaysArray = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    }
 
-        // Step 1: Create Vapi assistant
-        const serverUrl = `${process.env.VAPI_WEBHOOK_BASE_URL.replace(/\/$/, '')}/api/vapi/webhook`;
-        const agentData = {
-            businessName,
-            category,
-            workingDays: workingDaysArray,
-            startTime: startTime || '09:00',
-            endTime: endTime || '18:00',
-            slotDuration: parseInt(slotDuration) || 30,
-            phoneNumber: customerNumber,
-            serverUrl
-        };
+    // Step 1: Create Vapi assistant
+    const serverUrl = `${process.env.VAPI_WEBHOOK_BASE_URL.replace(/\/$/, '')}/api/vapi/webhook`;
+    const agentData = {
+      businessName,
+      category,
+      workingDays: workingDaysArray,
+      startTime: startTime || '09:00',
+      endTime: endTime || '18:00',
+      slotDuration: parseInt(slotDuration) || 30,
+      phoneNumber: customerNumber,
+      serverUrl
+    };
 
-        console.log('🤖 Creating Vapi assistant with serverUrl:', serverUrl);
-        const assistant = await vapi.createBookingAssistant(agentData);
-        const assistantId = assistant.id;
+    console.log('🤖 Creating Vapi assistant with serverUrl:', serverUrl);
+    const assistant = await vapi.createBookingAssistant(agentData);
+    const assistantId = assistant.id;
 
-        // Step 2: Try to assign the provided phone number to this assistant (optional but recommended)
-        if (customerNumber) {
-            try {
-                await vapi.assignPhoneNumberToAssistant(customerNumber, assistantId);
-            } catch (assignErr) {
-                console.warn('⚠️  Phone number assignment failed (you may need to do this manually in Vapi dashboard):', assignErr.message);
-                // Continue anyway - we still have the assistant created
-            }
-        }
+    // Step 2: Try to assign the provided phone number to this assistant (optional but recommended)
+    if (customerNumber) {
+      try {
+        await vapi.assignPhoneNumberToAssistant(customerNumber, assistantId);
+      } catch (assignErr) {
+        console.warn('⚠️  Phone number assignment failed (you may need to do this manually in Vapi dashboard):', assignErr.message);
+        // Continue anyway - we still have the assistant created
+      }
+    }
 
-        // Step 3: Save agent to database
-        const agentRecord = await BookingAgent.create({
-            userId: req.user.id,
-            botId,
-            category,
-            businessName,
-            workingDays,
-            startTime,
-            endTime,
-            slotDuration,
-            phoneNumber: customerNumber, // Store the Vapi phone number to display to user
-            vapiAssistantId: assistantId
-        });
+    // Step 3: Save agent to database
+    const agentRecord = await BookingAgent.create({
+      userId: req.user.id,
+      botId,
+      category,
+      businessName,
+      workingDays,
+      startTime,
+      endTime,
+      slotDuration,
+      phoneNumber: customerNumber, // Store the Vapi phone number to display to user
+      vapiAssistantId: assistantId
+    });
 
-        console.log('✅ Booking agent created with Vapi assistant:', assistantId);
+    console.log('✅ Booking agent created with Vapi assistant:', assistantId);
 
-        // Render success page with the phone number
-        res.render("agent-success", {
-            botId,
-            phoneNumber: customerNumber,
-            isVapi: true
-        });
+    // Render success page with the phone number
+    res.render("agent-success", {
+      botId,
+      phoneNumber: customerNumber,
+      isVapi: true
+    });
 
-    } catch (error) {
-        console.error('❌ Create booking agent failed:', error.response?.data || error.message);
-        res.status(500).send(`
+  } catch (error) {
+    console.error('❌ Create booking agent failed:', error.response?.data || error.message);
+    res.status(500).send(`
             <h1>Error Creating Agent</h1>
             <p>${error.message}</p>
             <a href="javascript:history.back()">Go Back</a>
         `);
-    }
+  }
 });
 
 
@@ -1858,22 +2054,22 @@ app.post("/create-booking-agent", auth, async (req, res) => {
 
 
 app.get("/bookings/:botId", auth, botOwner, async (req, res) => {
-    const bookings = await Booking.find({
-        botId: req.params.botId
-    }).sort({ createdAt: -1 });
+  const bookings = await Booking.find({
+    botId: req.params.botId
+  }).sort({ createdAt: -1 });
 
-    res.json(bookings);
+  res.json(bookings);
 });
 
 
 
 app.post("/report", async (req, res) => {
-    await Report.create({
-        messageId: req.body.message,
-        reason: "Spam"
-    });
+  await Report.create({
+    messageId: req.body.message,
+    reason: "Spam"
+  });
 
-    res.json({ success: true });
+  res.json({ success: true });
 });
 
 
@@ -1882,55 +2078,55 @@ app.post("/report", async (req, res) => {
 
 // PROFILE UPDATE ROUTE
 app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
-    try {
+  try {
 
-        console.log("BODY:", req.body);
-        console.log("FILE:", req.file);
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
 
-        const { bio, skills, github, linkedin, role } = req.body;
+    const { bio, skills, github, linkedin, role } = req.body;
 
-        // Sanitize inputs to prevent XSS
-        let updateData = {};
-        if (bio !== undefined) updateData.bio = validator.escape(bio).trim();
-        if (skills !== undefined) updateData.skills = validator.escape(skills).trim();
-        if (github !== undefined) updateData.github = validator.escape(github).trim();
-        if (linkedin !== undefined) updateData.linkedin = validator.escape(linkedin).trim();
-        if (role !== undefined) updateData.role = validator.escape(role).trim();
+    // Sanitize inputs to prevent XSS
+    let updateData = {};
+    if (bio !== undefined) updateData.bio = validator.escape(bio).trim();
+    if (skills !== undefined) updateData.skills = validator.escape(skills).trim();
+    if (github !== undefined) updateData.github = validator.escape(github).trim();
+    if (linkedin !== undefined) updateData.linkedin = validator.escape(linkedin).trim();
+    if (role !== undefined) updateData.role = validator.escape(role).trim();
 
-        // ✅ SAVE PHOTO
-        if (req.file) {
-            updateData.photo = req.file.path || ("/uploads/" + req.file.filename);
-        }
-
-        const updatedUser = await User.findByIdAndUpdate(
-            req.user.id,
-            updateData,
-            { returnDocument: 'after' }
-        );
-
-        console.log("UPDATED USER:", updatedUser);
-
-        res.redirect("/profile");
-
-    } catch (err) {
-        console.log("ERROR:", err);
-        res.send("Profile update failed");
+    // ✅ SAVE PHOTO
+    if (req.file) {
+      updateData.photo = req.file.path || ("/uploads/" + req.file.filename);
     }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      { returnDocument: 'after' }
+    );
+
+    console.log("UPDATED USER:", updatedUser);
+
+    res.redirect("/profile");
+
+  } catch (err) {
+    console.log("ERROR:", err);
+    res.send("Profile update failed");
+  }
 });
 
 
 app.post("/track", chatLimiter, botAccess, async (req, res) => {
-    await Behavior.create(req.body);
-    res.sendStatus(200);
+  await Behavior.create(req.body);
+  res.sendStatus(200);
 });
 
 
 
 app.get("/logout", (req, res) => {
 
-    res.clearCookie("token")
+  res.clearCookie("token")
 
-    res.redirect("/login")
+  res.redirect("/login")
 
 })
 
@@ -1941,79 +2137,79 @@ app.get("/logout", (req, res) => {
 // ============================================
 
 cron.schedule('0 9 * * *', async () => {
-    console.log('\n📅 Running daily lead summary job...');
+  console.log('\n📅 Running daily lead summary job...');
 
-    try {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStart = new Date(yesterday.setHours(0, 0, 0, 0));
-        const yesterdayEnd = new Date(yesterday.setHours(23, 59, 59, 999));
+  try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStart = new Date(yesterday.setHours(0, 0, 0, 0));
+    const yesterdayEnd = new Date(yesterday.setHours(23, 59, 59, 999));
 
-        // Fetch all users
-        const users = await User.find({});
+    // Fetch all users
+    const users = await User.find({});
 
-        for (const user of users) {
-            try {
-                // Get user's bots
-                const bots = await Bot.find({ userId: user._id });
-                const botIds = bots.map(b => b.botId);
+    for (const user of users) {
+      try {
+        // Get user's bots
+        const bots = await Bot.find({ userId: user._id });
+        const botIds = bots.map(b => b.botId);
 
-                // Fetch yesterday's leads for this user
-                const yesterdayLeads = await Lead.find({
-                    botId: { $in: botIds },
-                    createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd }
-                });
+        // Fetch yesterday's leads for this user
+        const yesterdayLeads = await Lead.find({
+          botId: { $in: botIds },
+          createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd }
+        });
 
-                if (yesterdayLeads.length === 0) {
-                    console.log(`📭 No leads for ${user.email} yesterday`);
-                    continue;
-                }
-
-                // Calculate stats
-                const totalLeads = yesterdayLeads.length;
-                const hotLeads = yesterdayLeads.filter(l => l.leadScore >= 70).length;
-                const warmLeads = yesterdayLeads.filter(l => l.leadScore >= 40 && l.leadScore < 70).length;
-                const avgScore = Math.round(yesterdayLeads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / totalLeads);
-
-                // Group leads by bot
-                const botLeadMap = {};
-                yesterdayLeads.forEach(lead => {
-                    const botName = bots.find(b => b.botId === lead.botId)?.name || 'Unknown Bot';
-                    botLeadMap[botName] = (botLeadMap[botName] || 0) + 1;
-                });
-
-                const topBots = Object.entries(botLeadMap)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 3)
-                    .map(([name, leads]) => ({ name, leads }));
-
-                // Estimate potential revenue (₹100 per qualified lead)
-                const potentialRevenue = yesterdayLeads.filter(l => l.leadStatus === 'qualified' || l.interestLevel === 'high').length * 100;
-
-                const stats = {
-                    totalLeads,
-                    hotLeads,
-                    warmLeads,
-                    avgScore,
-                    potentialRevenue,
-                    topBots
-                };
-
-                // Send summary email
-                await sendDailyLeadsSummary(user.email, stats);
-
-                console.log(`📊 Summary sent to ${user.email} - ${totalLeads} leads`);
-
-            } catch (err) {
-                console.error(`❌ Error processing summary for user ${user.email}:`, err.message);
-            }
+        if (yesterdayLeads.length === 0) {
+          console.log(`📭 No leads for ${user.email} yesterday`);
+          continue;
         }
 
-        console.log('✅ Daily lead summary job completed\n');
+        // Calculate stats
+        const totalLeads = yesterdayLeads.length;
+        const hotLeads = yesterdayLeads.filter(l => l.leadScore >= 70).length;
+        const warmLeads = yesterdayLeads.filter(l => l.leadScore >= 40 && l.leadScore < 70).length;
+        const avgScore = Math.round(yesterdayLeads.reduce((sum, l) => sum + (l.leadScore || 0), 0) / totalLeads);
 
-    } catch (err) {
-        console.error('❌ Daily summary job failed:', err);
+        // Group leads by bot
+        const botLeadMap = {};
+        yesterdayLeads.forEach(lead => {
+          const botName = bots.find(b => b.botId === lead.botId)?.name || 'Unknown Bot';
+          botLeadMap[botName] = (botLeadMap[botName] || 0) + 1;
+        });
+
+        const topBots = Object.entries(botLeadMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([name, leads]) => ({ name, leads }));
+
+        // Estimate potential revenue (₹100 per qualified lead)
+        const potentialRevenue = yesterdayLeads.filter(l => l.leadStatus === 'qualified' || l.interestLevel === 'high').length * 100;
+
+        const stats = {
+          totalLeads,
+          hotLeads,
+          warmLeads,
+          avgScore,
+          potentialRevenue,
+          topBots
+        };
+
+        // Send summary email
+        await sendDailyLeadsSummary(user.email, stats);
+
+        console.log(`📊 Summary sent to ${user.email} - ${totalLeads} leads`);
+
+      } catch (err) {
+        console.error(`❌ Error processing summary for user ${user.email}:`, err.message);
+      }
     }
+
+    console.log('✅ Daily lead summary job completed\n');
+
+  } catch (err) {
+    console.error('❌ Daily summary job failed:', err);
+  }
 });
 
 // Also send a test email on startup (optional - for debugging)
@@ -2027,76 +2223,76 @@ cron.schedule('0 9 * * *', async () => {
 
 // Migration: Populate authorizedDomain for existing bots AND normalize categories
 async function migrateAuthorizedDomains() {
-    try {
-        const { extractDomain } = require("./middleware/domainAuth");
+  try {
+    const { extractDomain } = require("./middleware/domainAuth");
 
-        // Find all bots that need migration (either missing authorizedDomain OR have old category names)
-        const botsNeedingMigration = await Bot.find({
-            $or: [
-                { websiteUrl: { $exists: true, $ne: null, $ne: "" }, authorizedDomain: { $exists: false } },
-                { category: { $in: ['Customer Support', 'E-commerce Assistant', 'customer support', 'e-commerce assistant'] } }
-            ]
-        });
+    // Find all bots that need migration (either missing authorizedDomain OR have old category names)
+    const botsNeedingMigration = await Bot.find({
+      $or: [
+        { websiteUrl: { $exists: true, $ne: null, $ne: "" }, authorizedDomain: { $exists: false } },
+        { category: { $in: ['Customer Support', 'E-commerce Assistant', 'customer support', 'e-commerce assistant'] } }
+      ]
+    });
 
-        if (botsNeedingMigration.length === 0) {
-            console.log("✅ No bots need migration");
-            return;
-        }
-
-        console.log(`🔄 Migrating ${botsNeedingMigration.length} bots...`);
-
-        let migrated = 0;
-        let failed = 0;
-
-        // Category normalization mapping
-        const categoryMapping = {
-            'Customer Support': 'support',
-            'customer support': 'support',
-            'E-commerce Assistant': 'sales',
-            'e-commerce assistant': 'sales'
-        };
-
-        for (const bot of botsNeedingMigration) {
-            try {
-                let changes = 0;
-                const updates = {};
-
-                // Normalize category if needed
-                if (categoryMapping[bot.category]) {
-                    const oldCategory = bot.category;
-                    updates.category = categoryMapping[bot.category];
-                    console.log(`  ℹ️  Bot ${bot.botId}: Normalized category "${oldCategory}" → "${updates.category}"`);
-                    changes++;
-                }
-
-                // Set authorizedDomain if missing
-                if (bot.websiteUrl && !bot.authorizedDomain) {
-                    const domain = extractDomain(bot.websiteUrl);
-                    if (domain) {
-                        updates.authorizedDomain = domain;
-                        console.log(`  ℹ️  Bot ${bot.botId} (${bot.name}): Set authorizedDomain = ${domain}`);
-                        changes++;
-                    } else {
-                        console.log(`  ⚠️  Bot ${bot.botId}: Could not extract domain from "${bot.websiteUrl}"`);
-                    }
-                }
-
-                if (changes > 0) {
-                    // Use findByIdAndUpdate to avoid document middleware/save hooks
-                    await Bot.findByIdAndUpdate(bot._id, updates, { returnDocument: 'after', runValidators: true });
-                    migrated++;
-                }
-            } catch (err) {
-                failed++;
-                console.error(`  ✗ Bot ${bot.botId}: Error - ${err.message}`);
-            }
-        }
-
-        console.log(`✅ Migration complete: ${migrated} updated, ${failed} failed`);
-
-    } catch (err) {
-        console.error("❌ Migration error:", err);
+    if (botsNeedingMigration.length === 0) {
+      console.log("✅ No bots need migration");
+      return;
     }
+
+    console.log(`🔄 Migrating ${botsNeedingMigration.length} bots...`);
+
+    let migrated = 0;
+    let failed = 0;
+
+    // Category normalization mapping
+    const categoryMapping = {
+      'Customer Support': 'support',
+      'customer support': 'support',
+      'E-commerce Assistant': 'sales',
+      'e-commerce assistant': 'sales'
+    };
+
+    for (const bot of botsNeedingMigration) {
+      try {
+        let changes = 0;
+        const updates = {};
+
+        // Normalize category if needed
+        if (categoryMapping[bot.category]) {
+          const oldCategory = bot.category;
+          updates.category = categoryMapping[bot.category];
+          console.log(`  ℹ️  Bot ${bot.botId}: Normalized category "${oldCategory}" → "${updates.category}"`);
+          changes++;
+        }
+
+        // Set authorizedDomain if missing
+        if (bot.websiteUrl && !bot.authorizedDomain) {
+          const domain = extractDomain(bot.websiteUrl);
+          if (domain) {
+            updates.authorizedDomain = domain;
+            console.log(`  ℹ️  Bot ${bot.botId} (${bot.name}): Set authorizedDomain = ${domain}`);
+            changes++;
+          } else {
+            console.log(`  ⚠️  Bot ${bot.botId}: Could not extract domain from "${bot.websiteUrl}"`);
+          }
+        }
+
+        if (changes > 0) {
+          // Use findByIdAndUpdate to avoid document middleware/save hooks
+          await Bot.findByIdAndUpdate(bot._id, updates, { returnDocument: 'after', runValidators: true });
+          migrated++;
+        }
+      } catch (err) {
+        failed++;
+        console.error(`  ✗ Bot ${bot.botId}: Error - ${err.message}`);
+      }
+    }
+
+    console.log(`✅ Migration complete: ${migrated} updated, ${failed} failed`);
+
+  } catch (err) {
+    console.error("❌ Migration error:", err);
+  }
 }
 
 const PORT = process.env.PORT || 3000;
@@ -2179,64 +2375,66 @@ startServer();
 
 // 404 handler (must be after all routes)
 app.use((req, res) => {
-    logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
-    res.status(404).render('404', {
-        url: req.originalUrl,
-        message: "Page not found"
-    });
+  logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
+  res.status(404).render('404', {
+    url: req.originalUrl,
+    message: "Page not found"
+  });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-    logger.error("Unhandled error:", {
-        message: err.message,
-        stack: err.stack,
-        url: req.originalUrl,
-        method: req.method,
-        ip: req.ip
-    });
+  logger.error("Unhandled error:", {
+    message: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.ip
+  });
 
-    if (res.headersSent) {
-        return next(err);
-    }
+  if (res.headersSent) {
+    return next(err);
+  }
 
-    // Determine if request expects JSON:
-    // - API routes (/api/*, /auth/*, /login, /signup, etc.)
-    // - AJAX/Fetch requests (X-Requested-With header)
-    // - Requests with JSON content-type or accept header
-    const jsonPaths = ['/login', '/signup', '/verify-otp', '/createbot', '/update-profile', '/logout', '/api/', '/auth/'];
-    const isApiRequest =
-        jsonPaths.some(path => req.path.startsWith(path)) ||
-        req.xhr ||
-        req.headers.accept?.includes('application/json') ||
-        req.headers['content-type']?.includes('application/json');
+  // Determine if request expects JSON:
+  // - API routes (/api/*, /auth/*, /login, /signup, etc.)
+  // - AJAX/Fetch requests (X-Requested-With header)
+  // - Requests with JSON content-type or accept header
+  const jsonPaths = ['/login', '/signup', '/verify-otp', '/createbot', '/update-profile', '/logout', '/api/', '/auth/'];
+  const isApiRequest =
+    jsonPaths.some(path => req.path.startsWith(path)) ||
+    req.xhr ||
+    req.headers.accept?.includes('application/json') ||
+    req.headers['content-type']?.includes('application/json');
 
-    // In development, show detailed error
-    if (process.env.NODE_ENV !== 'production') {
-        if (isApiRequest) {
-            res.status(500).json({
-                success: false,
-                message: err.message || "Internal server error",
-                stack: err.stack
-            });
-        } else {
-            res.status(500).render('error', {
-                error: err,
-                message: err.message || "Internal server error"
-            });
-        }
+  // In development, show detailed error
+  if (process.env.NODE_ENV !== 'production') {
+    if (isApiRequest) {
+      res.status(500).json({
+        success: false,
+        message: err.message || "Internal server error",
+        stack: err.stack
+      });
     } else {
-        // In production, show generic error
-        if (isApiRequest) {
-            res.status(500).json({
-                success: false,
-                message: "Something went wrong. Please try again."
-            });
-        } else {
-            res.status(500).render('error', {
-                error: {},
-                message: "Something went wrong. Our team has been notified."
-            });
-        }
+      res.status(500).render('error', {
+        error: err,
+        message: err.message || "Internal server error"
+      });
     }
+  } else {
+    // In production, show generic error
+    if (isApiRequest) {
+      res.status(500).json({
+        success: false,
+        message: "Something went wrong. Please try again."
+      });
+    } else {
+      res.status(500).render('error', {
+        error: {},
+        message: "Something went wrong. Our team has been notified."
+      });
+    }
+  }
 });
+
+
