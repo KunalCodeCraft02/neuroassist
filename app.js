@@ -2199,16 +2199,64 @@ app.get("/bot/:id", generalLimiter, botAccess, async (req, res) => {
 
 })
 
-app.delete("/deletebot/:botId", generalLimiter, auth, botOwner, async (req, res) => {
+app.delete("/deletebot/:botId", generalLimiter, auth, async (req, res) => {
+
   try {
-    // botOwner middleware already verified ownership and attached bot
-    await Bot.deleteOne({ botId: req.params.botId });
-    res.json({ success: true });
+
+    const botId = req.params.botId;
+
+    console.log("🗑️ DELETE BOT:", botId);
+
+    // FIND USER BOT
+    const bot = await Bot.findOne({
+      botId: botId,
+      userId: req.user.id
+    });
+
+    if (!bot) {
+
+      return res.status(404).json({
+        success: false,
+        message: "Bot not found"
+      });
+    }
+
+    // DELETE RELATED DATA
+    await Conversation.deleteMany({
+      botId: bot.botId
+    });
+
+    await Booking.deleteMany({
+      botId: bot.botId
+    });
+
+    await Lead.deleteMany({
+      botId: bot.botId
+    });
+
+    // DELETE BOT
+    await Bot.deleteOne({
+      botId: bot.botId
+    });
+
+    console.log("✅ BOT DELETED SUCCESSFULLY");
+
+    return res.json({
+      success: true,
+      message: "Bot deleted successfully"
+    });
+
   } catch (err) {
-    console.log(err);
-    res.json({ success: false });
+
+    console.log("❌ DELETE BOT ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete bot",
+      error: err.message
+    });
   }
-})
+});
 
 
 // PAYMENTS ROUTE 
