@@ -1594,11 +1594,7 @@ app.post(
 
         newlyGeneratedApiKey,
 
-        appUrl:
-          process.env.APP_URL ||
-          (!isProduction
-            ? "http://localhost:3000"
-            : "")
+        appUrl: process.env.APP_URL || "http://localhost:3000"
       });
 
     } catch (err) {
@@ -2426,7 +2422,8 @@ app.use((err, req, res, next) => {
     if (isApiRequest) {
       res.status(500).json({
         success: false,
-        message: "Something went wrong. Please try again."
+        message: err.message,
+        stack: err.stack
       });
     } else {
       res.status(500).render('error', {

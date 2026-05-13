@@ -31,6 +31,9 @@ async function botAccess(req, res, next) {
     // If token is provided, verify it
     if (token) {
       try {
+        if (!secret) {
+          throw new Error("JWT secret missing");
+        }
         const secret = process.env.EMBED_SECRET || process.env.JWT_SECRET;
         const decoded = jwt.verify(token, secret);
         botId = decoded.botId;
@@ -99,8 +102,11 @@ async function botAccess(req, res, next) {
     }
 
     const isAllowed =
-      requestDomain === authorizedDomain ||
-      requestDomain.endsWith('.' + authorizedDomain);
+      requestDomain &&
+      (
+        requestDomain === authorizedDomain ||
+        requestDomain.endsWith("." + authorizedDomain)
+      );
 
     if (!isAllowed) {
       logger.warn(`Domain restriction: Request from ${requestDomain} rejected for bot ${botId} (authorized: ${authorizedDomain})`);

@@ -16,12 +16,12 @@ module.exports = async function botOwner(req, res, next) {
     }
 
     // Validate ObjectId format
-    if (!/^[0-9a-fA-F]{24}$/.test(botId)) {
-      return res.status(400).json({
-        error: "Invalid Bot ID",
-        message: "The provided bot ID is invalid"
-      });
-    }
+    // if (!/^[0-9a-fA-F]{24}$/.test(botId)) {
+    //   return res.status(400).json({
+    //     error: "Invalid Bot ID",
+    //     message: "The provided bot ID is invalid"
+    //   });
+    // }
 
     // Verify bot exists and belongs to current user
     const bot = await Bot.findOne({
