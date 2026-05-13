@@ -20,7 +20,7 @@ require("./config/passport")
 const { body, validationResult } = require("express-validator")
 const validator = require("validator")
 const Chat = require("./models/chat")
-
+const generateReply = require("./services/gemini");
 const { logger, loggerStream } = require("./utils/logger")
 
 const User = require("./models/users")
@@ -1718,16 +1718,23 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
   try {
 
-    // ===============================
-    // BOT FROM MIDDLEWARE
-    // ===============================
+    // ====================================
+    // VALIDATE BOT
+    // ====================================
 
     const bot = req.bot;
     const botId = req.botId;
 
-    // ===============================
+    if (!bot) {
+
+      return res.status(404).json({
+        reply: "Bot not found"
+      });
+    }
+
+    // ====================================
     // VALIDATE MESSAGE
-    // ===============================
+    // ====================================
 
     const { message } = req.body;
 
@@ -1746,9 +1753,9 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
     console.log("📩 MESSAGE:", msg);
 
-    // ===============================
-    // 🔥 BOOKING LOGIC
-    // ===============================
+    // ====================================
+    // BOOKING FLOW
+    // ====================================
 
     if (
       msg.includes("book") ||
@@ -1756,10 +1763,15 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     ) {
 
       return res.json({
+
         reply:
           "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
       });
     }
+
+    // ====================================
+    // DATE/TIME DETECTION
+    // ====================================
 
     const dateTimeMatch =
       message.match(
@@ -1774,11 +1786,9 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
       const time =
         dateTimeMatch[2];
 
-      const Booking =
-        require("./models/booking");
-
       const existing =
         await Booking.findOne({
+
           botId,
           date,
           time
@@ -1787,6 +1797,7 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
       if (existing) {
 
         return res.json({
+
           reply:
             `This slot (${time}) is already booked. Try another time.`
         });
@@ -1806,14 +1817,15 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
       });
 
       return res.json({
+
         reply:
           `✅ Your appointment is confirmed for ${date} at ${time}`
       });
     }
 
-    // ===============================
-    // 🔥 LEAD DETECTION
-    // ===============================
+    // ====================================
+    // LEAD DETECTION
+    // ====================================
 
     const emailMatch =
       message.match(
@@ -1828,19 +1840,16 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
         /name\s*is\s*([a-zA-Z ]+)/i
       );
 
+    // ====================================
+    // SAVE LEAD
+    // ====================================
+
     if (emailMatch || phoneMatch) {
 
       try {
 
         const user =
           await User.findById(bot.userId);
-
-        const botName =
-          bot.name;
-
-        // ===============================
-        // LEAD SCORING
-        // ===============================
 
         let leadScore = 0;
 
@@ -1855,7 +1864,7 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
           leadScore += 15;
 
           keywordsDetected.push(
-            "email_provided"
+            "email"
           );
         }
 
@@ -1864,7 +1873,7 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
           leadScore += 15;
 
           keywordsDetected.push(
-            "phone_provided"
+            "phone"
           );
         }
 
@@ -1873,44 +1882,22 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
           leadScore += 10;
 
           keywordsDetected.push(
-            "name_provided"
+            "name"
           );
         }
 
         // BUYING INTENT
         const intentKeywords = {
 
-          "price": 10,
-
-          "cost": 10,
-
-          "pricing": 10,
-
-          "how much": 10,
-
-          "demo": 10,
-
-          "trial": 10,
-
-          "consultation": 10,
-
-          "meeting": 8,
-
-          "call me": 8,
-
-          "contact me": 8,
-
-          "buy": 15,
-
-          "purchase": 15,
-
-          "order": 10,
-
-          "subscribe": 10,
-
-          "get started": 10,
-
-          "interested": 12
+          price: 10,
+          pricing: 10,
+          cost: 10,
+          buy: 15,
+          purchase: 15,
+          demo: 10,
+          trial: 10,
+          interested: 10,
+          subscribe: 10
         };
 
         for (
@@ -1928,78 +1915,22 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
           }
         }
 
-        // MESSAGE QUALITY
-        if (message.length > 20)
-          leadScore += 5;
-
-        if (message.length > 50)
-          leadScore += 5;
-
-        if (message.length > 100)
-          leadScore += 5;
-
-        if (lowerMsg.includes("?"))
-          leadScore += 5;
-
-        // URGENCY
-        const urgencyWords = [
-
-          "asap",
-
-          "urgent",
-
-          "immediately",
-
-          "today",
-
-          "tomorrow",
-
-          "this week"
-        ];
-
-        if (
-          urgencyWords.some(word =>
-            lowerMsg.includes(word)
-          )
-        ) {
-
-          leadScore += 10;
-
-          keywordsDetected.push(
-            "urgent"
-          );
-        }
-
         leadScore =
           Math.min(100, leadScore);
 
-        // ===============================
         // LEAD STATUS
-        // ===============================
-
         let interestLevel = "low";
-
-        let leadStatus = "new";
 
         if (leadScore >= 70) {
 
           interestLevel = "high";
 
-          leadStatus = "qualified";
-
         } else if (leadScore >= 40) {
 
           interestLevel = "medium";
-
-        } else if (leadScore < 20) {
-
-          leadStatus = "cold";
         }
 
-        // ===============================
         // SAVE LEAD
-        // ===============================
-
         const newLead =
           await Lead.create({
 
@@ -2026,19 +1957,15 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
             interestLevel,
 
-            leadStatus,
-
             keywordsDetected,
 
             wantsDemo:
-              lowerMsg.includes("demo") ||
-              lowerMsg.includes("trial"),
+              lowerMsg.includes("demo"),
 
             askedPricing:
               lowerMsg.includes("price") ||
               lowerMsg.includes("pricing") ||
-              lowerMsg.includes("cost") ||
-              lowerMsg.includes("how much")
+              lowerMsg.includes("cost")
           });
 
         console.log(
@@ -2046,79 +1973,52 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
           newLead._id
         );
 
-        // ===============================
-        // NOTIFICATIONS
-        // ===============================
-
-        try {
-
-          await sendWhatsAppLead(
-            newLead
-          );
-
-        } catch (err) {
-
-          console.log(
-            "WhatsApp Error:",
-            err.message
-          );
-        }
-
+        // EMAIL
         try {
 
           await sendEmailLead(
+
             newLead,
-            user ? user.email : null,
-            botName
+
+            user
+              ? user.email
+              : null,
+
+            bot.name
           );
 
-        } catch (err) {
+        } catch (emailErr) {
 
           console.log(
-            "Email Error:",
-            err.message
+            "EMAIL ERROR:",
+            emailErr.message
           );
-        }
-
-        // ===============================
-        // RESPONSE
-        // ===============================
-
-        let reply =
-          "🔥 Thanks! Our team will contact you soon.";
-
-        if (leadScore >= 70) {
-
-          reply =
-            "🎯 Excellent! We'll reach out within 24 hours.";
-
-        } else if (leadScore >= 40) {
-
-          reply =
-            "👍 Thanks for your interest! Our team will contact you soon.";
         }
 
         return res.json({
-          reply
+
+          reply:
+            "🔥 Thank you! Our team will contact you soon."
         });
 
       } catch (leadErr) {
 
-        console.error(
-          "❌ LEAD SAVE ERROR:",
+        console.log(
+          "❌ LEAD ERROR:",
           leadErr
         );
 
         return res.json({
+
           reply:
-            "Something went wrong while saving your details."
+            "Failed to save lead."
         });
       }
     }
 
-    // ===============================
-    // 🔥 INTEREST DETECTION
-    // ===============================
+    // ====================================
+    // INTEREST DETECTION
+    // ====================================
 
     const isInterested =
 
@@ -2126,28 +2026,32 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
       msg.includes("price") ||
 
-      msg.includes("interested") ||
+      msg.includes("pricing") ||
 
-      msg.includes("demo") ||
+      msg.includes("purchase") ||
 
-      msg.includes("purchase");
+      msg.includes("demo");
 
     if (isInterested) {
 
       return res.json({
+
         reply:
           "Great! Please share your Name, Email and Phone number 😊"
       });
     }
 
-    // ===============================
-    // 🤖 AI RESPONSE
-    // ===============================
+    // ====================================
+    // AI REPLY
+    // ====================================
 
     let reply =
-      "Sorry, I could not generate a response.";
+      "Sorry, AI service unavailable.";
 
     try {
+
+      // TEMP TEST
+      // reply = "AI working successfully!";
 
       reply =
         await generateReply(
@@ -2157,47 +2061,56 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
     } catch (aiErr) {
 
-      console.error(
-        "❌ AI ERROR:",
-        aiErr
+      console.log(
+        "❌ AI ERROR:"
       );
+
+      console.log(aiErr);
+
+      reply =
+        "AI service temporarily unavailable.";
     }
 
-    // ===============================
-    // SANITIZE
-    // ===============================
+    // ====================================
+    // SAVE CHAT
+    // ====================================
 
-    const userMessage =
-      validator.escape(message);
+    try {
 
-    const botReply =
-      validator.escape(reply);
+      await Conversation.create({
 
-    // ===============================
-    // SAVE CONVERSATION
-    // ===============================
+        botId,
 
-    await Conversation.create({
+        messages: [
 
-      botId,
+          {
 
-      messages: [
+            role: "user",
 
-        {
-          role: "user",
-          text: userMessage
-        },
+            text: message
+          },
 
-        {
-          role: "bot",
-          text: botReply
-        }
-      ]
-    });
+          {
 
-    // ===============================
+            role: "bot",
+
+            text: reply
+          }
+        ]
+      });
+
+    } catch (dbErr) {
+
+      console.log(
+        "❌ CONVERSATION SAVE ERROR:"
+      );
+
+      console.log(dbErr);
+    }
+
+    // ====================================
     // FINAL RESPONSE
-    // ===============================
+    // ====================================
 
     return res.json({
       reply
@@ -2205,11 +2118,11 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
   } catch (err) {
 
-    console.error(
+    console.log(
       "🔥 CHAT ERROR:"
     );
 
-    console.error(err);
+    console.log(err);
 
     return res.status(500).json({
 
