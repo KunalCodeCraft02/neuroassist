@@ -1,117 +1,190 @@
 require("dotenv").config();
+
 const Groq = require("groq-sdk");
 
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
 
-/* CATEGORY ROLE MAP */
+/* =========================
+   CATEGORY ROLE MAP
+========================= */
 
 function getRole(category) {
 
     const roles = {
 
-        "Customer Support":
+        "customer-support":
             "You are a helpful customer support assistant. Solve customer problems politely and clearly.",
 
-        "Sales Assistant":
+        "sales":
             "You are a professional sales assistant. Recommend products and encourage users to make a purchase.",
 
-        "FAQ Bot":
+        "faq":
             "You answer frequently asked questions clearly and concisely.",
 
-        "Lead Generation":
+        "lead-generation":
             "Your goal is to collect customer contact details like email or phone politely.",
 
-        "E-commerce Assistant":
+        "ecommerce":
             "You help users find products, explain product details, and assist with orders and delivery.",
 
-        "Technical Support":
+        "technical":
             "You are a technical support assistant. Help users fix software or technical issues step by step.",
 
-        "Booking Assistant":
+        "booking":
             "You help users book appointments, reservations, or schedules.",
 
-        "Product Advisor":
+        "product-advisor":
             "Recommend the best products based on the user's needs and preferences.",
 
-        "Marketing Assistant":
+        "marketing":
             "Explain services, promotions, and pricing plans to users clearly.",
 
-        "HR Assistant":
+        "hr":
             "Answer questions related to recruitment, hiring, and employee policies.",
 
-        "Education Assistant":
+        "education":
             "Help students with course information, admissions, and study guidance.",
 
-        "Healthcare Assistant":
-            "Provide general healthcare information but avoid giving dangerous medical advice."
+        "healthcare":
+            "Provide general healthcare information but avoid giving dangerous medical advice.",
 
+        "general":
+            "You are a helpful AI assistant.",
+
+        "custom":
+            "You are a customizable AI assistant."
     };
 
-    return roles[category] || "You are a helpful AI assistant.";
+    return roles[category] ||
+        "You are a helpful AI assistant.";
 }
+
+/* =========================
+   GENERATE AI REPLY
+========================= */
 
 async function generateReply(bot, message) {
 
     try {
 
-        /* CATEGORY ROLE */
+        // Validate API key
+        if (!process.env.GROQ_API_KEY) {
 
-        const role = getRole(bot.category);
+            console.log("❌ GROQ API KEY MISSING");
 
-        /* TRAINING KNOWLEDGE */
+            return "AI service configuration error.";
+        }
 
-        const knowledge = bot.knowledge
-            ? bot.knowledge.join("\n")
-            : "";
+        // Validate message
+        if (!message || typeof message !== "string") {
 
-        /* WEBSITE CONTENT */
+            return "Invalid message.";
+        }
 
-        const websiteData = bot.websiteContent || "";
+        // Role
+        const role =
+            getRole(bot.category);
 
-        /* FINAL PROMPT */
+        // Knowledge
+        let knowledge = "";
+
+        if (
+            bot.knowledge &&
+            Array.isArray(bot.knowledge)
+        ) {
+
+            knowledge =
+                bot.knowledge.join("\n");
+        }
+
+        // Website content
+        const websiteData =
+            bot.websiteContent || "";
+
+        // Limit huge content
+        const limitedWebsiteData =
+            websiteData.substring(0, 12000);
+
+        const limitedKnowledge =
+            knowledge.substring(0, 8000);
+
+        /* =========================
+           FINAL PROMPT
+        ========================= */
 
         const prompt = `
+
 ${role}
 
 Use the following business knowledge if relevant.
 
-Business Knowledge:
-${knowledge}
+BUSINESS KNOWLEDGE:
+${limitedKnowledge}
 
-Website Knowledge:
-${websiteData}
+WEBSITE KNOWLEDGE:
+${limitedWebsiteData}
 
-User Question:
+USER QUESTION:
 ${message}
 
-Guidelines:
+RULES:
 - Answer professionally
 - Be helpful and friendly
-- Keep answers clear and useful
+- Keep answers short and clear
+- Use business knowledge when useful
+- Do not hallucinate fake information
 `;
 
-        const chat = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-            model: "llama-3.1-8b-instant"
-        });
+        console.log("🤖 GENERATING AI REPLY...");
 
-        return chat.choices[0].message.content;
+        const chat =
+            await groq.chat.completions.create({
+
+                messages: [
+
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+
+                ],
+
+                model: "llama-3.1-8b-instant",
+
+                temperature: 0.7,
+
+                max_tokens: 500
+            });
+
+        // Validate response
+        if (
+            !chat ||
+            !chat.choices ||
+            !chat.choices[0]
+        ) {
+
+            console.log("❌ INVALID GROQ RESPONSE");
+
+            return "AI could not generate a response.";
+        }
+
+        const reply =
+            chat.choices[0].message.content;
+
+        console.log("✅ AI REPLY GENERATED");
+
+        return reply ||
+            "AI could not generate a response.";
 
     } catch (err) {
 
-        console.log("GROQ ERROR:", err);
+        console.log("🔥 GROQ ERROR:");
+        console.log(err);
 
         return "AI service temporarily unavailable.";
-
     }
-
 }
 
 module.exports = generateReply;
