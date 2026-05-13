@@ -327,10 +327,9 @@ const botSchema = new mongoose.Schema({
 });
 
 // Update updatedAt on save
-botSchema.pre('save', function(next) {
-    this.updatedAt = Date.now();
-    next();
-});
+// botSchema.pre('save', function () {
+//     this.updatedAt = Date.now();
+// });
 
 // Index for common queries
 botSchema.index({ userId: 1, status: 1 });
