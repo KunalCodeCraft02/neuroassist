@@ -63,61 +63,122 @@ const vapiWebhook = require("./services/vapiWebhook");
 // 🛡️ SECURITY MIDDLEWARE SETUP
 // ============================================
 
-// 1. HTTP Security Headers (Helmet)
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "'unsafe-inline'",
-        "cdn.jsdelivr.net",
-        "fonts.googleapis.com",
-        "www.googletagmanager.com",
-        "https://checkout.razorpay.com",
-        "cdnjs.cloudflare.com"
-      ],
-      scriptSrcAttr: [
-        "'self'",
-        "'unsafe-inline'"
-      ],
-      styleSrc: [
-        "'self'",
-        "'unsafe-inline'",
-        "fonts.googleapis.com",
-        "cdn.jsdelivr.net"
-      ],
-      fontSrc: [
-        "'self'",
-        "fonts.gstatic.com",
-        "cdn.jsdelivr.net"
-      ],
-      imgSrc: [
-        "'self'",
-        "data:",
-        "res.cloudinary.com"
-      ],
-      connectSrc: [
-        "'self'",
-        "https://nominatim.openstreetmap.org",
-        "https://neuroassist-5z1k.onrender.com"
-      ],
-      frameSrc: [
-        "'self'",
-        "https://checkout.razorpay.com",
-        "https://api.razorpay.com"
-      ],
-      objectSrc: ["'none'"],
-      frameAncestors: ["'none'"]
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}))
+app.use(
+  helmet({
 
+    // IMPORTANT FOR EMBED WIDGETS
+    crossOriginEmbedderPolicy: false,
+
+    crossOriginResourcePolicy: {
+      policy: "cross-origin"
+    },
+
+    contentSecurityPolicy: {
+
+      directives: {
+
+        defaultSrc: ["'self'"],
+
+        scriptSrc: [
+
+          "'self'",
+
+          "'unsafe-inline'",
+
+          "'unsafe-eval'",
+
+          "cdn.jsdelivr.net",
+
+          "cdnjs.cloudflare.com",
+
+          "fonts.googleapis.com",
+
+          "www.googletagmanager.com",
+
+          "https://checkout.razorpay.com",
+
+          "https://bemybot.in"
+        ],
+
+        scriptSrcAttr: [
+
+          "'self'",
+
+          "'unsafe-inline'"
+        ],
+
+        styleSrc: [
+
+          "'self'",
+
+          "'unsafe-inline'",
+
+          "fonts.googleapis.com",
+
+          "cdn.jsdelivr.net"
+        ],
+
+        fontSrc: [
+
+          "'self'",
+
+          "fonts.gstatic.com",
+
+          "cdn.jsdelivr.net",
+
+          "data:"
+        ],
+
+        imgSrc: [
+
+          "'self'",
+
+          "data:",
+
+          "blob:",
+
+          "res.cloudinary.com"
+        ],
+
+        connectSrc: [
+
+          "'self'",
+
+          "https://bemybot.in",
+
+          "https://nominatim.openstreetmap.org",
+
+          "https://neuroassist-5z1k.onrender.com"
+        ],
+
+        frameSrc: [
+
+          "'self'",
+
+          "https://checkout.razorpay.com",
+
+          "https://api.razorpay.com"
+        ],
+
+        // IMPORTANT
+        frameAncestors: ["*"],
+
+        objectSrc: ["'none'"]
+
+      }
+    },
+
+    hsts: {
+
+      maxAge: 31536000,
+
+      includeSubDomains: true,
+
+      preload: true
+    }
+
+  })
+);
 // 2. CORS - Allow specific origins only
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
