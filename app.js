@@ -1679,188 +1679,403 @@ app.post(
 );
 
 app.post("/chat", chatLimiter, botAccess, async (req, res) => {
+
   try {
-    const bot = req.bot;  // Already fetched by domainAuth middleware
+
+    // ===============================
+    // BOT FROM MIDDLEWARE
+    // ===============================
+
+    const bot = req.bot;
     const botId = req.botId;
+
+    // ===============================
+    // VALIDATE MESSAGE
+    // ===============================
+
     const { message } = req.body;
 
-    const msg = message.toLowerCase();
+    if (
+      !message ||
+      typeof message !== "string"
+    ) {
 
-    // ===============================
-    // 🔥 BOOKING LOGIC (UNCHANGED)
-    // ===============================
-
-    if (msg.includes("book") || msg.includes("appointment")) {
-      return res.json({
-        reply: "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
+      return res.status(400).json({
+        reply: "Invalid message"
       });
     }
 
-    const dateTimeMatch = message.match(/(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/);
+    const msg =
+      message.toLowerCase().trim();
+
+    console.log("📩 MESSAGE:", msg);
+
+    // ===============================
+    // 🔥 BOOKING LOGIC
+    // ===============================
+
+    if (
+      msg.includes("book") ||
+      msg.includes("appointment")
+    ) {
+
+      return res.json({
+        reply:
+          "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
+      });
+    }
+
+    const dateTimeMatch =
+      message.match(
+        /(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2})/
+      );
 
     if (dateTimeMatch) {
-      const date = dateTimeMatch[1];
-      const time = dateTimeMatch[2];
 
-      const Booking = require("./models/booking");
+      const date =
+        dateTimeMatch[1];
 
-      const existing = await Booking.findOne({ botId, date, time });
+      const time =
+        dateTimeMatch[2];
+
+      const Booking =
+        require("./models/booking");
+
+      const existing =
+        await Booking.findOne({
+          botId,
+          date,
+          time
+        });
 
       if (existing) {
+
         return res.json({
-          reply: `This slot (${time}) is already booked. Try another time.`
+          reply:
+            `This slot (${time}) is already booked. Try another time.`
         });
       }
 
       await Booking.create({
+
         botId,
+
         name: "Guest User",
+
         phone: "N/A",
+
         date,
+
         time
       });
 
       return res.json({
-        reply: `Your appointment is confirmed for ${date} at ${time}`
+        reply:
+          `✅ Your appointment is confirmed for ${date} at ${time}`
       });
     }
 
     // ===============================
-    // 🔥 LEAD DETECTION (NEW LOGIC)
+    // 🔥 LEAD DETECTION
     // ===============================
 
-    const emailMatch = message.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
-    const phoneMatch = message.match(/\b\d{10}\b/);
-    const nameMatch = message.match(/name\s*is\s*([a-zA-Z ]+)/i);
+    const emailMatch =
+      message.match(
+        /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i
+      );
+
+    const phoneMatch =
+      message.match(/\b\d{10}\b/);
+
+    const nameMatch =
+      message.match(
+        /name\s*is\s*([a-zA-Z ]+)/i
+      );
 
     if (emailMatch || phoneMatch) {
 
       try {
 
-        // Get user info for email notification (bot already available from middleware)
-        const user = await User.findById(bot.userId);
-        const botName = bot.name;
+        const user =
+          await User.findById(bot.userId);
 
-        // 🔥 LEAD SCORING ENGINE
+        const botName =
+          bot.name;
+
+        // ===============================
+        // LEAD SCORING
+        // ===============================
+
         let leadScore = 0;
+
         const keywordsDetected = [];
-        const lowerMsg = message.toLowerCase();
 
-        // Contact Information (Max: 30 points)
+        const lowerMsg =
+          message.toLowerCase();
+
+        // CONTACT INFO
         if (emailMatch) {
+
           leadScore += 15;
-          keywordsDetected.push('email_provided');
-        }
-        if (phoneMatch) {
-          leadScore += 15;
-          keywordsDetected.push('phone_provided');
-        }
-        if (nameMatch) {
-          leadScore += 10;
-          keywordsDetected.push('name_provided');
+
+          keywordsDetected.push(
+            "email_provided"
+          );
         }
 
-        // Buying Intent Keywords (Max: 40 points)
+        if (phoneMatch) {
+
+          leadScore += 15;
+
+          keywordsDetected.push(
+            "phone_provided"
+          );
+        }
+
+        if (nameMatch) {
+
+          leadScore += 10;
+
+          keywordsDetected.push(
+            "name_provided"
+          );
+        }
+
+        // BUYING INTENT
         const intentKeywords = {
-          'price': 10,
-          'cost': 10,
-          'pricing': 10,
-          'how much': 10,
-          'demo': 10,
-          'trial': 10,
-          'consultation': 10,
-          'consultation call': 10,
-          'meeting': 8,
-          'call me': 8,
-          'contact me': 8,
-          'buy': 15,
-          'purchase': 15,
-          'order': 10,
-          'subscribe': 10,
-          'get started': 10,
-          'interested': 12
+
+          "price": 10,
+
+          "cost": 10,
+
+          "pricing": 10,
+
+          "how much": 10,
+
+          "demo": 10,
+
+          "trial": 10,
+
+          "consultation": 10,
+
+          "meeting": 8,
+
+          "call me": 8,
+
+          "contact me": 8,
+
+          "buy": 15,
+
+          "purchase": 15,
+
+          "order": 10,
+
+          "subscribe": 10,
+
+          "get started": 10,
+
+          "interested": 12
         };
 
-        for (const [keyword, points] of Object.entries(intentKeywords)) {
-          if (lowerMsg.includes(keyword)) {
+        for (
+          const [keyword, points]
+          of Object.entries(intentKeywords)
+        ) {
+
+          if (
+            lowerMsg.includes(keyword)
+          ) {
+
             leadScore += points;
+
             keywordsDetected.push(keyword);
           }
         }
 
-        // Message Length & Quality (Max: 20 points)
-        if (message.length > 20) leadScore += 5;
-        if (message.length > 50) leadScore += 5;
-        if (message.length > 100) leadScore += 5;
-        if (lowerMsg.includes('?')) leadScore += 5; // Asking questions shows engagement
+        // MESSAGE QUALITY
+        if (message.length > 20)
+          leadScore += 5;
 
-        // Urgency Indicators (Max: 10 points)
-        const urgencyWords = ['asap', 'urgent', 'immediately', 'today', 'tomorrow', 'this week'];
-        if (urgencyWords.some(word => lowerMsg.includes(word))) {
+        if (message.length > 50)
+          leadScore += 5;
+
+        if (message.length > 100)
+          leadScore += 5;
+
+        if (lowerMsg.includes("?"))
+          leadScore += 5;
+
+        // URGENCY
+        const urgencyWords = [
+
+          "asap",
+
+          "urgent",
+
+          "immediately",
+
+          "today",
+
+          "tomorrow",
+
+          "this week"
+        ];
+
+        if (
+          urgencyWords.some(word =>
+            lowerMsg.includes(word)
+          )
+        ) {
+
           leadScore += 10;
-          keywordsDetected.push('urgent');
+
+          keywordsDetected.push(
+            "urgent"
+          );
         }
 
-        // Cap at 100
-        leadScore = Math.min(100, leadScore);
+        leadScore =
+          Math.min(100, leadScore);
 
-        // Determine interest level and status
-        let interestLevel = 'low';
-        let leadStatus = 'new';
+        // ===============================
+        // LEAD STATUS
+        // ===============================
+
+        let interestLevel = "low";
+
+        let leadStatus = "new";
 
         if (leadScore >= 70) {
-          interestLevel = 'high';
-          leadStatus = 'qualified';
+
+          interestLevel = "high";
+
+          leadStatus = "qualified";
+
         } else if (leadScore >= 40) {
-          interestLevel = 'medium';
-        } else if (leadScore < 20 && leadScore > 0) {
-          leadStatus = 'cold';
+
+          interestLevel = "medium";
+
+        } else if (leadScore < 20) {
+
+          leadStatus = "cold";
         }
 
-        const newLead = await Lead.create({
-          botId,
-          name: nameMatch ? nameMatch[1] : "Unknown",
-          email: emailMatch ? emailMatch[0] : "",
-          phone: phoneMatch ? phoneMatch[0] : "",
-          message,
-          leadScore,
-          interestLevel,
-          leadStatus,
-          keywordsDetected,
-          wantsDemo: lowerMsg.includes('demo') || lowerMsg.includes('trial'),
-          askedPricing: intentKeywords.some(k => lowerMsg.includes(k))
-        });
+        // ===============================
+        // SAVE LEAD
+        // ===============================
 
-        console.log("🔥 Lead Saved with score:", leadScore, newLead);
+        const newLead =
+          await Lead.create({
 
-        // Send notifications
+            botId,
+
+            name:
+              nameMatch
+                ? nameMatch[1].trim()
+                : "Unknown",
+
+            email:
+              emailMatch
+                ? emailMatch[0]
+                : "",
+
+            phone:
+              phoneMatch
+                ? phoneMatch[0]
+                : "",
+
+            message,
+
+            leadScore,
+
+            interestLevel,
+
+            leadStatus,
+
+            keywordsDetected,
+
+            wantsDemo:
+              lowerMsg.includes("demo") ||
+              lowerMsg.includes("trial"),
+
+            askedPricing:
+              lowerMsg.includes("price") ||
+              lowerMsg.includes("pricing") ||
+              lowerMsg.includes("cost") ||
+              lowerMsg.includes("how much")
+          });
+
+        console.log(
+          "🔥 LEAD SAVED:",
+          newLead._id
+        );
+
+        // ===============================
+        // NOTIFICATIONS
+        // ===============================
+
         try {
-          await sendWhatsAppLead(newLead);
+
+          await sendWhatsAppLead(
+            newLead
+          );
+
         } catch (err) {
-          console.log("WhatsApp Error:", err.message);
+
+          console.log(
+            "WhatsApp Error:",
+            err.message
+          );
         }
 
         try {
-          await sendEmailLead(newLead, user ? user.email : null, botName);
+
+          await sendEmailLead(
+            newLead,
+            user ? user.email : null,
+            botName
+          );
+
         } catch (err) {
-          console.log("Email Error:", err.message);
+
+          console.log(
+            "Email Error:",
+            err.message
+          );
         }
 
-        // Custom response based on lead score
-        let reply = "🔥 Thanks! Our team will contact you soon.";
+        // ===============================
+        // RESPONSE
+        // ===============================
+
+        let reply =
+          "🔥 Thanks! Our team will contact you soon.";
+
         if (leadScore >= 70) {
-          reply = "🎯 Excellent! We'll reach out to you within 24 hours. Our team is excited to help!";
+
+          reply =
+            "🎯 Excellent! We'll reach out within 24 hours.";
+
         } else if (leadScore >= 40) {
-          reply = "👍 Thanks for your interest! Someone from our team will get back to you soon.";
+
+          reply =
+            "👍 Thanks for your interest! Our team will contact you soon.";
         }
-
-        return res.json({ reply });
-
-      } catch (err) {
-        console.log("LEAD SAVE ERROR:", err);
 
         return res.json({
-          reply: "Something went wrong while saving your details"
+          reply
+        });
+
+      } catch (leadErr) {
+
+        console.error(
+          "❌ LEAD SAVE ERROR:",
+          leadErr
+        );
+
+        return res.json({
+          reply:
+            "Something went wrong while saving your details."
         });
       }
     }
@@ -1870,43 +2085,105 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     // ===============================
 
     const isInterested =
+
       msg.includes("buy") ||
+
       msg.includes("price") ||
+
       msg.includes("interested") ||
+
       msg.includes("demo") ||
+
       msg.includes("purchase");
 
     if (isInterested) {
+
       return res.json({
-        reply: "Great! Please share your Name, Email and Phone number 😊"
+        reply:
+          "Great! Please share your Name, Email and Phone number 😊"
       });
     }
 
     // ===============================
-    // 🤖 NORMAL AI RESPONSE
+    // 🤖 AI RESPONSE
     // ===============================
 
-    const reply = await generateReply(bot, message);
+    let reply =
+      "Sorry, I could not generate a response.";
 
-    // Sanitize messages to prevent XSS
-    const userMessage = validator.escape(message);
-    const botReply = validator.escape(reply);
+    try {
+
+      reply =
+        await generateReply(
+          bot,
+          message
+        );
+
+    } catch (aiErr) {
+
+      console.error(
+        "❌ AI ERROR:",
+        aiErr
+      );
+    }
+
+    // ===============================
+    // SANITIZE
+    // ===============================
+
+    const userMessage =
+      validator.escape(message);
+
+    const botReply =
+      validator.escape(reply);
+
+    // ===============================
+    // SAVE CONVERSATION
+    // ===============================
 
     await Conversation.create({
+
       botId,
+
       messages: [
-        { role: "user", text: userMessage },
-        { role: "bot", text: botReply }
+
+        {
+          role: "user",
+          text: userMessage
+        },
+
+        {
+          role: "bot",
+          text: botReply
+        }
       ]
     });
 
-    res.json({ reply });
+    // ===============================
+    // FINAL RESPONSE
+    // ===============================
+
+    return res.json({
+      reply
+    });
 
   } catch (err) {
-    console.log("CHAT ERROR:", err);
 
-    res.json({
-      reply: "Server error"
+    console.error(
+      "🔥 CHAT ERROR:"
+    );
+
+    console.error(err);
+
+    return res.status(500).json({
+
+      reply:
+        "Internal server error",
+
+      error:
+        process.env.NODE_ENV !== "production"
+          ? err.message
+          : undefined
     });
   }
 });
