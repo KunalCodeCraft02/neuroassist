@@ -1,82 +1,140 @@
 (function () {
 
-    const script = document.currentScript
-    const botId = script.getAttribute("data-bot")
-    const botName = script.getAttribute("data-name") || "Assistant"
+    console.log("🤖 BOT JS LOADED");
 
-    // Get the API base URL from the script's src attribute
-    // e.g., "https://bemybot.in/js/bot.js" → "https://bemybot.in"
-    const scriptSrc = script.getAttribute('src') || '';
-    const API = scriptSrc.split('/js/')[0] || scriptSrc.split('/bot.js')[0] || '';
+    // =========================
+    // SCRIPT CONFIG
+    // =========================
 
-    /* FONT */
+    const script =
+        document.currentScript ||
+        document.querySelector('script[data-bot]');
 
-    const font = document.createElement("link")
-    font.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
-    font.rel = "stylesheet"
-    document.head.appendChild(font)
+    if (!script) {
+        console.error("❌ Bot script not found");
+        return;
+    }
 
-    /* CHAT BUTTON CONTAINER */
+    const botId =
+        script.getAttribute("data-bot");
 
-    const buttonWrapper = document.createElement("div")
-    buttonWrapper.style.position = "fixed"
-    buttonWrapper.style.bottom = "20px"
-    buttonWrapper.style.right = "20px"
-    buttonWrapper.style.display = "flex"
-    buttonWrapper.style.flexDirection = "column"
-    buttonWrapper.style.alignItems = "center"
-    buttonWrapper.style.zIndex = "9999"
+    const botName =
+        script.getAttribute("data-name") ||
+        "Assistant";
 
-    document.body.appendChild(buttonWrapper)
+    const token =
+        script.getAttribute("data-token");
 
-    /* CHAT BUBBLE */
+    const API =
+        new URL(script.src).origin;
 
-    const bubble = document.createElement("div")
+    console.log("✅ BOT ID:", botId);
+    console.log("✅ API:", API);
 
-    bubble.innerHTML = "💬"
+    if (!botId) {
+        console.error("❌ Missing botId");
+        return;
+    }
 
-    bubble.style.width = "60px"
-    bubble.style.height = "60px"
-    bubble.style.background = "#000"
-    bubble.style.color = "#fff"
-    bubble.style.display = "flex"
-    bubble.style.alignItems = "center"
-    bubble.style.justifyContent = "center"
-    bubble.style.borderRadius = "50%"
-    bubble.style.cursor = "pointer"
-    bubble.style.fontSize = "22px"
-    bubble.style.boxShadow = "0 10px 25px rgba(0,0,0,0.25)"
+    // =========================
+    // LOAD FONT
+    // =========================
 
-    buttonWrapper.appendChild(bubble)
+    const font = document.createElement("link");
 
-    /* BOT NAME UNDER ICON */
+    font.href =
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
 
-    const nameLabel = document.createElement("div")
-    nameLabel.innerText = botName
+    font.rel = "stylesheet";
 
-    nameLabel.style.marginTop = "6px"
-    nameLabel.style.fontSize = "12px"
-    nameLabel.style.fontFamily = "Inter"
-    nameLabel.style.color = "#333"
+    document.head.appendChild(font);
 
-    buttonWrapper.appendChild(nameLabel)
+    // =========================
+    // BUTTON WRAPPER
+    // =========================
 
-    /* CHAT WINDOW */
+    const buttonWrapper =
+        document.createElement("div");
 
-    const chat = document.createElement("div")
+    buttonWrapper.style.position = "fixed";
+    buttonWrapper.style.bottom = "20px";
+    buttonWrapper.style.right = "20px";
+    buttonWrapper.style.display = "flex";
+    buttonWrapper.style.flexDirection = "column";
+    buttonWrapper.style.alignItems = "center";
+    buttonWrapper.style.zIndex = "999999";
 
-    chat.style.position = "fixed"
-    chat.style.bottom = "100px"
-    chat.style.right = "20px"
-    chat.style.width = "340px"
-    chat.style.height = "480px"
-    chat.style.background = "#fff"
-    chat.style.borderRadius = "14px"
-    chat.style.boxShadow = "0 20px 60px rgba(0,0,0,0.25)"
-    chat.style.display = "none"
-    chat.style.flexDirection = "column"
-    chat.style.fontFamily = "Inter"
-    chat.style.overflow = "hidden"
+    document.body.appendChild(buttonWrapper);
+
+    // =========================
+    // CHAT BUTTON
+    // =========================
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.innerHTML = "💬";
+
+    bubble.style.width = "60px";
+    bubble.style.height = "60px";
+    bubble.style.background = "#000";
+    bubble.style.color = "#fff";
+    bubble.style.display = "flex";
+    bubble.style.alignItems = "center";
+    bubble.style.justifyContent = "center";
+    bubble.style.borderRadius = "50%";
+    bubble.style.cursor = "pointer";
+    bubble.style.fontSize = "24px";
+    bubble.style.boxShadow =
+        "0 10px 25px rgba(0,0,0,0.25)";
+
+    buttonWrapper.appendChild(bubble);
+
+    // =========================
+    // BOT NAME
+    // =========================
+
+    const nameLabel =
+        document.createElement("div");
+
+    nameLabel.innerText = botName;
+
+    nameLabel.style.marginTop = "6px";
+    nameLabel.style.fontSize = "12px";
+    nameLabel.style.fontFamily = "Inter";
+    nameLabel.style.color = "#333";
+
+    buttonWrapper.appendChild(nameLabel);
+
+    // =========================
+    // CHAT WINDOW
+    // =========================
+
+    const chat =
+        document.createElement("div");
+
+    chat.style.position = "fixed";
+    chat.style.bottom = "100px";
+    chat.style.right = "20px";
+    chat.style.width = "340px";
+    chat.style.height = "480px";
+    chat.style.background = "#fff";
+    chat.style.borderRadius = "16px";
+    chat.style.boxShadow =
+        "0 20px 60px rgba(0,0,0,0.25)";
+    chat.style.display = "none";
+    chat.style.flexDirection = "column";
+    chat.style.fontFamily = "Inter";
+    chat.style.overflow = "hidden";
+    chat.style.zIndex = "999999";
+
+    // MOBILE
+    if (window.innerWidth < 500) {
+
+        chat.style.width = "95vw";
+        chat.style.height = "80vh";
+        chat.style.right = "2.5vw";
+    }
 
     chat.innerHTML = `
 
@@ -86,19 +144,34 @@ color:#fff;
 padding:14px;
 font-weight:600;
 font-size:14px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 ">
-${botName}
+
+<span>${botName}</span>
+
+<span id="closeBot"
+style="
+cursor:pointer;
+font-size:18px;
+">
+✕
+</span>
+
 </div>
 
-<div id="messages" style="
+<div id="messages"
+style="
 flex:1;
 padding:12px;
 overflow-y:auto;
 background:#f6f6f6;
 display:flex;
 flex-direction:column;
-gap:6px;
-"></div>
+gap:8px;
+">
+</div>
 
 <div style="
 display:flex;
@@ -107,25 +180,27 @@ border-top:1px solid #eee;
 background:#fff;
 ">
 
-<input id="msgInput"
+<input
+id="msgInput"
 placeholder="Type message..."
 style="
 flex:1;
 border:1px solid #ddd;
-border-radius:8px;
-padding:8px;
+border-radius:10px;
+padding:10px;
 font-size:13px;
 outline:none;
 ">
 
-<button id="sendBtn"
+<button
+id="sendBtn"
 style="
 margin-left:8px;
 background:#000;
 color:#fff;
 border:none;
-padding:8px 14px;
-border-radius:8px;
+padding:10px 14px;
+border-radius:10px;
 cursor:pointer;
 font-size:13px;
 ">
@@ -133,188 +208,280 @@ Send
 </button>
 
 </div>
-`
+`;
 
-    document.body.appendChild(chat)
+    document.body.appendChild(chat);
 
+    // =========================
+    // USER SESSION
+    // =========================
 
+    const userId =
+        localStorage.getItem("uid") ||
+        `user_${Date.now()}`;
 
-
-    const userId = localStorage.getItem("uid") || Date.now();
     localStorage.setItem("uid", userId);
 
-    // TRACK VIEW
-    fetch(`${API}/track`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            botId,
-            userId,
-            page: window.location.href,
-            action: "view"
-        })
-    });
+    // =========================
+    // TRACKING
+    // =========================
 
-    // TRACK CLICK
+    async function track(action) {
+
+        try {
+
+            await fetch(`${API}/track`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+
+                body: JSON.stringify({
+                    botId,
+                    token,
+                    userId,
+                    page: window.location.href,
+                    action
+                })
+            });
+
+        } catch (err) {
+
+            console.log("Track error:", err);
+        }
+    }
+
+    track("view");
+
     document.addEventListener("click", () => {
-        fetch(`${API}/track`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                botId,
-                userId,
-                page: window.location.href,
-                action: "click"
-            })
-        });
+        track("click");
     });
 
+    // =========================
+    // AUTO ANALYZE
+    // =========================
 
     setTimeout(async () => {
 
         try {
-            const res = await fetch(`${API}/analyze?botId=${botId}&userId=${userId}`);
+
+            const res =
+                await fetch(
+                    `${API}/analyze?botId=${botId}&userId=${userId}&token=${token}`
+                );
+
             const data = await res.json();
 
-            console.log("USER STATUS:", data.status); // debug
+            console.log("USER STATUS:", data);
 
             if (data.status === "HOT") {
 
-                chat.style.display = "flex"; // ✅ OPEN CHAT
+                chat.style.display = "flex";
 
-                addBotMessage("🔥 Looks like you're interested! Want help choosing the best option?");
-
+                addBotMessage(
+                    "🔥 Looks like you're interested! Need help?"
+                );
             }
 
         } catch (err) {
-            console.log("Analyze error", err);
+
+            console.log("Analyze error:", err);
         }
 
     }, 5000);
 
-
-
-    /* OPEN / CLOSE CHAT */
+    // =========================
+    // OPEN / CLOSE
+    // =========================
 
     bubble.onclick = () => {
 
         chat.style.display =
-            chat.style.display === "none" ? "flex" : "none"
+            chat.style.display === "none"
+                ? "flex"
+                : "none";
+    };
 
-    }
+    document.addEventListener("click", (e) => {
 
-    /* MESSAGE HELPERS */
+        if (e.target.id === "closeBot") {
+            chat.style.display = "none";
+        }
+    });
+
+    // =========================
+    // MESSAGE HELPERS
+    // =========================
 
     function addUserMessage(text) {
 
-        const messages = document.getElementById("messages")
+        const messages =
+            document.getElementById("messages");
 
-        const row = document.createElement("div")
-        row.style.display = "flex"
-        row.style.justifyContent = "flex-end"
+        if (!messages) return;
 
-        const bubble = document.createElement("div")
-        bubble.innerText = text
+        const row =
+            document.createElement("div");
 
-        bubble.style.background = "#e9e9e9"
-        bubble.style.padding = "8px 12px"
-        bubble.style.borderRadius = "12px"
-        bubble.style.fontSize = "13px"
-        bubble.style.maxWidth = "70%"
-        bubble.style.wordWrap = "break-word"
+        row.style.display = "flex";
+        row.style.justifyContent = "flex-end";
 
-        row.appendChild(bubble)
-        messages.appendChild(row)
+        const bubble =
+            document.createElement("div");
 
-        messages.scrollTop = messages.scrollHeight
+        bubble.innerText = text;
 
+        bubble.style.background = "#e9e9e9";
+        bubble.style.padding = "10px 14px";
+        bubble.style.borderRadius = "14px";
+        bubble.style.fontSize = "13px";
+        bubble.style.maxWidth = "75%";
+        bubble.style.wordWrap = "break-word";
+
+        row.appendChild(bubble);
+
+        messages.appendChild(row);
+
+        messages.scrollTop =
+            messages.scrollHeight;
     }
 
     function addBotMessage(text) {
 
-        const messages = document.getElementById("messages")
+        const messages =
+            document.getElementById("messages");
 
-        const row = document.createElement("div")
-        row.style.display = "flex"
-        row.style.justifyContent = "flex-start"
+        if (!messages) return;
 
-        const bubble = document.createElement("div")
-        bubble.innerText = text
+        const row =
+            document.createElement("div");
 
-        bubble.style.background = "#dff6e4"
-        bubble.style.padding = "8px 12px"
-        bubble.style.borderRadius = "12px"
-        bubble.style.fontSize = "13px"
-        bubble.style.maxWidth = "70%"
-        bubble.style.wordWrap = "break-word"
+        row.style.display = "flex";
+        row.style.justifyContent = "flex-start";
 
-        row.appendChild(bubble)
-        messages.appendChild(row)
+        const bubble =
+            document.createElement("div");
 
-        messages.scrollTop = messages.scrollHeight
+        bubble.innerText = text;
 
+        bubble.style.background = "#dff6e4";
+        bubble.style.padding = "10px 14px";
+        bubble.style.borderRadius = "14px";
+        bubble.style.fontSize = "13px";
+        bubble.style.maxWidth = "75%";
+        bubble.style.wordWrap = "break-word";
+
+        row.appendChild(bubble);
+
+        messages.appendChild(row);
+
+        messages.scrollTop =
+            messages.scrollHeight;
     }
 
-    /* SEND MESSAGE */
+    // =========================
+    // SEND MESSAGE
+    // =========================
 
-    document.addEventListener("click", async function (e) {
+    async function sendMessage() {
 
-        if (e.target.id === "sendBtn") {
+        const input =
+            document.getElementById("msgInput");
 
-            const input = document.getElementById("msgInput")
-            const message = input.value.trim()
+        if (!input) return;
 
-            if (!message) return
+        const message =
+            input.value.trim();
 
-            input.value = ""
+        if (!message) return;
 
-            addUserMessage(message)
+        input.value = "";
 
-            /* TYPING INDICATOR */
+        addUserMessage(message);
 
-            const messages = document.getElementById("messages")
+        const messages =
+            document.getElementById("messages");
 
-            const typing = document.createElement("div")
-            typing.innerText = "Typing..."
-            typing.style.fontSize = "12px"
-            typing.style.color = "#777"
+        const typing =
+            document.createElement("div");
 
-            messages.appendChild(typing)
+        typing.innerText = "Typing...";
 
-            messages.scrollTop = messages.scrollHeight
+        typing.style.fontSize = "12px";
+        typing.style.color = "#777";
 
-            try {
-                const res = await fetch(`${API}/chat`, {
+        messages.appendChild(typing);
+
+        messages.scrollTop =
+            messages.scrollHeight;
+
+        try {
+
+            const res =
+                await fetch(`${API}/chat`, {
 
                     method: "POST",
 
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
                     },
 
                     body: JSON.stringify({
                         botId,
+                        token,
                         message
                     })
 
-                })
+                });
 
-                const data = await res.json()
+            const data = await res.json();
 
-                typing.remove()
+            typing.remove();
 
-                addBotMessage(data.reply)
+            addBotMessage(
+                data.reply ||
+                "No response received."
+            );
 
-            } catch (err) {
+        } catch (err) {
 
-                typing.remove()
+            console.error(err);
 
-                addBotMessage("Server error. Please try again.")
+            typing.remove();
 
-            }
-
+            addBotMessage(
+                "⚠️ Server error. Please try again."
+            );
         }
+    }
 
-    })
+    // SEND BUTTON
+    document.addEventListener("click", (e) => {
 
-})()
+        if (e.target.id === "sendBtn") {
+            sendMessage();
+        }
+    });
+
+    // ENTER KEY
+    document.addEventListener("keypress", (e) => {
+
+        if (e.key === "Enter") {
+
+            const active =
+                document.activeElement;
+
+            if (
+                active &&
+                active.id === "msgInput"
+            ) {
+                sendMessage();
+            }
+        }
+    });
+
+})();
