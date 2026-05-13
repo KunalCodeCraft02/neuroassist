@@ -127,26 +127,67 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 
 app.use(cors({
+
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests, Postman)
-    if (!origin) {
-      logger.debug(`CORS: No origin header, allowing request`);
+
+    // Allow requests with:
+    // - no origin
+    // - null origin
+    // - Postman
+    // - mobile apps
+    // - file://
+    // - embedded widgets
+
+    if (!origin || origin === "null") {
+
+      logger.debug(
+        `CORS: No origin or null origin allowed`
+      );
+
       return callback(null, true);
     }
 
-    if (allowedOrigins.indexOf(origin) === -1) {
-      logger.warn(`CORS: Origin ${origin} not in allowed list: ${allowedOrigins.join(', ')}`);
-      const msg = `Origin ${origin} not allowed by CORS`;
-      return callback(new Error(msg), false);
+    // Allow configured origins
+    if (allowedOrigins.includes(origin)) {
+
+      logger.debug(
+        `CORS: Origin ${origin} allowed`
+      );
+
+      return callback(null, true);
     }
 
-    logger.debug(`CORS: Origin ${origin} allowed`);
-    return callback(null, true);
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
+    // Block unknown origins
+    logger.warn(
+      `CORS BLOCKED: ${origin}`
+    );
 
+    return callback(
+      new Error(
+        `Origin ${origin} not allowed by CORS`
+      ),
+      false
+    );
+  },
+
+  credentials: true,
+
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "OPTIONS"
+  ],
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization"
+  ],
+
+  optionsSuccessStatus: 200
+
+}));
 // 3. HTTP Request Logging (Morgan)
 const morgan = require("morgan")
 app.use(morgan('dev', {
