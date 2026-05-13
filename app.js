@@ -1376,59 +1376,14 @@ app.post(
   body("color")
     .optional()
     .matches(/^#[0-9A-F]{6}$/i)
-    .withMessage("Invalid color format (use #RRGGBB)"),
+    .withMessage("Invalid color format"),
 
   body("welcomeMessage")
     .optional()
     .trim()
     .isLength({ max: 500 })
-    .withMessage("Welcome message too long (max 500 chars)")
+    .withMessage("Welcome message too long")
     .escape(),
-
-  body("knowledge")
-    .optional()
-    .custom((value) => {
-
-      if (Array.isArray(value)) {
-
-        value.forEach((item, index) => {
-
-          if (typeof item !== "string") {
-            throw new Error(
-              `Knowledge item ${index} must be a string`
-            );
-          }
-
-          if (item.length > 10000) {
-            throw new Error(
-              `Knowledge item ${index} too long`
-            );
-          }
-        });
-
-      } else if (
-        value &&
-        typeof value === "string"
-      ) {
-
-        if (value.length > 50000) {
-          throw new Error(
-            "Knowledge content too long"
-          );
-        }
-
-      } else if (
-        value &&
-        typeof value !== "string"
-      ) {
-
-        throw new Error(
-          "Knowledge must be string or array"
-        );
-      }
-
-      return true;
-    }),
 
   body("websiteUrl")
     .optional({ checkFalsy: true })
@@ -1439,9 +1394,13 @@ app.post(
 
     try {
 
+      console.log("📥 CREATE BOT BODY:", req.body);
+
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
+
+        console.log("❌ VALIDATION ERRORS:", errors.array());
 
         return res.status(400).json({
           success: false,
@@ -1459,9 +1418,6 @@ app.post(
         websiteUrl
       } = req.body;
 
-      const botId = uuidv4();
-
-      // Fetch user
       const user = await User.findById(req.user.id);
 
       if (!user) {
@@ -1473,33 +1429,33 @@ app.post(
 
       }
 
-      // Count bots
+      // Bot limit check
       const botsCount = await Bot.countDocuments({
         userId: req.user.id
       });
 
-      // Check limit
       if (botsCount >= user.botsLimit) {
 
         return res.status(403).json({
           success: false,
-          message: "Bot limit reached. Upgrade your plan."
+          message: "Bot limit reached"
         });
 
       }
 
+      // Generate bot UUID
+      const botId = uuidv4();
+
+      // Generate API key if missing
       let newlyGeneratedApiKey = null;
 
-      // Generate API key
       if (!user.apiKey) {
 
-        newlyGeneratedApiKey = user.generateApiKey();
+        newlyGeneratedApiKey =
+          user.generateApiKey();
 
         await user.save();
 
-        console.log(
-          `🔑 API key generated for ${user.email}`
-        );
       }
 
       // Website processing
@@ -1513,16 +1469,24 @@ app.post(
 
         try {
 
-          // scrape website safely
-          websiteContent = await scrapeWebsite(
-            websiteUrl
-          );
+          websiteContent =
+            await scrapeWebsite(websiteUrl);
+
+          // LIMIT HUGE CONTENT
+          if (
+            websiteContent &&
+            websiteContent.length > 50000
+          ) {
+
+            websiteContent =
+              websiteContent.substring(0, 50000);
+          }
 
         } catch (scrapeErr) {
 
           console.error(
-            "Website scraping failed:",
-            scrapeErr.message
+            "❌ SCRAPER ERROR:",
+            scrapeErr
           );
 
           websiteContent = "";
@@ -1537,18 +1501,11 @@ app.post(
           authorizedDomain =
             extractDomain(websiteUrl);
 
-          if (!authorizedDomain) {
-
-            console.warn(
-              `Could not extract domain from ${websiteUrl}`
-            );
-          }
-
         } catch (domainErr) {
 
           console.error(
-            "Domain extraction failed:",
-            domainErr.message
+            "❌ DOMAIN ERROR:",
+            domainErr
           );
         }
       }
@@ -1566,18 +1523,20 @@ app.post(
 
         parsedKnowledge = knowledge
           .split("\n")
-          .map((item) => item.trim())
+          .map(item => item.trim())
           .filter(Boolean);
       }
 
-      // Create bot
+      console.log("📦 CREATING BOT...");
+
+      // CREATE BOT
       const bot = await Bot.create({
 
         userId: req.user.id,
 
         botId,
 
-        name,
+        name: name || "Untitled Bot",
 
         category: category || "general",
 
@@ -1591,31 +1550,27 @@ app.post(
 
         websiteUrl: websiteUrl || "",
 
-        authorizedDomain,
+        authorizedDomain: authorizedDomain || null,
 
-        websiteContent
+        websiteContent: websiteContent || ""
+
       });
 
-      // JWT Secret validation
+      console.log("✅ BOT CREATED:", bot.botId);
+
+      // JWT secret
       const jwtSecret =
         process.env.EMBED_SECRET ||
         process.env.JWT_SECRET;
 
       if (!jwtSecret) {
 
-        console.error(
+        throw new Error(
           "JWT secret missing"
         );
-
-        return res.status(500).json({
-          success: false,
-          message:
-            "Server configuration error"
-        });
-
       }
 
-      // Generate token
+      // Generate embed token
       const embedToken = jwt.sign(
         {
           botId: bot.botId
@@ -1626,6 +1581,8 @@ app.post(
         }
       );
 
+      console.log("✅ TOKEN CREATED");
+
       // Render page
       return res.render("embed", {
 
@@ -1635,26 +1592,26 @@ app.post(
 
         newlyGeneratedApiKey,
 
-        appUrl: process.env.APP_URL || "http://localhost:3000"
+        appUrl:
+          process.env.APP_URL ||
+          "http://localhost:3000"
       });
 
     } catch (err) {
 
       console.error(
-        "🔥 CREATE BOT ERROR:",
-        err
+        "🔥 FULL CREATE BOT ERROR:"
       );
+
+      console.error(err);
 
       return res.status(500).json({
 
         success: false,
 
-        message: "Failed to create bot",
+        message: err.message,
 
-        error:
-          process.env.NODE_ENV !== "production"
-            ? err.message
-            : undefined
+        stack: err.stack
       });
     }
   }
