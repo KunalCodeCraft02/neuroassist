@@ -377,7 +377,12 @@ function shouldSkipCSRF(req) {
 
     "/verify-otp",
 
-    "/createbot"
+    "/createbot",
+
+    // Bot embed API routes (called from external sites, no CSRF token)
+    "/track",
+    "/chat",
+    "/analyze"
 
   ];
 
