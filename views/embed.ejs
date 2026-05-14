@@ -781,10 +781,13 @@
 
             <div class="code-container">
               <div class="code-box" id="scriptCode">
-  &lt;script src="<%= appUrl || 'https://bemybot.in' %>/js/bot.js"
-    data-token="<%= embedToken %>"
-    data-bot="<%= bot.botId %>"
-    data-name="<%= bot.name %>"&gt;&lt;/script&gt;
+ <script
+  src="<%= appUrl || 'https://bemybot.in' %>/js/bot.js"
+  data-api="<%= appUrl || 'https://bemybot.in' %>"
+  data-token="<%= embedToken %>"
+  data-bot="<%= bot.botId %>"
+  data-name="<%= bot.name %>">
+</script>
               </div>
               <button class="copy-btn" onclick="copyScript()">
                 <i class="ri-file-copy-line"></i>

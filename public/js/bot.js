@@ -25,7 +25,10 @@
     const token =
         script.getAttribute("data-token");
 
+    // Allow explicit API URL override via data-api attribute
+    // Falls back to script origin (for production embedding)
     const API =
+        script.getAttribute("data-api") ||
         new URL(script.src).origin;
 
     console.log("✅ BOT ID:", botId);
@@ -438,23 +441,42 @@ Send
 
                 });
 
+            // Handle non-JSON responses (e.g., HTML error pages)
+            const contentType = res.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+                const text = await res.text();
+                console.error("Chat non-JSON response:", res.status, text);
+                typing.remove();
+                addBotMessage(
+                    `⚠️ Server error (${res.status}). Please try again.`
+                );
+                return;
+            }
+
             const data = await res.json();
 
             typing.remove();
 
-            addBotMessage(
-                data.reply ||
-                "No response received."
-            );
+            if (data.error) {
+                console.warn("Chat API error:", data.error);
+                addBotMessage(
+                    `⚠️ ${data.message || "Server error. Please try again."}`
+                );
+            } else {
+                addBotMessage(
+                    data.reply ||
+                    "No response received."
+                );
+            }
 
         } catch (err) {
 
-            console.error(err);
+            console.error("Chat fetch error:", err);
 
             typing.remove();
 
             addBotMessage(
-                "⚠️ Server error. Please try again."
+                "⚠️ Network error. Please check your connection."
             );
         }
     }

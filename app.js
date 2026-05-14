@@ -202,8 +202,8 @@ const localOrigins = [
 
 const extraOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS
-      .split(",")
-      .map(origin => origin.trim())
+    .split(",")
+    .map(origin => origin.trim())
   : ["https://bemybot.in"];
 
 const allowedOrigins = [...localOrigins, ...extraOrigins];
@@ -1753,25 +1753,51 @@ app.post(
 
 app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
+  // ====================================
+  // CORS HEADERS
+  // ====================================
+
+  res.header(
+    "Access-Control-Allow-Origin",
+    "*"
+  );
+
+  res.header(
+    "Access-Control-Allow-Headers",
+    "*"
+  );
+
+  res.header(
+    "Access-Control-Allow-Methods",
+    "*"
+  );
+
   try {
 
+    console.log("📩 CHAT BODY:");
+    console.log(req.body);
+
     // ====================================
-    // VALIDATE BOT
+    // BOT
     // ====================================
 
     const bot = req.bot;
     const botId = req.botId;
-    console.log(req.body);
 
     if (!bot) {
 
+      console.log("❌ BOT NOT FOUND");
+
       return res.status(404).json({
+
+        error: true,
+
         reply: "Bot not found"
       });
     }
 
     // ====================================
-    // VALIDATE MESSAGE
+    // MESSAGE
     // ====================================
 
     const { message } = req.body;
@@ -1782,6 +1808,9 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     ) {
 
       return res.status(400).json({
+
+        error: true,
+
         reply: "Invalid message"
       });
     }
@@ -1789,7 +1818,7 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     const msg =
       message.toLowerCase().trim();
 
-    console.log("📩 MESSAGE:", msg);
+    console.log("📩 USER:", msg);
 
     // ====================================
     // BOOKING FLOW
@@ -1802,13 +1831,15 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
       return res.json({
 
+        success: true,
+
         reply:
           "Sure! Please provide date and time like: 2026-03-20 17:00 📅"
       });
     }
 
     // ====================================
-    // DATE/TIME DETECTION
+    // DATE/TIME DETECT
     // ====================================
 
     const dateTimeMatch =
@@ -1836,8 +1867,10 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
         return res.json({
 
+          success: true,
+
           reply:
-            `This slot (${time}) is already booked. Try another time.`
+            `This slot (${time}) is already booked.`
         });
       }
 
@@ -1856,8 +1889,10 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
       return res.json({
 
+        success: true,
+
         reply:
-          `✅ Your appointment is confirmed for ${date} at ${time}`
+          `✅ Appointment confirmed for ${date} at ${time}`
       });
     }
 
@@ -1873,11 +1908,6 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     const phoneMatch =
       message.match(/\b\d{10}\b/);
 
-    const nameMatch =
-      message.match(
-        /name\s*is\s*([a-zA-Z ]+)/i
-      );
-
     // ====================================
     // SAVE LEAD
     // ====================================
@@ -1886,154 +1916,26 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
       try {
 
-        const user =
-          await User.findById(bot.userId);
+        await Lead.create({
 
-        let leadScore = 0;
+          botId,
 
-        const keywordsDetected = [];
+          email:
+            emailMatch
+              ? emailMatch[0]
+              : "",
 
-        const lowerMsg =
-          message.toLowerCase();
+          phone:
+            phoneMatch
+              ? phoneMatch[0]
+              : "",
 
-        // CONTACT INFO
-        if (emailMatch) {
-
-          leadScore += 15;
-
-          keywordsDetected.push(
-            "email"
-          );
-        }
-
-        if (phoneMatch) {
-
-          leadScore += 15;
-
-          keywordsDetected.push(
-            "phone"
-          );
-        }
-
-        if (nameMatch) {
-
-          leadScore += 10;
-
-          keywordsDetected.push(
-            "name"
-          );
-        }
-
-        // BUYING INTENT
-        const intentKeywords = {
-
-          price: 10,
-          pricing: 10,
-          cost: 10,
-          buy: 15,
-          purchase: 15,
-          demo: 10,
-          trial: 10,
-          interested: 10,
-          subscribe: 10
-        };
-
-        for (
-          const [keyword, points]
-          of Object.entries(intentKeywords)
-        ) {
-
-          if (
-            lowerMsg.includes(keyword)
-          ) {
-
-            leadScore += points;
-
-            keywordsDetected.push(keyword);
-          }
-        }
-
-        leadScore =
-          Math.min(100, leadScore);
-
-        // LEAD STATUS
-        let interestLevel = "low";
-
-        if (leadScore >= 70) {
-
-          interestLevel = "high";
-
-        } else if (leadScore >= 40) {
-
-          interestLevel = "medium";
-        }
-
-        // SAVE LEAD
-        const newLead =
-          await Lead.create({
-
-            botId,
-
-            name:
-              nameMatch
-                ? nameMatch[1].trim()
-                : "Unknown",
-
-            email:
-              emailMatch
-                ? emailMatch[0]
-                : "",
-
-            phone:
-              phoneMatch
-                ? phoneMatch[0]
-                : "",
-
-            message,
-
-            leadScore,
-
-            interestLevel,
-
-            keywordsDetected,
-
-            wantsDemo:
-              lowerMsg.includes("demo"),
-
-            askedPricing:
-              lowerMsg.includes("price") ||
-              lowerMsg.includes("pricing") ||
-              lowerMsg.includes("cost")
-          });
-
-        console.log(
-          "🔥 LEAD SAVED:",
-          newLead._id
-        );
-
-        // EMAIL
-        try {
-
-          await sendEmailLead(
-
-            newLead,
-
-            user
-              ? user.email
-              : null,
-
-            bot.name
-          );
-
-        } catch (emailErr) {
-
-          console.log(
-            "EMAIL ERROR:",
-            emailErr.message
-          );
-        }
+          message
+        });
 
         return res.json({
+
+          success: true,
 
           reply:
             "🔥 Thank you! Our team will contact you soon."
@@ -2041,42 +1943,17 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
       } catch (leadErr) {
 
-        console.log(
-          "❌ LEAD ERROR:",
-          leadErr
-        );
+        console.log("❌ LEAD ERROR:");
+        console.log(leadErr);
 
         return res.json({
 
+          success: true,
+
           reply:
-            "Failed to save lead."
+            "Lead received successfully."
         });
       }
-    }
-
-    // ====================================
-    // INTEREST DETECTION
-    // ====================================
-
-    const isInterested =
-
-      msg.includes("buy") ||
-
-      msg.includes("price") ||
-
-      msg.includes("pricing") ||
-
-      msg.includes("purchase") ||
-
-      msg.includes("demo");
-
-    if (isInterested) {
-
-      return res.json({
-
-        reply:
-          "Great! Please share your Name, Email and Phone number 😊"
-      });
     }
 
     // ====================================
@@ -2084,12 +1961,11 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     // ====================================
 
     let reply =
-      "Sorry, AI service unavailable.";
+      "AI service unavailable.";
 
     try {
 
-      // TEMP TEST
-      // reply = "AI working successfully!";
+      console.log("🤖 GENERATING AI REPLY");
 
       reply =
         await generateReply(
@@ -2097,20 +1973,19 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
           message
         );
 
+      console.log("✅ AI REPLY:", reply);
+
     } catch (aiErr) {
 
-      console.log(
-        "❌ AI ERROR:"
-      );
-
+      console.log("❌ AI ERROR:");
       console.log(aiErr);
 
       reply =
-        "AI service temporarily unavailable.";
+        "AI temporarily unavailable.";
     }
 
     // ====================================
-    // SAVE CHAT
+    // SAVE CONVERSATION
     // ====================================
 
     try {
@@ -2122,16 +1997,12 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
         messages: [
 
           {
-
             role: "user",
-
             text: message
           },
 
           {
-
             role: "bot",
-
             text: reply
           }
         ]
@@ -2140,7 +2011,7 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     } catch (dbErr) {
 
       console.log(
-        "❌ CONVERSATION SAVE ERROR:"
+        "❌ CONVERSATION ERROR:"
       );
 
       console.log(dbErr);
@@ -2151,18 +2022,20 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
     // ====================================
 
     return res.json({
+
+      success: true,
+
       reply
     });
 
   } catch (err) {
 
-    console.log(
-      "🔥 CHAT ERROR:"
-    );
-
+    console.log("🔥 CHAT ROUTE ERROR:");
     console.log(err);
 
     return res.status(500).json({
+
+      success: false,
 
       reply:
         "Internal server error",
