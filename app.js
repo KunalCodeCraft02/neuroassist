@@ -203,42 +203,16 @@ app.use(cors({
 
   origin: function (origin, callback) {
 
-    // Allow requests with:
-    // - no origin
-    // - null origin
-    // - Postman
-    // - mobile apps
-    // - file://
-    // - embedded widgets
-
     if (!origin || origin === "null") {
-
-      logger.debug(
-        `CORS: No origin or null origin allowed`
-      );
-
       return callback(null, true);
     }
 
-    // Allow configured origins
     if (allowedOrigins.includes(origin)) {
-
-      logger.debug(
-        `CORS: Origin ${origin} allowed`
-      );
-
       return callback(null, true);
     }
-
-    // Block unknown origins
-    logger.warn(
-      `CORS BLOCKED: ${origin}`
-    );
 
     return callback(
-      new Error(
-        `Origin ${origin} not allowed by CORS`
-      ),
+      new Error(`Origin ${origin} not allowed by CORS`),
       false
     );
   },
@@ -261,10 +235,10 @@ app.use(cors({
   ],
 
   optionsSuccessStatus: 200
-
 }));
 
-app.options("*", cors());
+// HANDLE PREFLIGHT
+app.use(cors());
 // 3. HTTP Request Logging (Morgan)
 const morgan = require("morgan")
 app.use(morgan('dev', {
