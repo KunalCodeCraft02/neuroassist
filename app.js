@@ -179,66 +179,82 @@ app.use(
 
   })
 );
-// 2. CORS - Allow specific origins only
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  ? process.env.ALLOWED_ORIGINS
+      .split(",")
+      .map(origin => origin.trim())
   : [
-    'https://bemybot.in',
 
-    'http://localhost:3000',
+      "https://bemybot.in",
 
-    'http://localhost:3001',
+      "http://localhost:3000",
 
-    'http://127.0.0.1:5500',
+      "http://localhost:3001",
 
-    'http://127.0.0.1:3000',
+      "http://127.0.0.1:5500",
 
-    'http://127.0.0.1:5501'
-  ];
+      "http://127.0.0.1:5501",
 
-// Log allowed origins on startup
-logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+      "http://127.0.0.1:3000"
+    ];
 
-app.use(cors({
+logger.info(
+  `✅ CORS Allowed Origins: ${allowedOrigins.join(", ")}`
+);
 
-  origin: function (origin, callback) {
+app.use((req, res, next) => {
 
-    if (!origin || origin === "null") {
-      return callback(null, true);
-    }
+  const origin = req.headers.origin;
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+  // ✅ Allow configured origins
+  if (
+    origin &&
+    allowedOrigins.includes(origin)
+  ) {
 
-    return callback(
-      new Error(`Origin ${origin} not allowed by CORS`),
-      false
+    res.header(
+      "Access-Control-Allow-Origin",
+      origin
     );
-  },
+  }
 
-  credentials: false,
+  // ✅ Allow requests without origin
+  // (mobile apps, Postman, curl, widgets)
+  if (!origin || origin === "null") {
 
-  methods: [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS"
-  ],
+    res.header(
+      "Access-Control-Allow-Origin",
+      "*"
+    );
+  }
 
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "CSRF-Token"
-  ],
+  // ✅ Allowed methods
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
 
-  optionsSuccessStatus: 200
-}));
+  // ✅ Allowed headers
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization, CSRF-Token"
+  );
 
-// HANDLE PREFLIGHT
-app.use(cors());
+  // ✅ Allow credentials
+  res.header(
+    "Access-Control-Allow-Credentials",
+    "true"
+  );
+
+  // ✅ Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
 // 3. HTTP Request Logging (Morgan)
 const morgan = require("morgan")
 app.use(morgan('dev', {
@@ -462,19 +478,36 @@ async function analyzeUser(botId, userId) {
 
 
 
-app.get("/analyze", chatLimiter, botAccess, async (req, res) => {
+app.get("/analyze", async (req, res) => {
 
-  const { botId, userId } = req.query;
+  try {
 
-  if (!botId || !userId) {
-    return res.json({ status: "UNKNOWN" });
+    const { botId, userId } = req.query;
+
+    if (!botId || !userId) {
+
+      return res.json({
+        status: "UNKNOWN"
+      });
+    }
+
+    const status =
+      await analyzeUser(botId, userId);
+
+    return res.json({
+      status
+    });
+
+  } catch (err) {
+
+    console.log("ANALYZE ERROR:");
+    console.log(err);
+
+    return res.status(500).json({
+      error: err.message
+    });
   }
-
-  const status = await analyzeUser(botId, userId);
-
-  res.json({ status });
 });
-
 
 
 
@@ -1713,6 +1746,7 @@ app.post("/chat", chatLimiter, botAccess, async (req, res) => {
 
     const bot = req.bot;
     const botId = req.botId;
+    console.log(req.body);
 
     if (!bot) {
 
@@ -2551,12 +2585,24 @@ app.post("/update-profile", auth, upload.single("photo"), async (req, res) => {
   }
 });
 
+app.post("/track", chatLimiter, async (req, res) => {
 
-app.post("/track", chatLimiter, botAccess, async (req, res) => {
-  await Behavior.create(req.body);
-  res.sendStatus(200);
+  try {
+
+    await Behavior.create(req.body);
+
+    return res.sendStatus(200);
+
+  } catch (err) {
+
+    console.log("TRACK ERROR:");
+    console.log(err);
+
+    return res.status(500).json({
+      error: err.message
+    });
+  }
 });
-
 
 
 app.get("/logout", (req, res) => {
