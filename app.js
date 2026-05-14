@@ -148,7 +148,17 @@ app.use(
 
           "https://nominatim.openstreetmap.org",
 
-          "https://neuroassist-5z1k.onrender.com"
+          "https://neuroassist-5z1k.onrender.com",
+
+          "http://127.0.0.1:5500",
+
+          "http://127.0.0.1:5501",
+
+          "http://localhost:3000",
+
+          "http://localhost:3001",
+
+          "http://localhost:5500"
         ],
 
         frameSrc: [
@@ -179,24 +189,24 @@ app.use(
 
   })
 );
-const allowedOrigins = process.env.ALLOWED_ORIGINS
+// Always include localhost/debugging origins for development & embedded widget testing
+const localOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:5501",
+  "http://127.0.0.1:3000",
+  "http://localhost:5500",
+  "http://localhost:5501"
+];
+
+const extraOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS
       .split(",")
       .map(origin => origin.trim())
-  : [
+  : ["https://bemybot.in"];
 
-      "https://bemybot.in",
-
-      "http://localhost:3000",
-
-      "http://localhost:3001",
-
-      "http://127.0.0.1:5500",
-
-      "http://127.0.0.1:5501",
-
-      "http://127.0.0.1:3000"
-    ];
+const allowedOrigins = [...localOrigins, ...extraOrigins];
 
 logger.info(
   `✅ CORS Allowed Origins: ${allowedOrigins.join(", ")}`
