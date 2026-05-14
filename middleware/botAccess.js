@@ -4,9 +4,11 @@ const jwt = require("jsonwebtoken");
 const { logger } = require("../utils/logger");
 
 /**
- * Bot Access Middleware
+ * ============================================
+ * BOT ACCESS MIDDLEWARE
+ * ============================================
  * Supports:
- * - JWT embed token
+ * - JWT token
  * - Legacy botId
  * - Domain restriction
  */
@@ -17,6 +19,25 @@ async function botAccess(req, res, next) {
 
     let botId = null;
     let token = null;
+
+    // ====================================
+    // CORS HEADERS
+    // ====================================
+
+    res.header(
+      "Access-Control-Allow-Origin",
+      "*"
+    );
+
+    res.header(
+      "Access-Control-Allow-Headers",
+      "*"
+    );
+
+    res.header(
+      "Access-Control-Allow-Methods",
+      "*"
+    );
 
     // ====================================
     // GET TOKEN
@@ -86,28 +107,18 @@ async function botAccess(req, res, next) {
         botId =
           decoded.botId;
 
-        // Expiry check
-        if (
-          decoded.exp &&
-          Date.now() >=
-          decoded.exp * 1000
-        ) {
-
-          return res.status(401).json({
-
-            error:
-              "Token expired",
-
-            message:
-              "Embed token expired"
-          });
-        }
+        console.log(
+          "✅ TOKEN BOT ID:",
+          botId
+        );
 
       } catch (err) {
 
-        logger.warn(
-          `❌ Invalid embed token: ${err.message}`
+        console.log(
+          "❌ TOKEN ERROR:"
         );
+
+        console.log(err);
 
         return res.status(401).json({
 
@@ -115,14 +126,14 @@ async function botAccess(req, res, next) {
             "Invalid token",
 
           message:
-            "Embed token invalid"
+            err.message
         });
       }
 
     } else {
 
       // ====================================
-      // LEGACY BOT ID SUPPORT
+      // LEGACY BOT ID
       // ====================================
 
       if (
@@ -165,6 +176,10 @@ async function botAccess(req, res, next) {
 
     if (!botId) {
 
+      console.log(
+        "❌ BOT ID MISSING"
+      );
+
       return res.status(400).json({
 
         error:
@@ -175,14 +190,45 @@ async function botAccess(req, res, next) {
       });
     }
 
+    // CLEAN BOT ID
+    botId =
+      String(botId).trim();
+
+    console.log(
+      "🔍 SEARCHING BOT:",
+      botId
+    );
+
+    // ====================================
+    // DEBUG DATABASE
+    // ====================================
+
+    const allBots =
+      await Bot.find({})
+        .select("botId name");
+
+    console.log(
+      "📦 DATABASE BOTS:"
+    );
+
+    console.log(allBots);
+
     // ====================================
     // FIND BOT
     // ====================================
 
     const bot =
       await Bot.findOne({
-        botId
+
+        botId: botId
+
       });
+
+    console.log(
+      "🤖 FOUND BOT:"
+    );
+
+    console.log(bot);
 
     if (!bot) {
 
@@ -192,7 +238,7 @@ async function botAccess(req, res, next) {
           "Bot not found",
 
         message:
-          "Requested bot does not exist"
+          `Requested bot does not exist: ${botId}`
       });
     }
 
@@ -208,7 +254,12 @@ async function botAccess(req, res, next) {
 
       "";
 
-    // Allow localhost testing
+    console.log(
+      "🌍 REQUEST ORIGIN:",
+      origin
+    );
+
+    // Allow localhost
     const localhostAllowed =
 
       origin.includes("127.0.0.1") ||
@@ -222,6 +273,16 @@ async function botAccess(req, res, next) {
 
       const authorizedDomain =
         bot.authorizedDomain;
+
+      console.log(
+        "🌍 REQUEST DOMAIN:",
+        requestDomain
+      );
+
+      console.log(
+        "🔐 AUTHORIZED DOMAIN:",
+        authorizedDomain
+      );
 
       // Skip if no domain configured
       if (
@@ -240,10 +301,8 @@ async function botAccess(req, res, next) {
 
         if (!isAllowed) {
 
-          logger.warn(
-
-            `❌ Domain blocked: ${requestDomain}`
-
+          console.log(
+            "❌ DOMAIN BLOCKED"
           );
 
           return res.status(403).json({
@@ -263,16 +322,23 @@ async function botAccess(req, res, next) {
     // ====================================
 
     req.bot = bot;
-    req.botId = botId;
+
+    req.botId = bot.botId;
+
+    console.log(
+      "✅ BOT ACCESS GRANTED:",
+      bot.botId
+    );
 
     next();
 
   } catch (err) {
 
-    logger.error(
-      "🔥 Bot access middleware error:",
-      err
+    console.log(
+      "🔥 BOT ACCESS ERROR:"
     );
+
+    console.log(err);
 
     return res.status(500).json({
 
