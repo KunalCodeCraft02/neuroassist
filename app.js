@@ -1717,20 +1717,39 @@ app.post(
 
       console.log("✅ TOKEN CREATED");
 
-      // Render page
-      return res.render("embed", {
+      const appUrl =
+        process.env.APP_URL ||
+        "https://bemybot.in";
+
+      const embedScript = `
+<script
+  src="${appUrl}/js/bot.js"
+  data-api="${appUrl}"
+  data-token="${embedToken}"
+  data-bot="${bot.botId}"
+  data-name="${bot.name}">
+</script>
+`;
+
+      console.log("✅ GENERATED SCRIPT:");
+      console.log(embedScript);
+
+      // ====================================
+      // RENDER EMBED PAGE
+      // ====================================
+
+      res.render("embed", {
 
         bot,
 
         embedToken,
 
+        script: embedScript,
+
         newlyGeneratedApiKey,
 
-        appUrl:
-          process.env.APP_URL ||
-          "http://localhost:3000"
+        appUrl
       });
-
     } catch (err) {
 
       console.error(
