@@ -182,7 +182,19 @@ app.use(
 // 2. CORS - Allow specific origins only
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['https://bemybot.in', 'http://localhost:3000', 'http://localhost:3001'];
+  : [
+    'https://bemybot.in',
+
+    'http://localhost:3000',
+
+    'http://localhost:3001',
+
+    'http://127.0.0.1:5500',
+
+    'http://127.0.0.1:3000',
+
+    'http://127.0.0.1:5501'
+  ];
 
 // Log allowed origins on startup
 logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
@@ -231,25 +243,28 @@ app.use(cors({
     );
   },
 
-  credentials: true,
+  credentials: false,
 
   methods: [
     "GET",
     "POST",
     "PUT",
+    "PATCH",
     "DELETE",
     "OPTIONS"
   ],
 
-allowedHeaders: [
-  "Content-Type",
-  "Authorization",
-  "CSRF-Token"
-],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "CSRF-Token"
+  ],
 
   optionsSuccessStatus: 200
 
 }));
+
+app.options("*", cors());
 // 3. HTTP Request Logging (Morgan)
 const morgan = require("morgan")
 app.use(morgan('dev', {
