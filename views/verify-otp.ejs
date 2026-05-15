@@ -1,105 +1,451 @@
+# Rewritten `verify-otp.ejs` — Matching Premium Homepage Theme
+
+```ejs
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>BemyBot — Verify OTP</title>
 
-    <title>Verify OTP</title>
     <meta name="csrf-token" content="<%= csrfToken ? csrfToken() : '' %>">
 
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap"
+        rel="stylesheet" />
+
     <style>
-        * {
+
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+        }
+
+        :root {
+            --bg: #0a0c10;
+            --surface: #0f1117;
+            --surface2: #14161e;
+            --surface3: #1a1d28;
+            --accent: #7c6af7;
+            --accent2: #5bf0c0;
+            --accent-dim: rgba(124, 106, 247, 0.14);
+            --text: #e8eaf0;
+            --text2: #9da3b8;
+            --muted: #4a5070;
+            --border: rgba(255, 255, 255, 0.06);
+            --border2: rgba(124, 106, 247, 0.2);
+            --radius: 24px;
+            --font-display: 'Instrument Serif', serif;
+            --font-sans: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            background: #ffffff;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            padding: 20px;
+            position: relative;
+            cursor: none;
         }
 
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+            opacity: .5;
+        }
+
+        /* CURSOR */
+        #cur {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width .25s, height .25s, background .25s;
+            mix-blend-mode: screen;
+        }
+
+        #cur-ring {
+            position: fixed;
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(124, 106, 247, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            transition: transform .12s ease-out;
+        }
+
+        body:has(button:hover) #cur,
+        body:has(input:hover) #cur {
+            width: 14px;
+            height: 14px;
+            background: var(--accent2);
+        }
+
+        /* BACKGROUND */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .mesh-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+        }
+
+        .mesh-blob-1 {
+            width: 600px;
+            height: 600px;
+            top: -220px;
+            right: -180px;
+            background: radial-gradient(circle, rgba(124, 106, 247, .12) 0%, transparent 70%);
+            animation: floatA 12s ease-in-out infinite alternate;
+        }
+
+        .mesh-blob-2 {
+            width: 450px;
+            height: 450px;
+            bottom: -100px;
+            left: -100px;
+            background: radial-gradient(circle, rgba(91, 240, 192, .08) 0%, transparent 70%);
+            animation: floatB 15s ease-in-out infinite alternate;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: -1;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%);
+        }
+
+        @keyframes floatA {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(-40px, 50px);
+            }
+        }
+
+        @keyframes floatB {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(40px, -40px);
+            }
+        }
+
+        /* CARD */
         .container {
-
-            width: 400px;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            border: 1px solid #eee;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-
+            width: 100%;
+            max-width: 480px;
+            background: rgba(15, 17, 23, .78);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 42px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 80px rgba(124, 106, 247, .08);
         }
 
-        h2 {
-            margin-bottom: 10px;
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        /* BADGE */
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border2);
+            background: var(--accent-dim);
+            padding: 6px 14px 6px 10px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            letter-spacing: .08em;
+            color: var(--accent);
+            border-radius: 100px;
+            margin-bottom: 24px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent2);
+            border-radius: 50%;
+            animation: pulse 2.2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: .3;
+                transform: scale(.7);
+            }
+        }
+
+        /* ICON */
+        .otp-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            background: var(--accent-dim);
+            border: 1px solid var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .otp-icon i {
+            font-size: 34px;
+            color: var(--accent);
+        }
+
+        /* TITLE */
+        h1 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            font-size: clamp(42px, 6vw, 64px);
+            line-height: .95;
+            letter-spacing: -.03em;
+            margin-bottom: 14px;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         p {
+            color: var(--text2);
+            line-height: 1.8;
             font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 34px;
+        }
+
+        /* INPUT */
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap i {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 18px;
         }
 
         input {
-
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 18px 18px 18px 58px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            outline: none;
+            font-size: 24px;
             text-align: center;
-            letter-spacing: 4px;
-
+            letter-spacing: 10px;
+            transition: .3s;
+            font-family: var(--font-mono);
         }
 
+        input:focus {
+            border-color: var(--border2);
+            background: var(--surface3);
+            box-shadow: 0 0 0 4px rgba(124, 106, 247, .08);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+            letter-spacing: 4px;
+            font-size: 16px;
+        }
+
+        /* BUTTON */
         button {
-
-            margin-top: 20px;
+            margin-top: 22px;
             width: 100%;
-            padding: 13px;
-            background: black;
-            color: white;
+            padding: 16px;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--accent), #9c8ef7);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
             cursor: pointer;
-
+            transition: .3s;
+            box-shadow: 0 4px 24px rgba(124, 106, 247, .3);
         }
 
         button:hover {
-            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(124, 106, 247, .4);
         }
+
+        /* MESSAGE */
+        .message {
+            margin-top: 22px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text2);
+            transition: .3s;
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:768px) {
+
+            body {
+                cursor: auto;
+            }
+
+            #cur,
+            #cur-ring {
+                display: none;
+            }
+
+            .container {
+                padding: 32px 24px;
+                border-radius: 26px;
+            }
+
+            h1 {
+                font-size: 48px;
+            }
+
+            input {
+                font-size: 20px;
+                letter-spacing: 8px;
+            }
+        }
+
     </style>
 
 </head>
 
 <body>
 
+    <div id="cur"></div>
+    <div id="cur-ring"></div>
+
+    <div class="mesh-bg">
+        <div class="mesh-blob mesh-blob-1"></div>
+        <div class="mesh-blob mesh-blob-2"></div>
+    </div>
+
+    <div class="grid-bg"></div>
+
+
     <div class="container">
 
-        <h2>Verify OTP</h2>
+        <div class="hero-badge">
+            <div class="badge-dot"></div>
+            SECURE VERIFICATION
+        </div>
 
-        <p>Enter the verification code sent to your email.</p>
+        <div class="otp-icon">
+            <i class="ri-shield-check-line"></i>
+        </div>
+
+        <h1>Verify <span>OTP</span></h1>
+
+        <p id="messageText">
+            Enter the verification code sent to your email address to continue your secure login.
+        </p>
 
         <form id="otpForm">
 
-            <input type="text" name="otp" placeholder="Enter OTP" required>
+            <div class="input-wrap">
+                <i class="ri-key-2-line"></i>
+                <input type="text" name="otp" placeholder="000000" maxlength="6" required>
+            </div>
 
-            <button type="submit">Verify</button>
+            <button type="submit">
+                Verify Code
+            </button>
 
         </form>
 
+        <div class="message">
+            Your OTP expires in a few minutes for security reasons.
+        </div>
+
     </div>
 
+
     <script>
+
+        // CURSOR
+        const cur = document.getElementById('cur');
+        const ring = document.getElementById('cur-ring');
+
+        window.addEventListener('mousemove', (e) => {
+            cur.style.left = e.clientX + 'px';
+            cur.style.top = e.clientY + 'px';
+
+            ring.style.left = e.clientX + 'px';
+            ring.style.top = e.clientY + 'px';
+        });
+
+
         document.getElementById("otpForm").addEventListener("submit", async function (e) {
 
             e.preventDefault()
@@ -107,26 +453,63 @@
             const otp = this.otp.value
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || ''
+
             const res = await fetch("/verify-otp", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ otp, _csrf: csrfToken })
+                body: JSON.stringify({
+                    otp,
+                    _csrf: csrfToken
+                })
             })
 
             const data = await res.json()
 
             if (data.success) {
-                window.location = data.redirect
+
+                document.getElementById("messageText").innerText = "Verification successful. Redirecting..."
+                document.getElementById("messageText").style.color = "#5bf0c0"
+
+                setTimeout(() => {
+                    window.location = data.redirect
+                }, 800)
+
             } else {
-                document.querySelector("p").innerText = data.message
-                document.querySelector("p").style.color = "red"
+
+                document.getElementById("messageText").innerText = data.message
+                document.getElementById("messageText").style.color = "#ff7a7a"
+
             }
 
         })
+
     </script>
 
 </body>
 
 </html>
+<!-- ```
+
+---
+
+### What Changed
+
+* Complete redesign matching homepage/index theme
+* Same futuristic dark UI
+* Purple + cyan premium gradients
+* Glassmorphism verification card
+* Animated mesh background
+* Premium OTP input style
+* Better typography (`Instrument Serif`, `Outfit`, `JetBrains Mono`)
+* Animated cursor effect
+* Better mobile responsive design
+* Improved verify button design
+* Existing OTP verification logic preserved completely
+* Existing fetch logic unchanged
+* CSRF logic untouched
+
+Reference theme analyzed:
+
+* Homepage/index theme fileciteturn0file0L1-L300 -->
