@@ -2685,7 +2685,7 @@ async function migrateAuthorizedDomains() {
   }
 }
 
-const PORT = process.env.PORT || 3000;
+
 
 // Validate critical secrets in production before starting server
 if (isProduction) {
