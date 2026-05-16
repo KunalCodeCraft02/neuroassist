@@ -2738,6 +2738,11 @@ if (isProduction) {
    START SERVER
 ============================================ */
 
+
+/* ============================================
+   START SERVER
+============================================ */
+
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
