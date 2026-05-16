@@ -2734,27 +2734,47 @@ if (isProduction) {
 }
 
 // Start server after DB is connected
+/* ============================================
+   START SERVER
+============================================ */
+
+const PORT = process.env.PORT || 3000;
+
 async function startServer() {
+
   try {
-    // Wait for MongoDB connection
+
+    // CONNECT DATABASE
     await connectDB();
 
-    // Small delay to ensure Mongoose is fully ready
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("✅ MongoDB Connected Successfully");
 
-    // Run migration on startup (after DB connected)
+    // RUN MIGRATIONS
     console.log("🔄 Running database migrations...");
     await migrateAuthorizedDomains();
 
-    // Start server
-    server.listen(PORT, () => {
-      logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-      logger.info("📧 Daily lead summaries will be sent at 9:00 AM every day");
+    // START SERVER
+    server.listen(PORT, "0.0.0.0", () => {
+
+      console.log(`
+🚀 ==================================
+   BemyBot Server Started
+🌍 Environment : ${process.env.NODE_ENV || "development"}
+📡 Port        : ${PORT}
+==================================
+      `);
+
     });
+
   } catch (err) {
-    console.error("❌ Failed to start server:", err);
+
+    console.error("❌ Failed to start server:");
+    console.error(err);
+
     process.exit(1);
+
   }
+
 }
 
 startServer();
