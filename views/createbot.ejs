@@ -185,7 +185,9 @@
       transform: translate(-50%, -50%);
     }
 
-    /* NAVBAR */
+    /* ===================== */
+    /* NAVBAR — FIXED        */
+    /* ===================== */
 
     #nav {
       height: 74px;
@@ -196,7 +198,8 @@
       top: 0;
       left: 0;
 
-      z-index: 1000;
+      /* Raised z-index so it always sits above content */
+      z-index: 10000;
 
       padding: 0 42px;
 
@@ -204,16 +207,20 @@
       align-items: center;
       justify-content: space-between;
 
-      transition: .35s;
+      transition: background .35s, border-color .35s;
 
       border-bottom: 1px solid transparent;
+
+      /* Always-on background so it's visible on all devices */
+      background: rgba(10, 12, 16, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     #nav.scrolled {
-      background: rgba(10, 12, 16, .82);
-
+      background: rgba(10, 12, 16, .92);
       backdrop-filter: blur(24px);
-
+      -webkit-backdrop-filter: blur(24px);
       border-color: var(--border);
     }
 
@@ -221,6 +228,9 @@
       display: flex;
       align-items: baseline;
       gap: 4px;
+
+      /* Prevent logo from being pushed off-screen */
+      flex-shrink: 0;
     }
 
     .logo h3 {
@@ -260,7 +270,7 @@
 
       font-size: 14px;
 
-      transition: .3s;
+      transition: color .3s;
     }
 
     #nav-links a:hover {
@@ -278,7 +288,9 @@
 
       font-size: 22px;
 
-      transition: .3s;
+      cursor: pointer;
+
+      transition: color .3s;
     }
 
     #icon i:hover {
@@ -289,7 +301,9 @@
       display: none;
     }
 
-    /* MOBILE MENU */
+    /* ========================= */
+    /* MOBILE FULLSCREEN MENU    */
+    /* ========================= */
 
     #fixediv {
       position: fixed;
@@ -298,13 +312,17 @@
       left: 0;
 
       width: 100%;
-      height: 100vh;
+      height: 100%;
+      height: 100dvh; /* dynamic viewport height for mobile browsers */
 
       background: #07090d;
 
-      z-index: 9999;
+      /* Must be above navbar */
+      z-index: 10001;
 
-      transition: .5s ease;
+      transition: top .45s cubic-bezier(.4, 0, .2, 1);
+
+      overflow: hidden;
     }
 
     #fixediv.open {
@@ -325,6 +343,8 @@
       font-size: 36px;
 
       cursor: pointer;
+
+      z-index: 1;
     }
 
     .links-fixed {
@@ -336,34 +356,42 @@
       flex-direction: column;
 
       justify-content: center;
-      align-items: center;
 
+      /* KEY FIX: center items horizontally */
+      align-items: center;
       text-align: center;
 
-      gap: 24px;
+      gap: 20px;
 
-      padding: 40px 20px;
+      padding: 80px 20px 40px;
     }
 
     .links-fixed a {
+      display: block;
+
+      width: 100%;
+
       text-decoration: none;
 
       color: white;
 
-      font-size: clamp(42px, 10vw, 72px);
+      font-size: clamp(36px, 9vw, 64px);
 
       font-family: var(--font-display);
 
       font-weight: 700;
 
-      line-height: 1;
+      line-height: 1.1;
 
-      letter-spacing: -.04em;
+      letter-spacing: -.03em;
 
-      transition: .3s;
+      text-align: center;
+
+      transition: color .3s;
     }
 
-    .links-fixed a:hover {
+    .links-fixed a:hover,
+    .links-fixed a:active {
       color: var(--accent);
     }
 
@@ -623,6 +651,8 @@
       overflow: hidden;
 
       background: none;
+
+      cursor: pointer;
     }
 
     .color-label {
@@ -672,7 +702,7 @@
 
       cursor: pointer;
 
-      transition: .3s;
+      transition: transform .3s, box-shadow .3s;
 
       box-shadow:
         0 10px 30px rgba(124, 106, 247, .25);
@@ -878,6 +908,8 @@
       border-radius: 14px;
 
       color: white;
+
+      cursor: pointer;
     }
 
     /* LIVE */
@@ -904,7 +936,9 @@
       background: var(--accent2);
     }
 
-    /* TABLET */
+    /* ===================== */
+    /* TABLET                */
+    /* ===================== */
 
     @media(max-width:1100px) {
 
@@ -920,7 +954,9 @@
       }
     }
 
-    /* MOBILE */
+    /* ===================== */
+    /* MOBILE                */
+    /* ===================== */
 
     @media(max-width:768px) {
 
@@ -935,6 +971,7 @@
 
       #menuicon {
         display: block;
+        cursor: pointer;
       }
 
       #nav-links {
@@ -942,9 +979,14 @@
       }
 
       #nav {
-        height: 72px;
+        height: 64px;
 
         padding: 0 18px;
+
+        /* Ensure full-width on mobile */
+        left: 0;
+        right: 0;
+        width: 100%;
       }
 
       .logo h3 {
@@ -956,7 +998,7 @@
       }
 
       .content-wrapper {
-        padding-top: 100px;
+        padding-top: 90px;
       }
 
       .page-header {
@@ -1001,7 +1043,6 @@
 
       .phone-frame {
         width: 100%;
-
         max-width: 100%;
       }
 
@@ -1009,16 +1050,20 @@
         min-height: 340px;
       }
 
+      /* Mobile menu links — centered */
       .links-fixed {
-        gap: 20px;
+        gap: 16px;
       }
 
       .links-fixed a {
-        font-size: clamp(42px, 10vw, 62px);
+        font-size: clamp(36px, 10vw, 58px);
+        text-align: center;
       }
     }
 
-    /* SMALL MOBILE */
+    /* ===================== */
+    /* SMALL MOBILE          */
+    /* ===================== */
 
     @media(max-width:480px) {
 
@@ -1052,7 +1097,7 @@
       }
 
       .links-fixed a {
-        font-size: 48px;
+        font-size: 42px;
       }
     }
   </style>
@@ -1069,25 +1114,25 @@
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
 
-    <!-- MOBILE FULLSCREEN MENU (from home page) -->
+    <!-- MOBILE FULLSCREEN MENU -->
     <div id="fixediv">
-      <button class="close-btn" id="closeMenu">
+      <button class="close-btn" id="closeMenu" aria-label="Close menu">
         <i class="ri-close-line"></i>
       </button>
       <div class="links-fixed">
         <a href="/">HOME</a>
         <a href="/about">ABOUT</a>
-        <a href="/chat">Community</a>
+        <a href="/chat">COMMUNITY</a>
         <a href="/pricing">PRICING</a>
         <a href="/profile">PROFILE</a>
         <a href="/bookings">BOOKINGS</a>
-        <a href="/createbot">Create Bot</a>
-        <a href="/logout">Logout</a>
+        <a href="/createbot">CREATE BOT</a>
+        <a href="/logout">LOGOUT</a>
       </div>
     </div>
 
-    <!-- NAVBAR (from home page) -->
-    <div id="nav">
+    <!-- NAVBAR -->
+    <nav id="nav" role="navigation" aria-label="Main navigation">
       <div class="logo">
         <h3>Bemy</h3>
         <h3>Bot</h3>
@@ -1103,11 +1148,11 @@
           <a href="/logout">Logout</a>
         </div>
         <div id="icon">
-          <i id="menuicon" class="ri-menu-line"></i>
+          <i id="menuicon" class="ri-menu-line" role="button" aria-label="Open menu" tabindex="0"></i>
           <i class="ri-shopping-cart-2-line"></i>
         </div>
       </div>
-    </div>
+    </nav>
 
     <!-- Main Content -->
     <div class="content-wrapper">
@@ -1118,7 +1163,7 @@
           <span class="separator">→</span>
           <span>Create Bot</span>
         </div>
-        <h1 class="page-title">Design Your <span class="accent">AI Assistant</span></h1>
+        <h1 class="page-title">Design Your <span>AI Assistant</span></h1>
         <p class="page-subtitle">Customize every detail of your chatbot. See changes in real-time as you build your
           perfect AI companion.</p>
       </div>
@@ -1134,6 +1179,7 @@
 
           <form action="/createbot" method="POST" novalidate>
             <input type="hidden" name="_csrf" value="<%= csrfToken ? csrfToken() : '' %>">
+
             <div class="form-group">
               <label>
                 <i class="ri-robot-line"></i>
@@ -1202,9 +1248,9 @@
                 <i class="ri-brain-line"></i>
                 Training Knowledge
               </label>
-              <textarea name="knowledge" class="form-control" placeholder="Teach your bot important information about your business&#10;&#10;Example:&#10;• Refund
-  policy: 7 days from purchase&#10;• Delivery time: 3-5 business days&#10;• Support hours: 9am - 6pm EST" rows="5"
-                maxlength="2000"></textarea>
+              <textarea name="knowledge" class="form-control"
+                placeholder="Teach your bot important information about your business&#10;&#10;Example:&#10;• Refund policy: 7 days from purchase&#10;• Delivery time: 3-5 business days&#10;• Support hours: 9am - 6pm EST"
+                rows="5" maxlength="2000"></textarea>
             </div>
 
             <button type="submit" class="btn-create" id="submitBtn">
@@ -1262,36 +1308,27 @@
   </div>
 
   <script>
-    // Mobile menu toggle - from home page
+    // ── Mobile menu ──────────────────────────────────────────
     const mobileMenuBtn = document.getElementById('menuicon');
     const mobileMenu = document.getElementById('fixediv');
     const closeMobileMenuBtn = document.getElementById('closeMenu');
 
-    if (mobileMenuBtn && mobileMenu && closeMobileMenuBtn) {
-      mobileMenuBtn.addEventListener('click', () => {
-        mobileMenu.classList.add('open');
-      });
+    function openMenu() { mobileMenu.classList.add('open'); }
+    function closeMenu() { mobileMenu.classList.remove('open'); }
 
-      closeMobileMenuBtn.addEventListener('click', () => {
-        mobileMenu.classList.remove('open');
-      });
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMenu);
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openMenu(); });
+    if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', closeMenu);
 
-      // Close menu when clicking on links
-      document.querySelectorAll('.links-fixed a').forEach(link => {
-        link.addEventListener('click', () => {
-          mobileMenu.classList.remove('open');
-        });
-      });
+    document.querySelectorAll('.links-fixed a').forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
 
-      // Close menu on escape key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
-          mobileMenu.classList.remove('open');
-        }
-      });
-    }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeMenu();
+    });
 
-    // Custom cursor animation (only on desktop)
+    // ── Custom cursor (desktop only) ─────────────────────────
     if (window.matchMedia('(pointer: fine)').matches) {
       const cur = document.getElementById('cur');
       const ring = document.getElementById('cur-ring');
@@ -1313,20 +1350,15 @@
       })();
     }
 
-    // Navbar scroll effect
+    // ── Navbar scroll effect ─────────────────────────────────
     const nav = document.getElementById('nav');
     const handleScroll = () => {
-      if (window.scrollY > 60) {
-        nav.classList.add('scrolled');
-      } else {
-        nav.classList.remove('scrolled');
-      }
+      nav.classList.toggle('scrolled', window.scrollY > 60);
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    // Form inputs - live preview updates with debouncing
+    // ── Live preview ─────────────────────────────────────────
     const nameInput = document.getElementById('botName');
     const colorInput = document.getElementById('botColor');
     const messageInput = document.getElementById('welcomeMessage');
@@ -1337,139 +1369,83 @@
     const colorValueDisplay = document.getElementById('colorValue');
     const sendBtn = document.querySelector('.send-btn');
 
-    // Initialize with default color
-    const defaultColor = colorInput.value;
-    previewHeader.style.background = defaultColor;
-    if (sendBtn) {
-      sendBtn.style.background = defaultColor;
+    function applyColor(color) {
+      previewHeader.style.background = color;
+      if (sendBtn) sendBtn.style.background = color;
+      colorValueDisplay.textContent = color;
     }
-    colorValueDisplay.textContent = defaultColor;
 
-    // Debounced update functions
-    const debounce = (func, wait) => {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
+    applyColor(colorInput.value);
+
+    const debounce = (fn, ms) => {
+      let t;
+      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
     };
 
-    const updateName = debounce(() => {
-      const name = nameInput.value.trim() || 'Support Assistant';
-      previewName.textContent = name;
-    }, 100);
+    nameInput.addEventListener('input', debounce(() => {
+      previewName.textContent = nameInput.value.trim() || 'Support Assistant';
+    }, 100));
 
-    const updateColor = debounce(() => {
-      const color = colorInput.value;
-      previewHeader.style.background = color;
-      if (sendBtn) {
-        sendBtn.style.background = color;
-      }
-      colorValueDisplay.textContent = color;
-    }, 100);
+    colorInput.addEventListener('input', debounce(() => {
+      applyColor(colorInput.value);
+    }, 50));
 
-    const updateMessage = debounce(() => {
-      const message = messageInput.value.trim() || 'Hello 👋 How can I help you today?';
-      previewMessage.textContent = message;
-    }, 100);
-
-    nameInput.addEventListener('input', updateName);
-    colorInput.addEventListener('input', updateColor);
-    messageInput.addEventListener('input', updateMessage);
+    messageInput.addEventListener('input', debounce(() => {
+      previewMessage.textContent = messageInput.value.trim() || 'Hello 👋 How can I help you today?';
+    }, 100));
 
     // Send button animation
-    const sendButton = document.querySelector('.send-btn');
-    if (sendButton) {
-      sendButton.addEventListener('click', function () {
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function () {
         this.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-          this.style.transform = 'scale(1)';
-        }, 150);
+        setTimeout(() => { this.style.transform = ''; }, 150);
       });
     }
 
-    // Form submission enhancement
+    // Form submission feedback
     const form = document.querySelector('form');
     const submitBtn = document.getElementById('submitBtn');
 
-    form.addEventListener('submit', function (e) {
-      const originalContent = submitBtn.innerHTML;
+    form.addEventListener('submit', function () {
+      const original = submitBtn.innerHTML;
       submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i><span>Creating...</span>';
       submitBtn.style.pointerEvents = 'none';
-
-      // Form will submit normally, but button stays disabled temporarily
       setTimeout(() => {
         if (document.body.contains(submitBtn)) {
-          submitBtn.innerHTML = originalContent;
+          submitBtn.innerHTML = original;
           submitBtn.style.pointerEvents = '';
         }
       }, 5000);
     });
 
-    // Color picker hover effect (desktop only)
+    // Color picker hover (desktop)
     if (window.matchMedia('(pointer: fine)').matches) {
       const colorWrapper = document.querySelector('.color-picker-wrapper');
-      colorWrapper.addEventListener('mouseenter', () => {
-        colorInput.style.transform = 'scale(1.02)';
-      });
-      colorWrapper.addEventListener('mouseleave', () => {
-        colorInput.style.transform = 'scale(1)';
-      });
+      colorWrapper.addEventListener('mouseenter', () => { colorInput.style.transform = 'scale(1.02)'; });
+      colorWrapper.addEventListener('mouseleave', () => { colorInput.style.transform = ''; });
     }
 
-    // Prevent zoom on input focus in iOS
-    let viewport = document.querySelector('meta[name="viewport"]');
-    const originalViewportContent = viewport.getAttribute('content');
-
-    document.querySelectorAll('input, textarea, select').forEach(element => {
-      element.addEventListener('focus', () => {
-        if (window.innerWidth <= 768) {
+    // Prevent iOS zoom on input focus
+    const viewport = document.querySelector('meta[name="viewport"]');
+    const vpDefault = viewport.getAttribute('content');
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+      el.addEventListener('focus', () => {
+        if (window.innerWidth <= 768)
           viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-        }
       });
-
-      element.addEventListener('blur', () => {
-        viewport.setAttribute('content', originalViewportContent);
+      el.addEventListener('blur', () => {
+        viewport.setAttribute('content', vpDefault);
       });
     });
 
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-      if (mobileMenu && mobileMenu.classList.contains('open')) {
-        mobileMenu.classList.remove('open');
-      }
-    });
+    // Close mobile menu on resize to desktop
+    window.addEventListener('resize', debounce(() => {
+      if (window.innerWidth > 768) closeMenu();
+    }, 250));
 
-    // Resize handler
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        // Close mobile menu on resize to desktop
-        if (window.innerWidth > 768 && mobileMenu.classList.contains('open')) {
-          mobileMenu.classList.remove('open');
-        }
-      }, 250);
-    });
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      // Close mobile menu if navigating back
-      window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-          mobileMenu.classList.remove('open');
-        }
-      });
-
-      // Set initial viewport for mobile
-      if (window.innerWidth <= 768) {
-        const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-      }
+    // Close mobile menu on back-navigation
+    window.addEventListener('pageshow', e => {
+      if (e.persisted) closeMenu();
     });
   </script>
 </body>
